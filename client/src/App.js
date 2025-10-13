@@ -834,8 +834,9 @@ export default function App() {
         twinkleMarkers.forEach((marker, i) => {
             const icon = L.divIcon({
                 className: 'twinkle-marker',
-                html: '<div class="twinkle-dot"></div>',
-                iconSize: [20, 20]
+                html: `<div class="twinkle-dot" style="animation-delay: ${((i * 0.2) % 1.5).toFixed(2)}s;"></div>`,
+                iconSize: [12, 12],
+                iconAnchor: [6, 6]
             });
 
             const m = L.marker([marker.lat, marker.lng], { icon }).addTo(map);
