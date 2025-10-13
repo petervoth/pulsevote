@@ -7,6 +7,7 @@
     "start": "node server.js",
     "build": "cd client && npm run build",
     "dev": "concurrently \"node server.js\" \"cd client && npm start\"",
+    "postinstall": "cd client && npm install",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
