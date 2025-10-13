@@ -1090,3 +1090,30 @@ body.dark-mode .leaflet-control-zoom-out {
         background: #555;
         color: #fff;
     }
+
+/* Twinkle code for online*/
+@keyframes twinkle {
+    0% {
+        opacity: 0.2;
+        transform: scale(0.8);
+    }
+
+    50% {
+        opacity: 1;
+        transform: scale(1.2);
+    }
+
+    100% {
+        opacity: 0.2;
+        transform: scale(0.8);
+    }
+}
+
+.twinkle-marker .twinkle-dot {
+    width: 12px;
+    height: 12px;
+    background: gold;
+    border-radius: 50%;
+    animation: twinkle 1.5s ease-in-out infinite;
+    box-shadow: 0 0 8px rgba(255, 215, 0, 0.6);
+}
