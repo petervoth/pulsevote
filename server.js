@@ -387,7 +387,7 @@ const clientBuildPath = path.join(__dirname, 'client', 'build');
 app.use(express.static(clientBuildPath));
 
 // Fallback: serve index.html for all unmatched routes (React Router support)
-app.get('*', (req, res) => {
+app.get('/*', (req, res) => {
     res.sendFile(path.join(clientBuildPath, 'index.html'));
 });
 
