@@ -828,23 +828,6 @@ export default function App() {
         }
     }, [twinklePoints, selectedTopic]);
 
-    useEffect(() => {
-        if (!map || selectedTopic) return;
-
-        twinkleMarkers.forEach((marker, i) => {
-            const delay = ((i * 0.2) % 1.5).toFixed(2);
-
-            const icon = L.divIcon({
-                className: 'twinkle-marker',
-                html: `<div class="twinkle-dot" style="animation-delay: ${delay}s;"></div>`,
-                iconSize: [12, 12],
-                iconAnchor: [6, 6] // centers the dot
-            });
-
-            L.marker([marker.lat, marker.lng], { icon }).addTo(map);
-        });
-    }, [map, twinkleMarkers, selectedTopic]);
-
     const stancePercentages = useMemo(() => {
         const counts = { "-No": 0, No: 0, Neutral: 0, Yes: 0, "Yes+": 0 };
         heatPoints.forEach(p => {
