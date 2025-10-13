@@ -6,7 +6,7 @@
   "scripts": {
     "start": "node server.js",
     "build": "cd client && npm run build",
-    "dev": "concurrently \"node server.js\" \"cd client && npm start\""
+    "dev": "concurrently \"node server.js\" \"cd client && npm start\"",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
