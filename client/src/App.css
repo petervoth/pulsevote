@@ -1091,5 +1091,26 @@ body.dark-mode .leaflet-control-zoom-out {
         color: #fff;
     }
 
+/* Twinkle effects */
+@keyframes pulse {
+    0%, 100% {
+        transform: scale(0.9);
+        opacity: 0.6;
+    }
+
+    50% {
+        transform: scale(1.2);
+        opacity: 1;
+    }
+}
+
+.twinkle-dot {
+    width: 12px;
+    height: 12px;
+    background: gold;
+    border-radius: 50%;
+    animation: pulse 1.5s ease-in-out infinite;
+    box-shadow: 0 0 6px rgba(255, 215, 0, 0.5);
+}
 
 

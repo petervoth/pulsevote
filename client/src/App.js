@@ -918,22 +918,32 @@ export default function App() {
                         {selectedTopic && renderPoints.length > 0 && (
                             <HeatmapLayer points={renderPoints} />
                         )}
-                        {!selectedTopic &&
-                            twinkleMarkers.map((m, i) => (
-                                <Circle
-                                    key={`tw-${m.id}-${i}`}
-                                    center={[m.lat, m.lng]}
-                                    radius={m.radius}
-                                    pathOptions={{
-                                        className: "twinkle-marker",
-                                        color: m.color,
-                                        fillColor: m.color,
-                                        fillOpacity: 0.6,
-                                    }}
-                                    renderer={svgRenderer}
-                                />
-                            ))
-                        }
+                        useEffect(() => {
+  if (!map || selectedTopic) return;
+
+                        // Clear any previous twinkle markers
+                        const twinkleLayerGroup = L.layerGroup().addTo(map);
+
+  twinkleMarkers.forEach((marker, i) => {
+    const delay = (Math.random() * 2).toFixed(2);
+                        const duration = (1.5 + Math.random()).toFixed(2);
+
+                        const icon = L.divIcon({
+                            className: 'twinkle-marker',
+                        html: `<div class="twinkle-dot" style="animation-delay: ${delay}s; animation-duration: ${duration}s;"></div>`,
+      iconSize: [12, 12],
+      iconAnchor: [6, 6]
+    });
+
+    const m = L.marker([marker.lat, marker.lng], { icon });
+    m.addTo(twinkleLayerGroup);
+  });
+
+  return () => {
+    map.removeLayer(twinkleLayerGroup);
+  };
+}, [map, twinkleMarkers, selectedTopic]);
+
                     </MapContainer>
                 </main>
 
