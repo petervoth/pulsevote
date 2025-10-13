@@ -827,10 +827,16 @@ export default function App() {
         twinkleMarkers.forEach((marker, i) => {
             const delay = (Math.random() * 2).toFixed(2);
             const duration = (1.5 + Math.random()).toFixed(2);
+            const color = STANCE_COLOR[marker.stance] || "#888"; // fallback if stance is missing
 
             const icon = L.divIcon({
                 className: 'twinkle-marker',
-                html: `<div class="twinkle-dot" style="animation-delay: ${delay}s; animation-duration: ${duration}s;"></div>`,
+                html: `<div class="twinkle-dot" style="
+        animation-delay: ${delay}s;
+        animation-duration: ${duration}s;
+        background: ${color};
+        box-shadow: 0 0 6px ${color};
+      "></div>`,
                 iconSize: [12, 12],
                 iconAnchor: [6, 6]
             });
