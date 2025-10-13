@@ -391,12 +391,6 @@ app.get('*', (req, res) => {
     res.sendFile(path.join(clientBuildPath, 'index.html'));
 });
 
-// THEN your server.listen() call
-const PORT = parseInt(process.env.PORT, 10) || 5000;
-server.listen(PORT, () => {
-    console.log(`🚀 Server listening on port ${PORT}`);
-});
-
 // ---------------------------
 // Start server
 // ---------------------------
