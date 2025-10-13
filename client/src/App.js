@@ -824,10 +824,12 @@ export default function App() {
 
         const twinkleLayerGroup = L.layerGroup().addTo(map);
 
+        const stanceColors = Object.values(STANCE_COLOR); // Grab your 5 defined colors
+
         twinkleMarkers.forEach((marker, i) => {
             const delay = (Math.random() * 2).toFixed(2);
             const duration = (1.5 + Math.random()).toFixed(2);
-            const color = STANCE_COLOR[marker.stance] || "#888"; // fallback if stance is missing
+            const color = stanceColors[Math.floor(Math.random() * stanceColors.length)];
 
             const icon = L.divIcon({
                 className: 'twinkle-marker',
