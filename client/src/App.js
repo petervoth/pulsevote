@@ -832,15 +832,16 @@ export default function App() {
         if (!map || selectedTopic) return;
 
         twinkleMarkers.forEach((marker, i) => {
+            const delay = ((i * 0.2) % 1.5).toFixed(2);
+
             const icon = L.divIcon({
                 className: 'twinkle-marker',
-                html: `<div class="twinkle-dot" style="animation-delay: ${((i * 0.2) % 1.5).toFixed(2)}s;"></div>`,
+                html: `<div class="twinkle-dot" style="animation-delay: ${delay}s;"></div>`,
                 iconSize: [12, 12],
-                iconAnchor: [6, 6]
+                iconAnchor: [6, 6] // centers the dot
             });
 
-            const m = L.marker([marker.lat, marker.lng], { icon }).addTo(map);
-            m._icon.style.animationDelay = `${((i * 0.2) % 1.5).toFixed(2)}s`;
+            L.marker([marker.lat, marker.lng], { icon }).addTo(map);
         });
     }, [map, twinkleMarkers, selectedTopic]);
 

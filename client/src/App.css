@@ -1095,7 +1095,7 @@ body.dark-mode .leaflet-control-zoom-out {
 @keyframes twinkle {
     0%, 100% {
         opacity: 0.3;
-        transform: scale(0.9);
+        transform: scale(1);
     }
 
     50% {
@@ -1112,4 +1112,5 @@ body.dark-mode .leaflet-control-zoom-out {
     animation: twinkle 1.5s ease-in-out infinite;
     box-shadow: 0 0 6px rgba(255, 215, 0, 0.5);
 }
+
 
