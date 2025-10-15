@@ -457,10 +457,25 @@ button {
         }
 
 /* Center the Create a New Topic heading horizontally in the accordion header */
+.accordion-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 1rem; /* ✅ Match height across accordions */
+    padding: 0 0rem;
+    box-sizing: border-box;
+}
+
+    .accordion-header h3 {
+        font-size: 1rem; /* ✅ Match 'Filters' font size */
+        margin: 0;
+        font-weight: normal;
+    }
+
 .create-section .accordion-header {
     display: flex;
     align-items: center;
-    gap: 0.5rem;
+    gap: 0rem;
 }
 
     /* Make the title take remaining space and center its text */
@@ -490,8 +505,8 @@ button {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 0.5rem;
-    margin-bottom: 0.5rem;
+    gap: 0rem;
+    margin-bottom: 0rem;
 }
 
 .accordion-toggle {
