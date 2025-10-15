@@ -1202,16 +1202,14 @@ body.dark-mode .leaflet-control-zoom-out {
     .stance-summary {
         display: flex;
         flex-direction: row;
+        flex-wrap: nowrap;
         justify-content: space-between;
-        flex-wrap: nowrap; /* ⛔ Prevent wrapping */
-        overflow-x: auto; /* ✅ Allow horizontal scroll if needed */
-        padding-bottom: 0rem; /* Optional: space for scrollbar */
+        width: 100%;
+        padding: 0.5rem 0;
     }
 
     .stance-box {
-        flex: 0 0 18%; /* Fixed width per box */
-        min-width: 0px;
-        max-width: 70px;
+        flex: 1; /* Each box takes equal space */
         text-align: center;
         font-size: 0.85rem;
         border-radius: 6px;
@@ -1219,6 +1217,7 @@ body.dark-mode .leaflet-control-zoom-out {
         color: #333;
         border: 1px solid #ccc;
         box-sizing: border-box;
+        margin: 0; /* No gaps */
     }
 
     .spotlight-close {
@@ -1230,14 +1229,7 @@ body.dark-mode .leaflet-control-zoom-out {
     }
 
     /* Stance summary adjustments */
-    .stance-summary {
-        margin: 0.4rem 0;
-    }
-
-    .stance-box {
-        padding: 0.4rem 0;
-    }
-
+    
     .stance-label {
         font-size: 0.65rem;
     }
@@ -1545,14 +1537,24 @@ body.dark-mode .leaflet-control-zoom-out {
 
     /* Stance summary */
     .stance-summary {
-        margin: 0.35rem 0;
-        flex-wrap: wrap;
+        display: flex;
+        flex-direction: row;
+        flex-wrap: nowrap;
+        justify-content: space-between;
+        width: 100%;
+        padding: 0.5rem 0;
     }
 
     .stance-box {
-        flex: 1 1 calc(50% - 2px);
-        padding: 0.3rem;
-        font-size: 0.75rem;
+        flex: 1; /* Each box takes equal space */
+        text-align: center;
+        font-size: 0.85rem;
+        border-radius: 6px;
+        background: #f0f0f0;
+        color: #333;
+        border: 1px solid #ccc;
+        box-sizing: border-box;
+        margin: 0; /* No gaps */
     }
 
     .stance-label {
