@@ -321,7 +321,7 @@ export default function App() {
     // Share topic consts
     const query = useQuery();
     const topicIdFromURL = query.get("topic");
-    const [topics, setTopics] = useState([]);
+    const location = useLocation();
 
     // Share topic query
     function useQuery() {
@@ -330,18 +330,36 @@ export default function App() {
 
     useEffect(() => {
         async function loadSharedTopic() {
-            const query = new URLSearchParams(window.location.search);
-            const topicId = query.get("topic");
+            const params = new URLSearchParams(location.search);
+            const topicId = params.get("topic");
+
             if (!topicId) return;
 
             try {
+                // First check if topic is already loaded
+                const existing = topics.find(t => String(t.id) === String(topicId));
+                if (existing) {
+                    setSelectedTopic(existing);
+                    // Load points for this topic
+                    const res = await fetch(`${API_BASE}/points?topic_id=${encodeURIComponent(existing.id)}`);
+                    if (res.ok) {
+                        setHeatPoints(await res.json());
+                    }
+                    return;
+                }
+
+                // If not in topics list, fetch it from server
                 const res = await fetch(`${API_BASE}/topics/${topicId}`);
                 if (res.ok) {
                     const topic = await res.json();
-                    setTopics(prev => (prev.some(t => t.id === topic.id) ? prev : [...prev, topic]));
+                    setTopics(prev => (prev.some(t => t.id === topic.id) ? prev : [topic, ...prev]));
                     setSelectedTopic(topic);
-                } else {
-                    console.warn("Topic not found:", res.status);
+
+                    // Load points for this topic
+                    const pointsRes = await fetch(`${API_BASE}/points?topic_id=${encodeURIComponent(topic.id)}`);
+                    if (pointsRes.ok) {
+                        setHeatPoints(await pointsRes.json());
+                    }
                 }
             } catch (err) {
                 console.error("Error loading shared topic:", err);
@@ -349,7 +367,7 @@ export default function App() {
         }
 
         loadSharedTopic();
-    }, []);
+    }, [location.search, topics]);
 
     useEffect(() => {
         async function tryLoadTopic() {

@@ -295,6 +295,43 @@ app.post("/points", async (req, res) => {
     }
 });
 
+
+// Topic share Route
+app.get("/topics/:id", async (req, res) => {
+    try {
+        const topicId = req.params.id;
+        const result = await pool.query(
+            `SELECT 
+                t.id, 
+                t.title, 
+                t.description, 
+                t.created_by, 
+                t.stance, 
+                t.created_at,
+                COUNT(DISTINCT p.user_id) as vote_count
+            FROM topics t
+            LEFT JOIN points p ON t.id::text = p.topic_id::text
+            WHERE t.id = $1
+            GROUP BY t.id, t.title, t.description, t.created_by, t.stance, t.created_at`,
+            [topicId]
+        );
+
+        if (result.rows.length === 0) {
+            return res.status(404).json({ error: "Topic not found" });
+        }
+
+        const topic = {
+            ...result.rows[0],
+            vote_count: parseInt(result.rows[0].vote_count) || 0
+        };
+
+        res.json(topic);
+    } catch (err) {
+        console.error("Error fetching topic by ID:", err);
+        res.status(500).json({ error: "Server error" });
+    }
+});
+
 // ---------------------------
 // NEW! Twinkle points route
 // ---------------------------
