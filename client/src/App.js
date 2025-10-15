@@ -1,6 +1,7 @@
 ﻿// src/App.js
 
 import React, { useState, useEffect, useRef, useMemo } from "react";
+import { useLocation } from "react-router-dom";
 import L from "leaflet";
 import "leaflet.heat";
 import { MapContainer, TileLayer, Circle, useMap } from "react-leaflet";
@@ -316,6 +317,68 @@ export default function App() {
     // Shared Canvas renderer
     const canvasRenderer = useMemo(() => L.canvas({ padding: 0.5 }), []);
     const svgRenderer = useMemo(() => L.svg(), []);
+
+    // Share topic consts
+    const query = useQuery();
+    const topicIdFromURL = query.get("topic");
+    const [topics, setTopics] = useState([]);
+
+    // Share topic query
+    function useQuery() {
+        return new URLSearchParams(useLocation().search);
+    }
+
+    useEffect(() => {
+        async function loadSharedTopic() {
+            const query = new URLSearchParams(window.location.search);
+            const topicId = query.get("topic");
+            if (!topicId) return;
+
+            try {
+                const res = await fetch(`${API_BASE}/topics/${topicId}`);
+                if (res.ok) {
+                    const topic = await res.json();
+                    setTopics(prev => (prev.some(t => t.id === topic.id) ? prev : [...prev, topic]));
+                    setSelectedTopic(topic);
+                } else {
+                    console.warn("Topic not found:", res.status);
+                }
+            } catch (err) {
+                console.error("Error loading shared topic:", err);
+            }
+        }
+
+        loadSharedTopic();
+    }, []);
+
+    useEffect(() => {
+        async function tryLoadTopic() {
+            if (!topicIdFromURL) return;
+
+            // First, try to find it in already-loaded topics
+            const match = topics.find(t => String(t.id) === String(topicIdFromURL));
+            if (match) {
+                setSelectedTopic(match);
+                return;
+            }
+
+            // If not found, fetch it directly
+            try {
+                const res = await fetch(`${API_BASE}/topics/${topicIdFromURL}`);
+                if (res.ok) {
+                    const topic = await res.json();
+                    setTopics(prev => (prev.some(t => t.id === topic.id) ? prev : [...prev, topic]));
+                    setSelectedTopic(topic);
+                } else {
+                    console.warn("Topic not found or fetch failed:", res.status);
+                }
+            } catch (err) {
+                console.error("Error fetching topic by ID:", err);
+            }
+        }
+
+        tryLoadTopic();
+    }, [topicIdFromURL]);
 
     // Apply dark mode class to body and save to localStorage
     useEffect(() => {
@@ -983,7 +1046,7 @@ export default function App() {
                             </section>
                         )
                     ) : selectedTopic ? (
-                        <section className="spotlight-section card">
+                            <section id="spotlight-section" className="spotlight-section card">
                             <button className="spotlight-close" onClick={closeSpotlight}>✕</button>
                             <div className="spotlight-content">
                                 <h3 className="spotlight-title">{selectedTopic.title}</h3>
