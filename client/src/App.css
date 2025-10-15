@@ -1108,7 +1108,7 @@ body.dark-mode .leaflet-control-zoom-out {
     display: flex !important;
     flex-direction: column;
     width: 100%;
-    min-height: 300px;
+    min-height: 250px;
     }
 
     /* Sidebar becomes full-width */
