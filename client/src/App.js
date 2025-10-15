@@ -956,7 +956,7 @@ export default function App() {
                     </MapContainer>
                 </main>
 
-                <aside className="right-column" style={{ width: 300, display: "flex", flexDirection: "column" }}>
+                <aside className="right-column">
                     {userSpotlightOpen ? (
                         selectedUserPoint ? (
                             <section className="spotlight-section card">
