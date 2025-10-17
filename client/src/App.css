@@ -1155,6 +1155,7 @@ body.dark-mode .leaflet-control-zoom-out {
         padding: 5px 8px;
         font-size: 0.75rem;
         margin-bottom: 4px;
+        height: 28px;
     }
 
         .header-logout svg {
