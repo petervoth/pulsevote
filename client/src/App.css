@@ -1146,16 +1146,16 @@ body.dark-mode .leaflet-control-zoom-out {
     .header-user-info {
         display: flex;
         flex-direction: row;
-        gap: 8px;
         justify-content: flex-end;
-        flex-wrap: wrap;
+        gap: 8px; /* spacing between email and coordinates */
+        margin-bottom: 4px;
     }
 
     .header-email,
-    .header-home,
-    .header-action {
+    .header-home {
         font-size: 0.9rem;
-        margin-bottom: 4px;
+        margin: 0;
+        padding: 0;
     }
 
     .header-controls {
