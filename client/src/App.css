@@ -1599,11 +1599,11 @@ body.dark-mode .leaflet-control-zoom-out {
 
     /* Create section */
     .create-section .accordion-header h3 {
-        font-size: 0.9rem;
+        font-size: 1.0rem;
     }
 
     .accordion-section .accordion-header h3 {
-        font-size: 0.9rem;
+        font-size: 1.0rem;
     }
 
     .accordion-toggle {
