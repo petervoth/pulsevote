@@ -1138,12 +1138,13 @@ body.dark-mode .leaflet-control-zoom-out {
         align-items: flex-end;
         text-align: right;
         gap: 0.4rem;
+        margin-right: 48px; 
     }
 
     .header-email.mono,
-    .header-home {
+    .header-home,
+    .dark-mode-toggle {
         font-size: 0.75rem;
-        display: inline-block;
         white-space: nowrap;
     }
 
@@ -1151,13 +1152,6 @@ body.dark-mode .leaflet-control-zoom-out {
         padding: 5px 8px;
         font-size: 0.75rem;
         margin-bottom: 4px;
-    }
-
-    .dark-mode-toggle {
-        align-self: flex-end;
-        margin-top: 0;
-        padding: 5px 8px;
-        font-size: 0.75rem;
     }
 
     /* Reduce card padding */
