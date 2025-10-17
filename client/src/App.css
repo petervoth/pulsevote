@@ -635,11 +635,6 @@ button {
     color: #0078d7;
 }
 
-/* Ensure line breaks work in topic description */
-.description-text {
-    white-space: pre-line;
-}
-
 .header-home.clickable {
     background: none;
     border: none;
@@ -812,7 +807,11 @@ body.dark-mode select {
 }
 
 body.dark-mode .feed-date {
-    color: #999;
+    color: #444;
+}
+
+body.dark-mode .feed-desc {
+    color: #999; /* previously used for date */
 }
 
 body.dark-mode .stance-box {
