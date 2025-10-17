@@ -49,6 +49,7 @@ const FILTERED_WORDS = [
     "shit",
     "cunt",
     "motherfucker",
+    "asshole",
     // Add more words as needed
 ];
 function containsFilteredWords(text) {
@@ -1080,7 +1081,14 @@ export default function App() {
                                 </div>
                                 <p className="spotlight-meta">By: <strong>{selectedTopic.created_by}</strong><br />On: {new Date(selectedTopic.created_at).toLocaleString()}</p>
                                 {selectedTopic.description ? (
-                                    <p className="spotlight-desc" style={{ margin: "2rem 0" }}>{selectedTopic.description}</p>
+                                        <p className="spotlight-desc" style={{ margin: "2rem 0" }}>
+                                            {selectedTopic.description.split('\n').map((line, index) => (
+                                                <React.Fragment key={index}>
+                                                    {line}
+                                                    <br />
+                                                </React.Fragment>
+                                            ))}
+                                        </p>
                                 ) : (
                                     <p className="spotlight-desc muted" style={{ margin: "2rem 0" }}>No description provided.</p>
                                 )}
