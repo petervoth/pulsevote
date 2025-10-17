@@ -1128,29 +1128,38 @@ body.dark-mode .leaflet-control-zoom-out {
         font-size: 0.95rem;
     }
 
+    .header-right {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-end;
+        padding-right: 12px;
+    }
+
     .header-user-line {
         display: flex;
-        flex-wrap: wrap;
-        justify-content: flex-end;
-        gap: 6px; /* 👈 Controls spacing between buttons */
+        flex-direction: column;
+        align-items: flex-end;
+        text-align: right;
         margin-top: 8px;
-    }
-
-    .header-logout {
-        order: 2;
-    }
-
-    .dark-mode-toggle {
-        order: 1;
-        margin-right: -4px; /* 👈 Nudges it closer to logout */
     }
 
     .header-email,
     .header-home,
     .header-action {
-        width: 100%;
-        text-align: right;
+        font-size: 0.9rem;
         margin-bottom: 4px;
+    }
+
+    .header-controls {
+        display: flex;
+        gap: 4px;
+        margin-top: 4px;
+    }
+
+    .dark-mode-toggle,
+    .header-logout {
+        font-size: 1rem;
+        padding: 6px;
     }
 
     .header-logout svg {
