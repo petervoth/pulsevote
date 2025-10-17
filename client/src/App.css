@@ -1149,12 +1149,19 @@ body.dark-mode .leaflet-control-zoom-out {
     }
 
     .header-logout {
-        display: inline-flex; /* 👈 Enables vertical centering */
-        align-items: center; /* 👈 Vertically centers icon/text */
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
         padding: 5px 8px;
         font-size: 0.75rem;
         margin-bottom: 4px;
     }
+
+        .header-logout svg {
+            width: 16px;
+            height: 16px;
+            vertical-align: middle; /* 👈 Ensures icon sits flush */
+        }
 
     /* Reduce card padding */
     .card {
