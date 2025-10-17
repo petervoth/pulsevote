@@ -635,7 +635,10 @@ button {
     color: #0078d7;
 }
 
-/* App.css */
+/* Ensure line breaks work in topic description */
+.description-text {
+    white-space: pre-line;
+}
 
 .header-home.clickable {
     background: none;
