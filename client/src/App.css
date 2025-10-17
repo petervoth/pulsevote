@@ -1138,7 +1138,7 @@ body.dark-mode .leaflet-control-zoom-out {
         align-items: flex-end;
         text-align: right;
         gap: 0.4rem;
-        margin-right: 48px; 
+        margin-right: 48px;
     }
 
     .header-email.mono,
@@ -1149,6 +1149,8 @@ body.dark-mode .leaflet-control-zoom-out {
     }
 
     .header-logout {
+        display: inline-flex; /* 👈 Enables vertical centering */
+        align-items: center; /* 👈 Vertically centers icon/text */
         padding: 5px 8px;
         font-size: 0.75rem;
         margin-bottom: 4px;
