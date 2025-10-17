@@ -1217,11 +1217,16 @@ export default function App() {
                                             item.isAd ? (
                                                 <AdCard key={`ad-${item.adIndex}`} adIndex={item.adIndex} />
                                             ) : (
-                                                <li key={item.id} className="feed-item feed-item--clickable" onClick={() => handleSelectTopic(item)} role="button" tabIndex={0}>
-                                                    <div className="feed-title">{item.title}</div>
-                                                    {item.description && <div className="feed-desc">{item.description}</div>}
-                                                    {item.created_at && <div className="feed-date">{new Date(item.created_at).toLocaleString()}</div>}
-                                                </li>
+                                                    <li key={item.id} className="feed-item feed-item--clickable" onClick={() => handleSelectTopic(item)} role="button" tabIndex={0}>
+                                                        <div className="feed-left">
+                                                            <div className="feed-title">{item.title}</div>
+                                                            {item.description && <div className="feed-desc">{item.description}</div>}
+                                                            {item.created_at && <div className="feed-date">{new Date(item.created_at).toLocaleString()}</div>}
+                                                        </div>
+                                                        <div className="feed-right">
+                                                            <div className="feed-votes">{item.vote_count || 0} votes</div>
+                                                        </div>
+                                                    </li>
                                             )
                                         )}
                                     </ul>
