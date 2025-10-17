@@ -1128,25 +1128,29 @@ body.dark-mode .leaflet-control-zoom-out {
         font-size: 0.95rem;
     }
 
-    .header-right {
+    .header-user-line {
         display: flex;
-        flex-direction: column;
-        align-items: flex-start; /* Keeps theme toggle left-aligned */
+        flex-wrap: wrap;
+        justify-content: flex-end;
+        gap: 6px; /* 👈 Controls spacing between buttons */
+        margin-top: 8px;
     }
 
-    .header-user-line {
-        align-self: flex-end; /* 👈 Pushes user info to the right */
-        text-align: right;
-        margin-top: 8px;
+    .header-logout {
+        order: 2;
+    }
+
+    .dark-mode-toggle {
+        order: 1;
+        margin-right: -4px; /* 👈 Nudges it closer to logout */
     }
 
     .header-email,
     .header-home,
-    .header-action,
-    .header-logout {
-        display: block;
+    .header-action {
+        width: 100%;
+        text-align: right;
         margin-bottom: 4px;
-        font-size: 0.9rem;
     }
 
     .header-logout svg {
