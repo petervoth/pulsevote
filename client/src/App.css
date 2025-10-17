@@ -1143,6 +1143,14 @@ body.dark-mode .leaflet-control-zoom-out {
         margin-top: 8px;
     }
 
+    .header-user-info {
+        display: flex;
+        flex-direction: row;
+        gap: 8px;
+        justify-content: flex-end;
+        flex-wrap: wrap;
+    }
+
     .header-email,
     .header-home,
     .header-action {
