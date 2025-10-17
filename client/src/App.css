@@ -1129,50 +1129,23 @@ body.dark-mode .leaflet-control-zoom-out {
     }
 
     .header-right {
-        display: flex;
-        flex-direction: column;
-        align-items: flex-end;
-        padding-right: 12px;
+        gap: 0.5rem;
     }
 
     .header-user-line {
-        display: flex;
-        flex-direction: column;
-        align-items: flex-end;
-        text-align: right;
-        margin-top: 8px;
+        gap: 0.4rem;
+        flex-wrap: wrap;
     }
 
-    .header-user-info {
-        display: flex;
-        flex-direction: row;
-        justify-content: flex-end;
-        gap: 8px; /* spacing between email and coordinates */
-        margin-bottom: 4px;
+    .header-email.mono,
+    .header-home {
+        font-size: 0.75rem;
     }
 
-    .header-user-line > .header-email,
-    .header-user-line > .header-home {
-        display: inline-block;
-        font-size: 0.9rem;
-        margin: 0 4px 4px 0;
-        padding: 0;
-    }
-
-    .header-email {
-        margin-right: 8px;
-    }
-
-    .header-controls {
-        display: flex;
-        gap: 4px;
-        margin-top: 4px;
-    }
-
-    .dark-mode-toggle,
+    .header-action,
     .header-logout {
-        font-size: 1rem;
-        padding: 6px;
+        padding: 5px 8px;
+        font-size: 0.75rem;
     }
 
     .header-logout svg {
