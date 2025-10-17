@@ -1129,29 +1129,30 @@ body.dark-mode .leaflet-control-zoom-out {
     }
 
     .header-right {
-        gap: 0.5rem;
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start; /* Keeps theme toggle left-aligned */
     }
 
     .header-user-line {
-        gap: 0.4rem;
-        flex-wrap: wrap;
+        align-self: flex-end; /* 👈 Pushes user info to the right */
+        text-align: right;
+        margin-top: 8px;
     }
 
-    .header-email.mono,
-    .header-home {
-        font-size: 0.75rem;
-    }
-
+    .header-email,
+    .header-home,
     .header-action,
     .header-logout {
-        padding: 5px 8px;
-        font-size: 0.75rem;
+        display: block;
+        margin-bottom: 4px;
+        font-size: 0.9rem;
     }
 
-        .header-logout svg {
+    .header-logout svg {
             width: 16px;
             height: 16px;
-        }
+    }
 
     /* Reduce card padding */
     .card {
