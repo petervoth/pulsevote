@@ -819,6 +819,28 @@ body.dark-mode .stance-box {
     border: 1px solid #444;
 }
 
+.feed-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem 0;
+    border-bottom: 1px solid #ccc;
+}
+
+.feed-left {
+    flex: 1;
+}
+
+.feed-right {
+    margin-left: 1rem;
+    font-weight: bold;
+    color: #666;
+}
+
+body.dark-mode .feed-right {
+    color: #aaa;
+}
+
 /* About Modal Styles */
 .modal-overlay {
     position: fixed;
