@@ -466,7 +466,7 @@ button {
 }
 
     .accordion-header h3 {
-        font-size: 1.25rem; /* Match Create a New Topic */
+        font-size: 1rem; /* Match Create a New Topic */
         margin: 0;
         font-weight: 600; /* Match Create a New Topic */
         flex: 1 1 auto;
@@ -1599,6 +1599,10 @@ body.dark-mode .leaflet-control-zoom-out {
 
     /* Create section */
     .create-section .accordion-header h3 {
+        font-size: 0.9rem;
+    }
+
+    .accordion-section .accordion-header h3 {
         font-size: 0.9rem;
     }
 
