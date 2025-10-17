@@ -1151,11 +1151,16 @@ body.dark-mode .leaflet-control-zoom-out {
         margin-bottom: 4px;
     }
 
-    .header-email,
-    .header-home {
+    .header-user-line > .header-email,
+    .header-user-line > .header-home {
+        display: inline-block;
         font-size: 0.9rem;
-        margin: 0;
+        margin: 0 4px 4px 0;
         padding: 0;
+    }
+
+    .header-email {
+        margin-right: 8px;
     }
 
     .header-controls {
