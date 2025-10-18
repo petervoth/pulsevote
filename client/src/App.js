@@ -1328,7 +1328,10 @@ export default function App() {
                                             ) : (
                                                     <li key={item.id} className="feed-item feed-item--clickable" onClick={() => handleSelectTopic(item)} role="button" tabIndex={0}>
                                                         <div className="feed-left">
-                                                            <div className="feed-title">{item.title}</div>
+                                                            <div className="feed-title">
+                                                                <span className="topic-icon">{topicIcons[item.title] || ''}</span>
+                                                                <span>{item.title}</span>
+                                                            </div>
                                                             {item.description && <div className="feed-desc">{item.description}</div>}
                                                             {item.created_at && <div className="feed-date">{new Date(item.created_at).toLocaleString()}</div>}
                                                         </div>
