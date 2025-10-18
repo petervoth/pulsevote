@@ -1059,7 +1059,10 @@ export default function App() {
 
                                 PulseVote offers interactive ad placements within topic feeds. Reach geo-targeted audiences with sponsored messages that blend seamlessly into the user experience.
 
-                                In the future, we will offer an automated system to submit your sponsor info, message, and link. For now, please email us at: ads@pulsevote.org`)}>Advertise with Us</span>
+                                In the future, we will offer an automated system to submit your sponsor info, message, and link. For now, please email us at: 
+                                <a href="mailto:ads@pulsevote.org" style={{ color: darkMode ? '#ccc' : '#0077cc', textDecoration: 'underline' }}>
+                                ads@pulsevote.org
+                                </a>`)}>Advertise with Us</span>
                             </div>
                         </div>
                     </div>
