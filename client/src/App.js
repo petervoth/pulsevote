@@ -961,7 +961,20 @@ export default function App() {
     return (
         <div className="app-root" style={{ height: "100vh", display: "flex", flexDirection: "column" }}>
             <header className="app-header header--with-user">
-                <h1 className="site-title" onClick={() => setAboutModalOpen(true)} style={{ cursor: 'pointer' }}>
+                <h1
+                    className="site-title"
+                    onClick={() => setAboutModalOpen(true)}
+                    style={{
+                        fontSize: '1.2rem',
+                        fontWeight: 'bold',
+                        fontFamily: 'inherit',
+                        padding: '0.5rem 1rem',
+                        cursor: 'pointer',
+                        color: darkMode ? '#eee' : '#222',
+                        transition: 'color 0.3s ease',
+                        textAlign: 'center'
+                    }}
+                >
                     PulseVote
                 </h1>
                 <div className="header-right">
