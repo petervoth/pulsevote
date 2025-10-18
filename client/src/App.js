@@ -1013,14 +1013,14 @@ export default function App() {
                             <div style={{
                                 marginBottom: '1rem',
                                 fontSize: '0.9rem',
-                                color: '#444',
+                                color: darkMode ? '#ccc' : '#444',
                                 whiteSpace: 'pre-line'
                             }}>
                                 {aboutText || `Welcome to PulseVote — a platform where your voice matters and location tells a story.
 
-Create topics, share your stance, and see how opinions cluster across the map. Each vote creates a visual pulse that represents the intensity and distribution of public sentiment.
+                                Create topics, share your stance, and see how opinions cluster across the map. Each vote creates a visual pulse that represents the intensity and distribution of public sentiment.
 
-Set your homebase, engage with topics that matter to you, and be part of a geo-social movement that brings transparency to public opinion.`}
+                                Set your homebase, engage with topics that matter to you, and be part of a geo-social movement that brings transparency to public opinion.`}
                             </div>
 
                             <div style={{
@@ -1034,19 +1034,19 @@ Set your homebase, engage with topics that matter to you, and be part of a geo-s
                                 <span onClick={() => setAboutText(`PulseVote is a geo-social dashboard that visualizes public sentiment by location. It empowers users to share opinions, discover regional trends, and engage in civic dialogue.`)}>About Us</span>
                                 <span onClick={() => setAboutText(`Frequently Asked Questions:
 
-1. What is PulseVote?
-A geo-social dashboard for sharing and visualizing opinions.
+                                1. What is PulseVote?
+                                A geo-social dashboard for sharing and visualizing opinions.
 
-2. Do I need an account?
-No, but setting a homebase unlocks more features.
+                                2. Do I need an account?
+                                No, but setting a homebase unlocks more features.
 
-3. Can I create my own topics?
-Yes! Just click “Create a New Topic” and start engaging.`)}>F.A.Q.</span>
+                                3. Can I create my own topics?
+                                Yes! Just click “Create a New Topic” and start engaging.`)}>F.A.Q.</span>
                                 <span onClick={() => setAboutText(`Want to advertise with us?
 
-PulseVote offers interactive ad placements within topic feeds. Reach geo-targeted audiences with sponsored messages that blend seamlessly into the user experience.
+                                PulseVote offers interactive ad placements within topic feeds. Reach geo-targeted audiences with sponsored messages that blend seamlessly into the user experience.
 
-To get started, click “Create Ad” and submit your sponsor info, message, and link. We’ll guide you through payment and placement.`)}>Advertise with Us</span>
+                                To get started, click “Create Ad” and submit your sponsor info, message, and link. We’ll guide you through payment and placement.`)}>Advertise with Us</span>
                             </div>
                         </div>
                     </div>
