@@ -21,6 +21,33 @@ const STANCE_COLOR = {
     "Yes+": "#FFB000",
 };
 
+// Emojis for Topic List
+const topicIcons = {
+    "Agriculture and Agri-Food": "🌾",
+    "Elections": "🗳️",
+    "Employment and Social Development": "💼",
+    "Environment and Climate Change": "🌱",
+    "Entertainment": "🎭",
+    "Finance": "💰",
+    "Fisheries and Oceans": "🐟",
+    "Global Affairs": "🌍",
+    "Health": "🏥",
+    "Heritage": "🏛️",
+    "Immigration, Refugees and Citizenship": "🛂",
+    "Indigenous Services": "🧑‍🤝‍🧑",
+    "Infrastructure": "🏗️",
+    "Innovation, Science and Economic Development": "🔬",
+    "Justice": "⚖️",
+    "Local Affairs": "🏘️",
+    "National Defence": "🛡️",
+    "Natural Resources": "⛏️",
+    "Public Safety": "🚨",
+    "Public Services and Procurement": "📦",
+    "PulseVote - Site Suggestions": "💡",
+    "Transport": "🚗",
+    "Veterans Affairs": "🎖️"
+};
+
 // Sample ad data - customize these later
 const AD_DATA = [
     {
@@ -1097,7 +1124,9 @@ export default function App() {
                             <section className="spotlight-section card">
                                 <button className="spotlight-close" onClick={closeUserSpotlight}>✕</button>
                                 <div className="spotlight-content">
-                                    <h3 className="spotlight-title">{selectedUserPoint.topic.title}</h3>
+                                    <h3 className="spotlight-title">
+                                        {topicIcons[selectedTopic.title] || ''} {selectedTopic.title}
+                                    </h3>
                                     <p>Your stance: <strong>{selectedUserPoint.stance}</strong></p>
                                     <p>Intensity: {selectedUserPoint.intensity} / 100</p>
                                     <p>At: {new Date(selectedUserPoint.created_at).toLocaleString()}</p>
@@ -1121,7 +1150,9 @@ export default function App() {
                             <section id="spotlight-section" className="spotlight-section card">
                             <button className="spotlight-close" onClick={closeSpotlight}>✕</button>
                             <div className="spotlight-content">
-                                <h3 className="spotlight-title">{selectedTopic.title}</h3>
+                                    <h3 className="spotlight-title">
+                                        {topicIcons[selectedTopic.title] || ''} {selectedTopic.title}
+                                    </h3>
                                 <p className="spotlight-count">{renderPoints.length} vote{renderPoints.length !== 1 ? "s" : ""}</p>
                                 <button onClick={() => handleShare(selectedTopic.id)} className="share-button">Share</button>
                                 <div className="stance-summary">
