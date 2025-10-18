@@ -1146,7 +1146,7 @@ export default function App() {
                                             <form onSubmit={handleCreateTopic} className="compact-form create-topic-form">
                                                 <label>Topic</label>
                                                 <select value={selectedPresetTitle} onChange={e => setSelectedPresetTitle(e.target.value)} required>
-                                                    {["<< Select >>", "Agriculture and Agri-Food", "Elections", "Employment and Social Development", "Environment and Climate Change", "Entertainment", "Finance", "Fisheries and Oceans", "Global Affairs", "Health", "Heritage", "Immigration, Refugees and Citizenship", "Indigenous Services", "Infrastructure", "Innovation, Science and Economic Development", "Justice", "Local Affairs", "National Defence", "Natural Resources", "Public Safety", "Public Services and Procurement", "Transport", "Veterans Affairs"].map(opt => (
+                                                    {["<< Select >>", "Agriculture and Agri-Food", "Elections", "Employment and Social Development", "Environment and Climate Change", "Entertainment", "Finance", "Fisheries and Oceans", "Global Affairs", "Health", "Heritage", "Immigration, Refugees and Citizenship", "Indigenous Services", "Infrastructure", "Innovation, Science and Economic Development", "Justice", "Local Affairs", "National Defence", "Natural Resources", "Public Safety", "Public Services and Procurement", "PulseVote - Site Suggestions", "Transport", "Veterans Affairs"].map(opt => (
                                                         <option key={opt} value={opt}>{opt}</option>
                                                     ))}
                                                 </select>
