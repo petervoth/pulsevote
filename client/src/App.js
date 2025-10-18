@@ -259,6 +259,9 @@ export default function App() {
     const [user, setUser] = useState(null);
     const [profile, setProfile] = useState(null);
 
+    // Pop-up Extra Text - About Us, etc.
+    const [aboutText, setAboutText] = useState('');
+
     // Dark mode - load from localStorage on mount
     const [darkMode, setDarkMode] = useState(() => {
         const savedMode = localStorage.getItem('darkMode');
@@ -1010,7 +1013,23 @@ export default function App() {
                             <p>Welcome to PulseVote - a platform where your voice matters and location tells a story.</p>
                             <p>Create topics, share your stance, and see how opinions cluster across the map. Each vote creates a visual pulse that represents the intensity and distribution of public sentiment.</p>
                             <p>Set your homebase, engage with topics that matter to you, and be part of a geo-social movement that brings transparency to public opinion.</p>
-                            <p style={{ marginTop: '2rem', fontSize: '0.9rem', color: '#666' }}>About Us.         F.A.Q.         Advertise with Us.</p>
+                            <div style={{
+                                display: 'flex',
+                                justifyContent: 'space-around',
+                                marginTop: '2rem',
+                                fontSize: '0.9rem',
+                                color: '#666',
+                                cursor: 'pointer'
+                            }}>
+                                <span onClick={() => setAboutText('PulseVote is a geo-social dashboard...')}>About Us</span>
+                                <span onClick={() => setAboutText('Frequently Asked Questions:\n1. What is PulseVote?...')}>F.A.Q.</span>
+                                <span onClick={() => setAboutText('Want to advertise with us? Here’s how...')}>Advertise with Us</span>
+                            </div>
+                            {aboutText && (
+                                <div style={{ marginTop: '1rem', fontSize: '0.9rem', color: '#444' }}>
+                                    {aboutText}
+                                </div>
+                            )}
                         </div>
                     </div>
                 </div>
