@@ -54,19 +54,19 @@ const AD_DATA = [
         title: "Advertise with us",
         description: "Connect with your community",
         image: "https://picsum.photos/id/1043/280/160",
-        url: "",
+        url: "www.pulsevote.org",
     },
     {
         title: "Advertise with us",
         description: "Join thousands making a difference",
         image: "https://picsum.photos/id/1036/280/160",
-        url: "",
+        url: "www.pulsevote.org",
     },
     {
         title: "Advertise with us",
         description: "Get the latest civic updates",
         image: "https://picsum.photos/id/1029/280/160",
-        url: "",
+        url: "www.pulsevote.org",
     },
 ];
 
@@ -1072,24 +1072,35 @@ export default function App() {
                                 cursor: 'pointer'
                             }}>
                                 <span onClick={() => setAboutText(`PulseVote is a geo-social dashboard that visualizes public sentiment by location. It empowers users to share opinions, discover regional trends, and engage in civic dialogue.`)}>About Us</span>
-                                <span onClick={() => setAboutText(`Frequently Asked Questions:
+                                <span onClick={() => setAboutText(
+                                    <>
+                                        <p><strong>Frequently Asked Questions:</strong></p>
+                                        <p>1. <strong>What is PulseVote?</strong><br />
+                                            A geo-social dashboard for sharing and visualizing opinions.</p>
 
-                                1. What is PulseVote?
-                                A geo-social dashboard for sharing and visualizing opinions.
+                                        <p>2. <strong>Do I need an account?</strong><br />
+                                            No, but setting a homebase unlocks more features.</p>
 
-                                2. Do I need an account?
-                                No, but setting a homebase unlocks more features.
+                                        <p>3. <strong>Can I create my own topics?</strong><br />
+                                            Yes! Just click “Create a New Topic” and start engaging.</p>
+                                    </>
+                                )}>F.A.Q.</span>
 
-                                3. Can I create my own topics?
-                                Yes! Just click “Create a New Topic” and start engaging.`)}>F.A.Q.</span>
-                                <span onClick={() => setAboutText(`Want to advertise with us?
+                                <span onClick={() => setAboutText(
+                                    <>
+                                        <p><strong>Want to advertise with us?</strong></p>
+                                        <p>PulseVote offers interactive ad placements within topic feeds. Reach geo-targeted audiences with sponsored messages that blend seamlessly into the user experience.</p>
 
-                                PulseVote offers interactive ad placements within topic feeds. Reach geo-targeted audiences with sponsored messages that blend seamlessly into the user experience.
-
-                                In the future, we will offer an automated system to submit your sponsor info, message, and link. For now, please email us at: 
-                                <a href="mailto:ads@pulsevote.org" style={{ color: darkMode ? '#ccc' : '#0077cc', textDecoration: 'underline' }}>
-                                ads@pulsevote.org
-                                </a>`)}>Advertise with Us</span>
+                                        <p>In the future, we will offer an automated system to submit your sponsor info, message, and link. For now, please email us at:{" "}
+                                            <a
+                                                href="mailto:ads@pulsevote.org"
+                                                style={{ color: darkMode ? '#ccc' : '#0077cc', textDecoration: 'underline' }}
+                                            >
+                                                ads@pulsevote.org
+                                            </a>
+                                        </p>
+                                    </>
+                                )}>Advertise with Us</span>
                             </div>
                         </div>
                     </div>
