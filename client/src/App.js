@@ -1046,7 +1046,7 @@ export default function App() {
 
                                 PulseVote offers interactive ad placements within topic feeds. Reach geo-targeted audiences with sponsored messages that blend seamlessly into the user experience.
 
-                                To get started, click “Create Ad” and submit your sponsor info, message, and link. We’ll guide you through payment and placement.`)}>Advertise with Us</span>
+                                In the future, we will offer an automated system to submit your sponsor info, message, and link. For now, please email us at: ads@pulsevote.org`)}>Advertise with Us</span>
                             </div>
                         </div>
                     </div>
