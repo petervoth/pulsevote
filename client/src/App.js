@@ -970,7 +970,7 @@ export default function App() {
                         fontFamily: 'inherit',
                         padding: '0.5rem 1rem',
                         cursor: 'pointer',
-                        color: darkMode ? '#eee' : '#222',
+                        color: darkMode ? '#eee' : '#eee',
                         transition: 'color 0.3s ease',
                         textAlign: 'center'
                     }}
