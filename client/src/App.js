@@ -959,7 +959,7 @@ export default function App() {
         <div className="app-root" style={{ height: "100vh", display: "flex", flexDirection: "column" }}>
             <header className="app-header header--with-user">
                 <h1 className="site-title" onClick={() => setAboutModalOpen(true)} style={{ cursor: 'pointer' }}>
-                    PULSE-VOTE
+                    PulseVote
                 </h1>
                 <div className="header-right">
                     <button
@@ -1005,12 +1005,12 @@ export default function App() {
                 <div className="modal-overlay" onClick={() => setAboutModalOpen(false)}>
                     <div className="modal-content" onClick={(e) => e.stopPropagation()}>
                         <button className="modal-close" onClick={() => setAboutModalOpen(false)}>✕</button>
-                        <h2 className="modal-title">About PULSE●VOTE</h2>
+                        <h2 className="modal-title">About PulseVote</h2>
                         <div className="modal-body">
-                            <p>Welcome to PULSE●VOTE - a platform where your voice matters and location tells a story.</p>
+                            <p>Welcome to PulseVote - a platform where your voice matters and location tells a story.</p>
                             <p>Create topics, share your stance, and see how opinions cluster across the map. Each vote creates a visual pulse that represents the intensity and distribution of public sentiment.</p>
                             <p>Set your homebase, engage with topics that matter to you, and be part of a geo-social movement that brings transparency to public opinion.</p>
-                            <p style={{ marginTop: '2rem', fontSize: '0.9rem', color: '#666' }}>Click anywhere outside this box or the X button to close.</p>
+                            <p style={{ marginTop: '2rem', fontSize: '0.9rem', color: '#666' }}>About Us.         F.A.Q.         Advertise with Us.</p>
                         </div>
                     </div>
                 </div>
