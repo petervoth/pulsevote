@@ -54,19 +54,19 @@ const AD_DATA = [
         title: "Advertise with us",
         description: "Connect with your community",
         image: "https://picsum.photos/id/1043/280/160",
-        url: "https://example.com/events",
+        url: "",
     },
     {
         title: "Advertise with us",
         description: "Join thousands making a difference",
         image: "https://picsum.photos/id/1036/280/160",
-        url: "https://example.com/survey",
+        url: "",
     },
     {
         title: "Advertise with us",
         description: "Get the latest civic updates",
         image: "https://picsum.photos/id/1029/280/160",
-        url: "https://example.com/news",
+        url: "",
     },
 ];
 
