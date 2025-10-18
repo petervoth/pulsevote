@@ -1197,12 +1197,37 @@ export default function App() {
                                         </div>
                                         <div className={`accordion-body ${createOpen ? "expanded" : ""}`}>
                                             <form onSubmit={handleCreateTopic} className="compact-form create-topic-form">
-                                                <label>Topic</label>
-                                                <select value={selectedPresetTitle} onChange={e => setSelectedPresetTitle(e.target.value)} required>
-                                                    {["<< Select >>", "Agriculture and Agri-Food", "Elections", "Employment and Social Development", "Environment and Climate Change", "Entertainment", "Finance", "Fisheries and Oceans", "Global Affairs", "Health", "Heritage", "Immigration, Refugees and Citizenship", "Indigenous Services", "Infrastructure", "Innovation, Science and Economic Development", "Justice", "Local Affairs", "National Defence", "Natural Resources", "Public Safety", "Public Services and Procurement", "PulseVote - Site Suggestions", "Transport", "Veterans Affairs"].map(opt => (
-                                                        <option key={opt} value={opt}>{opt}</option>
-                                                    ))}
-                                                </select>
+                                                            <label>Topic</label>
+                                                            <select value={selectedPresetTitle} onChange={e => setSelectedPresetTitle(e.target.value)} required>
+                                                                {[
+                                                                    { label: "<< Select >>", value: "<< Select >>" },
+                                                                    { label: "🌾 Agriculture and Agri-Food", value: "Agriculture and Agri-Food" },
+                                                                    { label: "🗳️ Elections", value: "Elections" },
+                                                                    { label: "💼 Employment and Social Development", value: "Employment and Social Development" },
+                                                                    { label: "🌱 Environment and Climate Change", value: "Environment and Climate Change" },
+                                                                    { label: "🎭 Entertainment", value: "Entertainment" },
+                                                                    { label: "💰 Finance", value: "Finance" },
+                                                                    { label: "🐟 Fisheries and Oceans", value: "Fisheries and Oceans" },
+                                                                    { label: "🌍 Global Affairs", value: "Global Affairs" },
+                                                                    { label: "🏥 Health", value: "Health" },
+                                                                    { label: "🏛️ Heritage", value: "Heritage" },
+                                                                    { label: "🛂 Immigration, Refugees and Citizenship", value: "Immigration, Refugees and Citizenship" },
+                                                                    { label: "🧑‍🤝‍🧑 Indigenous Services", value: "Indigenous Services" },
+                                                                    { label: "🏗️ Infrastructure", value: "Infrastructure" },
+                                                                    { label: "🔬 Innovation, Science and Economic Development", value: "Innovation, Science and Economic Development" },
+                                                                    { label: "⚖️ Justice", value: "Justice" },
+                                                                    { label: "🏘️ Local Affairs", value: "Local Affairs" },
+                                                                    { label: "🛡️ National Defence", value: "National Defence" },
+                                                                    { label: "⛏️ Natural Resources", value: "Natural Resources" },
+                                                                    { label: "🚨 Public Safety", value: "Public Safety" },
+                                                                    { label: "📦 Public Services and Procurement", value: "Public Services and Procurement" },
+                                                                    { label: "💡 PulseVote - Site Suggestions", value: "PulseVote - Site Suggestions" },
+                                                                    { label: "🚗 Transport", value: "Transport" },
+                                                                    { label: "🎖️ Veterans Affairs", value: "Veterans Affairs" }
+                                                                ].map(opt => (
+                                                                    <option key={opt.value} value={opt.value}>{opt.label}</option>
+                                                                ))}
+                                                            </select>
                                                             <textarea
                                                                 placeholder="Description (required)"
                                                                 value={newDescription}
