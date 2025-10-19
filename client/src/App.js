@@ -1271,7 +1271,7 @@ export default function App() {
                                                                 ))}
                                                             </select>
                                                             <textarea
-                                                                placeholder="Description (required)"
+                                                                placeholder={`Topic (required)\n\nDescription`}
                                                                 value={newDescription}
                                                                 onChange={(e) => {
                                                                     setNewDescription(e.target.value);
