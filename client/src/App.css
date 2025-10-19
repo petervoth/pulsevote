@@ -1702,21 +1702,21 @@ body.dark-mode .leaflet-control-zoom-out {
 
 /* Light mode AVG stance coloring*/
 .stance-no-strong {
-    background-color: #648FFF;
+    background-color: #648FFF !important;
 }
 
 .stance-no {
-    background-color: #785EF0;
+    background-color: #785EF0 !important;
 }
 
 .stance-neutral {
-    background-color: #DC267F;
+    background-color: #DC267F !important;
 }
 
 .stance-yes {
-    background-color: #FE6100;
+    background-color: #FE6100 !important;
 }
 
 .stance-yes-strong {
-    background-color: #FFB000;
+    background-color: #FFB000 !important;
 }
