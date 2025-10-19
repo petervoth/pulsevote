@@ -213,6 +213,15 @@ function AdCard({ adIndex }) {
         </li>
     );
 }
+
+// Utility function for AVG box color
+function getAvgBoxColor(avg) {
+    if (avg < -1) return 'stance-no-strong';
+    if (avg < -0.1) return 'stance-no';
+    if (avg < 0.1) return 'stance-neutral';
+    if (avg < 1.0) return 'stance-yes';
+    return 'stance-yes-strong';
+}
 function HeatmapLayer({ points }) {
     const map = useMap();
 
@@ -1206,7 +1215,7 @@ export default function App() {
                                             <div className="stance-value">{stancePercentages[s]}%</div>
                                         </div>
                                     ))}
-                                        <div className="stance-box avg-box">
+                                        <div className={`stance-box ${getAvgBoxColor(avgStanceScore)}`}>
                                             <div className="stance-label">AVG</div>
                                             <div className="stance-value">{avgStanceScore}</div>
                                         </div>
