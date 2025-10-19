@@ -1699,3 +1699,45 @@ body.dark-mode .leaflet-control-zoom-out {
         font-size: 1rem !important;
     }
 }
+
+/* Light mode AVG stance coloring*/
+.stance-no-strong {
+    background-color: #648FFF;
+}
+
+.stance-no {
+    background-color: #785EF0;
+}
+
+.stance-neutral {
+    background-color: #DC267F;
+}
+
+.stance-yes {
+    background-color: #FE6100;
+}
+
+.stance-yes-strong {
+    background-color: #FFB000;
+}
+
+/* Dark mode overrides AVG stance coloring */
+.dark-mode .stance-no-strong {
+    background-color: #3a5bb5;
+}
+
+.dark-mode .stance-no {
+    background-color: #4f3bb5;
+}
+
+.dark-mode .stance-neutral {
+    background-color: #a02d5f;
+}
+
+.dark-mode .stance-yes {
+    background-color: #b94c00;
+}
+
+.dark-mode .stance-yes-strong {
+    background-color: #b88600;
+}
