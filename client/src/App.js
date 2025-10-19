@@ -21,6 +21,15 @@ const STANCE_COLOR = {
     "Yes+": "#FFB000",
 };
 
+// Stance weights
+const stanceWeights = {
+    '-No': -2,
+    'No': -1,
+    'Neutral': 0,
+    'Yes': 1,
+    'Yes+': 2,
+};
+
 // Emojis for Topic List
 const topicIcons = {
     "Agriculture and Agri-Food": "🌾",
@@ -985,6 +994,18 @@ export default function App() {
         );
     }, [heatPoints]);
 
+    const avgStanceScore = useMemo(() => {
+        if (!heatPoints.length) return '–';
+
+        const totalScore = heatPoints.reduce((sum, p) => {
+            const weight = stanceWeights[p.stance] ?? 0;
+            return sum + weight;
+        }, 0);
+
+        const avg = totalScore / heatPoints.length;
+        return avg.toFixed(2);
+    }, [heatPoints]);
+
     return (
         <div className="app-root" style={{ height: "100vh", display: "flex", flexDirection: "column" }}>
             <header className="app-header header--with-user">
@@ -1185,6 +1206,10 @@ export default function App() {
                                             <div className="stance-value">{stancePercentages[s]}%</div>
                                         </div>
                                     ))}
+                                        <div className="stance-box avg-box">
+                                            <div className="stance-label">AVG</div>
+                                            <div className="stance-value">{avgStanceScore}</div>
+                                        </div>
                                 </div>
                                 <p className="spotlight-meta">By: <strong>{selectedTopic.created_by}</strong><br />On: {new Date(selectedTopic.created_at).toLocaleString()}</p>
                                 {selectedTopic.description ? (
