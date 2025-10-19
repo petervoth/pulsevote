@@ -1083,6 +1083,18 @@ export default function App() {
 
                                         <p>3. <strong>Can I create my own topics?</strong><br />
                                             Yes! Just click “Create a New Topic” and start engaging.</p>
+
+                                        <p>4. <strong>Are there any limitations when making a topic?</strong><br />
+                                            Yes. Though moderation is very minimal on the site, certain words have been blocked to improve the user experience on PulseVote. You are also limited to creating only 1 voting topic in a 24 hour period to reduce spam.</p>
+
+                                        <p>5. <strong>Are there any limitations when voting?</strong><br />
+                                            No! Return to a topic and change your vote as often as you would like. For user-safety, there is no accessible voitng history so your most recent selection is always included in the live results.</p>
+
+                                        <p>6. <strong>Are these votes legally binding or used anywhere?</strong><br />
+                                            Not yet. In a perfect world, we would trust our police forces to always protect us from any encroachment on our personal freedoms. This in turn would allow us to trust a public voting system without fear of reprocussions, harassment, or assault. For now, PulseVote is a thought-experiment to give the world a voice and to show everyone there are more of us than you think. You deserve to take part in specific vote topics, not just electing the leaders who decide for you but keep letting you down term after term.</p>
+
+                                        <p>7. <strong>Who runs PulseVote?</strong><br />
+                                            A lone Canadian named Peter has built this site and runs everything solo. Please be patient with him. If you want to suggest improvements to PulseVote, please use the 'PulseVote' topic. And in true Canadian fashion, if you find something on the site is broken, sorry in advance!</p>
                                     </>
                                 )}>F.A.Q.</span>
 
