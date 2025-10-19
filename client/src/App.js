@@ -304,6 +304,9 @@ export default function App() {
     const [user, setUser] = useState(null);
     const [profile, setProfile] = useState(null);
 
+    // Map bounds
+    const bounds = mapRef.current.getBounds();
+
     // Pop-up Extra Text - About Us, etc.
     const [aboutText, setAboutText] = useState('');
 
@@ -376,6 +379,22 @@ export default function App() {
     function useQuery() {
         return new URLSearchParams(useLocation().search);
     }
+
+    // Listener that updates whenever the map moves or zooms
+    const [visibleBounds, setVisibleBounds] = useState(null);
+
+    useEffect(() => {
+        const map = mapRef.current;
+        if (!map) return;
+
+        const handleMove = () => {
+            const bounds = map.getBounds();
+            setVisibleBounds(bounds);
+        };
+
+        map.on('moveend', handleMove);
+        return () => map.off('moveend', handleMove);
+    }, []);
 
     useEffect(() => {
         async function loadSharedTopic() {
@@ -992,28 +1011,42 @@ export default function App() {
         }
     }, [twinklePoints, selectedTopic]);
 
+    const visiblePoints = useMemo(() => {
+        if (!visibleBounds) return heatPoints;
+
+        const sw = visibleBounds.getSouthWest();
+        const ne = visibleBounds.getNorthEast();
+
+        return heatPoints.filter(p => (
+            p.lat >= sw.lat &&
+            p.lat <= ne.lat &&
+            p.lng >= sw.lng &&
+            p.lng <= ne.lng
+        ));
+    }, [heatPoints, visibleBounds]);
+
     const stancePercentages = useMemo(() => {
         const counts = { "-No": 0, No: 0, Neutral: 0, Yes: 0, "Yes+": 0 };
-        heatPoints.forEach(p => {
+        visiblePoints.forEach(p => {
             if (counts[p.stance] != null) counts[p.stance]++;
         });
         const total = Object.values(counts).reduce((a, b) => a + b, 0);
         return Object.fromEntries(
             Object.entries(counts).map(([s, v]) => [s, total ? Math.round((v * 100) / total) : 0])
         );
-    }, [heatPoints]);
+    }, [visiblePoints]);
 
     const avgStanceScore = useMemo(() => {
-        if (!heatPoints.length) return '–';
+        if (!visiblePoints.length) return '–';
 
-        const totalScore = heatPoints.reduce((sum, p) => {
+        const totalScore = visiblePoints.reduce((sum, p) => {
             const weight = stanceWeights[p.stance] ?? 0;
             return sum + weight;
         }, 0);
 
-        const avg = totalScore / heatPoints.length;
+        const avg = totalScore / visiblePoints.length;
         return avg.toFixed(2);
-    }, [heatPoints]);
+    }, [visiblePoints]);
 
     return (
         <div className="app-root" style={{ height: "100vh", display: "flex", flexDirection: "column" }}>
