@@ -1721,18 +1721,14 @@ body.dark-mode .leaflet-control-zoom-out {
     background-color: #FFB000 !important;
 }
 
-@media (prefers-color-scheme: light) {
-    .stance-box.avg-neutral {
-        background-color: white !important;
-        color: black !important;
-    }
+.stance-box.avg-neutral {
+    background-color: white;
+    color: black;
 }
 
-@media (prefers-color-scheme: dark) {
-    .stance-box.avg-neutral {
-        background-color: #1A1A1A !important;
-        color: #f9f9f9 !important;
-    }
+body.dark-mode .stance-box.avg-neutral {
+    background-color: #1A1A1A;
+    color: #f9f9f9;
 }
 
 
