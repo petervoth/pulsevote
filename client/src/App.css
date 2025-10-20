@@ -1728,7 +1728,7 @@ body.dark-mode .leaflet-control-zoom-out {
 
 @media (prefers-color-scheme: dark) {
     .avg-neutral {
-        background-color: black !important;
+        background-color: #f9f9f9 !important;
         color: white !important;
     }
 }
