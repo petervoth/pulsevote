@@ -1721,9 +1721,11 @@ body.dark-mode .leaflet-control-zoom-out {
     background-color: #FFB000 !important;
 }
 
-.stance-box.avg-neutral {
-    background-color: white !important;
-    color: black !important;
+@media (prefers-color-scheme: light) {
+    .stance-box.avg-neutral {
+        background-color: white !important;
+        color: black !important;
+    }
 }
 
 @media (prefers-color-scheme: dark) {
