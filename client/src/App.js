@@ -216,6 +216,7 @@ function AdCard({ adIndex }) {
 
 // Utility function for AVG box color
 function getAvgBoxColor(avg) {
+    if (avg === "–") return "avg-neutral";
     if (avg < -1) return 'stance-no-strong';
     if (avg < -0.1) return 'stance-no';
     if (avg < 0.1) return 'stance-neutral';
