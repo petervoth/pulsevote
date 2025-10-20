@@ -300,6 +300,7 @@ function HeatmapLayer({ points }) {
 }
 export default function App() {
     // Map & user
+    const mapRef = useRef(null);
     const [map, setMap] = useState(null);
     const [user, setUser] = useState(null);
     const [profile, setProfile] = useState(null);
@@ -1184,7 +1185,7 @@ export default function App() {
 
             <div className="app-main" style={{ flex: 1, display: "flex", overflow: "hidden" }}>
                 <main className="map-column" style={{ flex: 1 }}>
-                    <MapContainer center={[20, 0]} zoom={2} className="main-map" whenCreated={setMap} preferCanvas={true} minZoom={2} maxZoom={12}>
+                    <MapContainer center={[20, 0]} zoom={2} className="main-map" whenCreated={mapInstance => mapRef.current = mapInstance} preferCanvas={true} minZoom={2} maxZoom={12}>
                         <TileLayer
                             url={darkMode
                                 ? "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
