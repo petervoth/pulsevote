@@ -1242,7 +1242,9 @@ export default function App() {
                                     <h3 className="spotlight-title">
                                         {topicIcons[selectedTopic.title] || ''} {selectedTopic.title}
                                     </h3>
-                                <p className="spotlight-count">{renderPoints.length} vote{renderPoints.length !== 1 ? "s" : ""}</p>
+                                    <p className="spotlight-count">
+                                        {renderPoints.length} of {heatPoints.length} votes visible
+                                    </p>
                                 <button onClick={() => handleShare(selectedTopic.id)} className="share-button">Share</button>
                                 <div className="stance-summary">
                                     {["-No", "No", "Neutral", "Yes", "Yes+"].map(s => (
