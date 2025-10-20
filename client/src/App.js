@@ -385,19 +385,19 @@ export default function App() {
     const [visibleBounds, setVisibleBounds] = useState(null);
 
     useEffect(() => {
-        const map = mapRef.current;
         if (!map || typeof map.getBounds !== 'function') return;
 
         const handleMove = () => {
-            const bounds = map.getBounds();
-            setVisibleBounds(bounds);
+            setVisibleBounds(map.getBounds());
         };
 
         map.on('moveend', handleMove);
-        setVisibleBounds(map.getBounds()); // set initial bounds
+        setVisibleBounds(map.getBounds()); // initial bounds
 
-        return () => map.off('moveend', handleMove);
-    }, []);
+        return () => {
+            map.off('moveend', handleMove);
+        };
+    }, [map]);
 
     useEffect(() => {
         async function loadSharedTopic() {
