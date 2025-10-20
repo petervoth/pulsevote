@@ -386,7 +386,7 @@ export default function App() {
 
     useEffect(() => {
         const map = mapRef.current;
-        if (!map) return;
+        if (!map || typeof map.getBounds !== 'function') return;
 
         const handleMove = () => {
             const bounds = map.getBounds();
