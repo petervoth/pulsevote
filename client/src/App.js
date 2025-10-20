@@ -1028,20 +1028,6 @@ export default function App() {
         ));
     }, [heatPoints, visibleBounds]);
 
-    const visiblePoints = useMemo(() => {
-        if (!visibleBounds) return heatPoints;
-
-        const sw = visibleBounds.getSouthWest();
-        const ne = visibleBounds.getNorthEast();
-
-        return heatPoints.filter(p => (
-            p.lat >= sw.lat &&
-            p.lat <= ne.lat &&
-            p.lng >= sw.lng &&
-            p.lng <= ne.lng
-        ));
-    }, [heatPoints, visibleBounds]);
-
     const stancePercentages = useMemo(() => {
         const counts = { "-No": 0, No: 0, Neutral: 0, Yes: 0, "Yes+": 0 };
         visiblePoints.forEach(p => {
