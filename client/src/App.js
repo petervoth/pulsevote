@@ -382,6 +382,7 @@ export default function App() {
     }
 
     // Listener that updates whenever the map moves or zooms
+    const [useMapView, setUseMapView] = useState(true);
     const [visibleBounds, setVisibleBounds] = useState(null);
 
     useEffect(() => {
@@ -585,6 +586,21 @@ export default function App() {
         topics.forEach(t => m.set(t.id, t));
         return Array.from(m.values());
     }, [topics]);
+
+    // Filtered Points
+    const filteredPoints = useMemo(() => {
+        if (!useMapView || !visibleBounds) return heatPoints;
+
+        const sw = visibleBounds.getSouthWest();
+        const ne = visibleBounds.getNorthEast();
+
+        return heatPoints.filter(p => (
+            p.lat >= sw.lat &&
+            p.lat <= ne.lat &&
+            p.lng >= sw.lng &&
+            p.lng <= ne.lng
+        ));
+    }, [heatPoints, visibleBounds, useMapView]);
 
     // Filter topics
     const filteredTopics = useMemo(() => {
@@ -1200,7 +1216,7 @@ export default function App() {
                         />
                         <MapSetter onMapReady={setMap} />
 
-                        {selectedTopic && renderPoints.length > 0 && (
+                        {selectedTopic && filteredPoints.length > 0 && (
                             <HeatmapLayer points={renderPoints} />
                         )}
                         
@@ -1243,7 +1259,7 @@ export default function App() {
                                         {topicIcons[selectedTopic.title] || ''} {selectedTopic.title}
                                     </h3>
                                     <p className="spotlight-count">
-                                        {renderPoints.length} of {heatPoints.length} votes visible
+                                        {filteredPoints.length} of {heatPoints.length} votes visible
                                     </p>
                                 <button onClick={() => handleShare(selectedTopic.id)} className="share-button">Share</button>
                                 <div className="stance-summary">
