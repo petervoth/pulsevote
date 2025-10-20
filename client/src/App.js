@@ -305,8 +305,8 @@ export default function App() {
     const [user, setUser] = useState(null);
     const [profile, setProfile] = useState(null);
 
-    // Map bounds
-    const bounds = mapRef.current.getBounds();
+    // Map bounds. Might be trash if everything works while this is commented-out.
+    //const bounds = mapRef.current.getBounds();
 
     // Pop-up Extra Text - About Us, etc.
     const [aboutText, setAboutText] = useState('');
@@ -394,6 +394,8 @@ export default function App() {
         };
 
         map.on('moveend', handleMove);
+        setVisibleBounds(map.getBounds()); // set initial bounds
+
         return () => map.off('moveend', handleMove);
     }, []);
 
@@ -1011,6 +1013,20 @@ export default function App() {
                 });
         }
     }, [twinklePoints, selectedTopic]);
+
+    const visiblePoints = useMemo(() => {
+        if (!visibleBounds) return heatPoints;
+
+        const sw = visibleBounds.getSouthWest();
+        const ne = visibleBounds.getNorthEast();
+
+        return heatPoints.filter(p => (
+            p.lat >= sw.lat &&
+            p.lat <= ne.lat &&
+            p.lng >= sw.lng &&
+            p.lng <= ne.lng
+        ));
+    }, [heatPoints, visibleBounds]);
 
     const visiblePoints = useMemo(() => {
         if (!visibleBounds) return heatPoints;
