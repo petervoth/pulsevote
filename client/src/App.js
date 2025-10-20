@@ -1177,7 +1177,7 @@ export default function App() {
                                             Not yet. In a perfect world, we would trust our police forces to always protect us from any encroachment on our personal freedoms. This in turn would allow us to trust a public voting system without fear of reprocussions, harassment, or assault. For now, PulseVote is a thought-experiment to give the world a voice and to show everyone there are more of us than you think. You deserve to take part in specific vote topics, not just electing the leaders who decide for you but keep letting you down term after term.</p>
 
                                         <p>7. <strong>Who runs PulseVote?</strong><br />
-                                            A lone Canadian data scientist named Peter has built this site and runs everything solo. Please be patient with him. If you want to suggest improvements to PulseVote, please use the 'PulseVote' topic. And in true Canadian fashion, if you find something on the site is broken, sorry in advance!</p>
+                                            A lone Canadian data scientist has built this site and runs everything independently, there is no "big government" behind this project. Please be patient with him. If you want to suggest improvements to PulseVote, please use the 'PulseVote' voting topic. And in true Canadian fashion, if you find something with the site is broken, sorry in advance!</p>
                                     </>
                                 )}>F.A.Q.</span>
 
