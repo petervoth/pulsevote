@@ -21,25 +21,61 @@ const STANCE_COLOR = {
     "Yes+": "#FFB000",
 };
 
+// Stance weights
+const stanceWeights = {
+    '-No': -2,
+    'No': -1,
+    'Neutral': 0,
+    'Yes': 1,
+    'Yes+': 2,
+};
+
+// Emojis for Topic List
+const topicIcons = {
+    "Agriculture and Agri-Food": "🌾",
+    "Elections": "🗳️",
+    "Employment and Social Development": "💼",
+    "Environment and Climate Change": "🌱",
+    "Entertainment": "🎭",
+    "Finance": "💰",
+    "Fisheries and Oceans": "🐟",
+    "Global Affairs": "🌍",
+    "Health": "🏥",
+    "Heritage": "🏛️",
+    "Immigration, Refugees and Citizenship": "🛂",
+    "Indigenous Services": "🧑‍🤝‍🧑",
+    "Infrastructure": "🏗️",
+    "Innovation, Science and Economic Development": "🔬",
+    "Justice": "⚖️",
+    "Local Affairs": "🏘️",
+    "National Defence": "🛡️",
+    "Natural Resources": "⛏️",
+    "Public Safety": "🚨",
+    "Public Services and Procurement": "📦",
+    "PulseVote - Site Suggestions": "💡",
+    "Transport": "🚗",
+    "Veterans Affairs": "🎖️"
+};
+
 // Sample ad data - customize these later
 const AD_DATA = [
     {
         title: "Advertise with us",
         description: "Connect with your community",
         image: "https://picsum.photos/id/1043/280/160",
-        url: "https://example.com/events",
+        url: "www.pulsevote.org",
     },
     {
         title: "Advertise with us",
         description: "Join thousands making a difference",
         image: "https://picsum.photos/id/1036/280/160",
-        url: "https://example.com/survey",
+        url: "www.pulsevote.org",
     },
     {
         title: "Advertise with us",
         description: "Get the latest civic updates",
         image: "https://picsum.photos/id/1029/280/160",
-        url: "https://example.com/news",
+        url: "www.pulsevote.org",
     },
 ];
 
@@ -49,6 +85,7 @@ const FILTERED_WORDS = [
     "shit",
     "cunt",
     "motherfucker",
+    "asshole",
     // Add more words as needed
 ];
 function containsFilteredWords(text) {
@@ -177,6 +214,15 @@ function AdCard({ adIndex }) {
     );
 }
 
+// Utility function for AVG box color
+function getAvgBoxColor(avg) {
+    if (avg === "–") return "avg-neutral";
+    if (avg < -1) return 'stance-no-strong';
+    if (avg < -0.1) return 'stance-no';
+    if (avg < 0.1) return 'stance-neutral';
+    if (avg < 1.0) return 'stance-yes';
+    return 'stance-yes-strong';
+}
 function HeatmapLayer({ points }) {
     const map = useMap();
 
@@ -253,12 +299,18 @@ function HeatmapLayer({ points }) {
 
     return null;
 }
-
 export default function App() {
     // Map & user
+    const mapRef = useRef(null);
     const [map, setMap] = useState(null);
     const [user, setUser] = useState(null);
     const [profile, setProfile] = useState(null);
+
+    // Map bounds. Might be trash if everything works while this is commented-out.
+    //const bounds = mapRef.current.getBounds();
+
+    // Pop-up Extra Text - About Us, etc.
+    const [aboutText, setAboutText] = useState('');
 
     // Dark mode - load from localStorage on mount
     const [darkMode, setDarkMode] = useState(() => {
@@ -321,20 +373,34 @@ export default function App() {
     const svgRenderer = useMemo(() => L.svg(), []);
 
     // Share topic consts
+    const query = useQuery();
+    const topicIdFromURL = query.get("topic");
     const location = useLocation();
 
-    // Apply dark mode class to body and save to localStorage
-    useEffect(() => {
-        if (darkMode) {
-            document.body.classList.add('dark-mode');
-            localStorage.setItem('darkMode', 'true');
-        } else {
-            document.body.classList.remove('dark-mode');
-            localStorage.setItem('darkMode', 'false');
-        }
-    }, [darkMode]);
+    // Share topic query
+    function useQuery() {
+        return new URLSearchParams(useLocation().search);
+    }
 
-    // Load shared topic from URL
+    // Listener that updates whenever the map moves or zooms
+    const [useMapView, setUseMapView] = useState(true);
+    const [visibleBounds, setVisibleBounds] = useState(null);
+
+    useEffect(() => {
+        if (!map || typeof map.getBounds !== 'function') return;
+
+        const handleMove = () => {
+            setVisibleBounds(map.getBounds());
+        };
+
+        map.on('moveend', handleMove);
+        setVisibleBounds(map.getBounds()); // initial bounds
+
+        return () => {
+            map.off('moveend', handleMove);
+        };
+    }, [map]);
+
     useEffect(() => {
         async function loadSharedTopic() {
             const params = new URLSearchParams(location.search);
@@ -375,6 +441,46 @@ export default function App() {
 
         loadSharedTopic();
     }, [location.search, topics]);
+
+    useEffect(() => {
+        async function tryLoadTopic() {
+            if (!topicIdFromURL) return;
+
+            // First, try to find it in already-loaded topics
+            const match = topics.find(t => String(t.id) === String(topicIdFromURL));
+            if (match) {
+                setSelectedTopic(match);
+                return;
+            }
+
+            // If not found, fetch it directly
+            try {
+                const res = await fetch(`${API_BASE}/topics/${topicIdFromURL}`);
+                if (res.ok) {
+                    const topic = await res.json();
+                    setTopics(prev => (prev.some(t => t.id === topic.id) ? prev : [...prev, topic]));
+                    setSelectedTopic(topic);
+                } else {
+                    console.warn("Topic not found or fetch failed:", res.status);
+                }
+            } catch (err) {
+                console.error("Error fetching topic by ID:", err);
+            }
+        }
+
+        tryLoadTopic();
+    }, [topicIdFromURL]);
+
+    // Apply dark mode class to body and save to localStorage
+    useEffect(() => {
+        if (darkMode) {
+            document.body.classList.add('dark-mode');
+            localStorage.setItem('darkMode', 'true');
+        } else {
+            document.body.classList.remove('dark-mode');
+            localStorage.setItem('darkMode', 'false');
+        }
+    }, [darkMode]);
 
     // Fetch profile from Supabase
     async function fetchProfile(userId) {
@@ -481,6 +587,21 @@ export default function App() {
         topics.forEach(t => m.set(t.id, t));
         return Array.from(m.values());
     }, [topics]);
+
+    // Filtered Points
+    const filteredPoints = useMemo(() => {
+        if (!useMapView || !visibleBounds) return heatPoints;
+
+        const sw = visibleBounds.getSouthWest();
+        const ne = visibleBounds.getNorthEast();
+
+        return heatPoints.filter(p => (
+            p.lat >= sw.lat &&
+            p.lat <= ne.lat &&
+            p.lng >= sw.lng &&
+            p.lng <= ne.lng
+        ));
+    }, [heatPoints, visibleBounds, useMapView]);
 
     // Filter topics
     const filteredTopics = useMemo(() => {
@@ -765,10 +886,6 @@ export default function App() {
         try {
             const res = await fetch(`${API_BASE}/topics?limit=${PAGE_SIZE}&offset=${page * PAGE_SIZE}`);
             const rows = await res.json();
-            if (!Array.isArray(rows)) {
-                console.error("Expected array but got:", rows);
-                return;
-            }
             setTopics(prev => {
                 const ids = new Set(prev.map(t => t.id));
                 const filtered = rows.filter(r => !ids.has(r.id));
@@ -840,7 +957,7 @@ export default function App() {
                     lng: p.lng,
                     radius: km * 1000,
                     color: STANCE_COLOR[p.stance] || "#666",
-                    stance: p.stance,
+                    stance: p.stance,  // ADD THIS LINE - keep the original stance value
                 };
             });
     }, [heatPoints]);
@@ -850,23 +967,12 @@ export default function App() {
             (async () => {
                 const res = await fetch(`${API_BASE}/twinkle_points`);
                 const rows = await res.json();
-                if (!Array.isArray(rows)) {
-                    console.error("Twinkle points response is not an array:", rows);
-                    return;
-                }
                 setTwinklePoints(rows);
-                // Ensure rows is an array before setting state
-                setTwinklePoints(Array.isArray(rows) ? rows : []);
             })();
         }
     }, [selectedTopic]);
 
     const twinkleMarkers = useMemo(() => {
-        // Ensure twinklePoints is an array before calling map
-        if (!Array.isArray(twinklePoints)) {
-            return [];
-        }
-
         return twinklePoints
             .map(p => {
                 const km = 2 + ((Number(p.intensity) || 0) / 100) * 18;
@@ -887,7 +993,7 @@ export default function App() {
 
         const twinkleLayerGroup = L.layerGroup().addTo(map);
 
-        const stanceColors = Object.values(STANCE_COLOR);
+        const stanceColors = Object.values(STANCE_COLOR); // Grab your 5 defined colors
 
         twinkleMarkers.forEach((marker, i) => {
             const delay = (Math.random() * 2).toFixed(2);
@@ -925,22 +1031,61 @@ export default function App() {
         }
     }, [twinklePoints, selectedTopic]);
 
+    const visiblePoints = useMemo(() => {
+        if (!visibleBounds) return heatPoints;
+
+        const sw = visibleBounds.getSouthWest();
+        const ne = visibleBounds.getNorthEast();
+
+        return heatPoints.filter(p => (
+            p.lat >= sw.lat &&
+            p.lat <= ne.lat &&
+            p.lng >= sw.lng &&
+            p.lng <= ne.lng
+        ));
+    }, [heatPoints, visibleBounds]);
+
     const stancePercentages = useMemo(() => {
         const counts = { "-No": 0, No: 0, Neutral: 0, Yes: 0, "Yes+": 0 };
-        heatPoints.forEach(p => {
+        visiblePoints.forEach(p => {
             if (counts[p.stance] != null) counts[p.stance]++;
         });
         const total = Object.values(counts).reduce((a, b) => a + b, 0);
         return Object.fromEntries(
             Object.entries(counts).map(([s, v]) => [s, total ? Math.round((v * 100) / total) : 0])
         );
-    }, [heatPoints]);
+    }, [visiblePoints]);
+
+    const avgStanceScore = useMemo(() => {
+        if (!visiblePoints.length) return '–';
+
+        const totalScore = visiblePoints.reduce((sum, p) => {
+            const weight = stanceWeights[p.stance] ?? 0;
+            return sum + weight;
+        }, 0);
+
+        const avg = totalScore / visiblePoints.length;
+        return avg.toFixed(2);
+    }, [visiblePoints]);
 
     return (
         <div className="app-root" style={{ height: "100vh", display: "flex", flexDirection: "column" }}>
             <header className="app-header header--with-user">
-                <h1 className="site-title" onClick={() => setAboutModalOpen(true)} style={{ cursor: 'pointer' }}>
-                    PULSE-VOTE
+                <h1
+                    className="site-title"
+                    onClick={() => setAboutModalOpen(true)}
+                    style={{
+                        fontSize: '1.2rem',
+                        fontWeight: 'bold',
+                        fontFamily: 'inherit',
+                        padding: '0.5rem 1rem',
+                        cursor: 'pointer',
+                        color: darkMode ? '#eee' : '#eee',
+                        transition: 'color 0.3s ease',
+                        textAlign: 'center'
+                    }}
+                >
+                    PulseVote
                 </h1>
                 <div className="header-right">
                     <button
@@ -960,7 +1105,7 @@ export default function App() {
                                 <button
                                     className="header-home mono clickable"
                                     onClick={() =>
-                                        map && map.flyTo([profile.home_lat, profile.home_lng], 9, { duration: 2 })
+                                        map.flyTo([profile.home_lat, profile.home_lng], 9, { duration: 2 })
                                     }
                                 >
                                     • {profile.home_lat.toFixed(4)}, {profile.home_lng.toFixed(4)}
@@ -986,12 +1131,72 @@ export default function App() {
                 <div className="modal-overlay" onClick={() => setAboutModalOpen(false)}>
                     <div className="modal-content" onClick={(e) => e.stopPropagation()}>
                         <button className="modal-close" onClick={() => setAboutModalOpen(false)}>✕</button>
-                        <h2 className="modal-title">About PULSE●VOTE</h2>
+                        <h2 className="modal-title">About PulseVote</h2>
                         <div className="modal-body">
-                            <p>Welcome to PULSE●VOTE - a platform where your voice matters and location tells a story.</p>
-                            <p>Create topics, share your stance, and see how opinions cluster across the map. Each vote creates a visual pulse that represents the intensity and distribution of public sentiment.</p>
-                            <p>Set your homebase, engage with topics that matter to you, and be part of a geo-social movement that brings transparency to public opinion.</p>
-                            <p style={{ marginTop: '2rem', fontSize: '0.9rem', color: '#666' }}>Click anywhere outside this box or the X button to close.</p>
+                            <div style={{
+                                marginBottom: '1rem',
+                                fontSize: '0.9rem',
+                                color: darkMode ? '#ccc' : '#444',
+                                whiteSpace: 'pre-line'
+                            }}>
+                                {aboutText || `Welcome to PulseVote — a platform where your voice matters and location tells a story.
+
+                                Create topics, share your stance, and see how opinions cluster across the map. Each vote creates a visual pulse that represents the intensity and distribution of public sentiment.
+
+                                Set your homebase, engage with topics that matter to you, and be part of a geo-social movement that brings transparency to public opinion.`}
+                            </div>
+
+                            <div style={{
+                                display: 'flex',
+                                justifyContent: 'space-around',
+                                marginTop: '2rem',
+                                fontSize: '0.9rem',
+                                color: '#666',
+                                cursor: 'pointer'
+                            }}>
+                                <span onClick={() => setAboutText(`PulseVote is a geo-social dashboard that visualizes public sentiment by location. It empowers users to share opinions, discover regional trends, and engage in civic dialogue.`)}>About Us</span>
+                                <span onClick={() => setAboutText(
+                                    <>
+                                        <p><strong>Frequently Asked Questions:</strong></p>
+                                        <p>1. <strong>What is PulseVote?</strong><br />
+                                            A geo-social dashboard for sharing and visualizing opinions.</p>
+
+                                        <p>2. <strong>Do I need an account?</strong><br />
+                                            No, but setting a homebase unlocks more features.</p>
+
+                                        <p>3. <strong>Can I create my own topics?</strong><br />
+                                            Yes! Just click “Create a New Topic” and start engaging.</p>
+
+                                        <p>4. <strong>Are there any limitations when making a topic?</strong><br />
+                                            Yes. Though moderation is very minimal on the site, certain words have been blocked to improve the user experience on PulseVote. You are also limited to creating only 1 voting topic in a 24 hour period to reduce spam.</p>
+
+                                        <p>5. <strong>Are there any limitations when voting?</strong><br />
+                                            No! Return to a topic and change your vote as often as you would like. For user-safety, there is no accessible voitng history so your most recent selection is always included in the live results.</p>
+
+                                        <p>6. <strong>Are these votes legally binding or used anywhere?</strong><br />
+                                            Not yet. In a perfect world, we would trust our police forces to always protect us from any encroachment on our personal freedoms. This in turn would allow us to trust a public voting system without fear of reprocussions, harassment, or assault. For now, PulseVote is a thought-experiment to give the world a voice and to show everyone there are more of us than you think. You deserve to take part in specific vote topics, not just electing the leaders who decide for you but keep letting you down term after term.</p>
+
+                                        <p>7. <strong>Who runs PulseVote?</strong><br />
+                                            A lone Canadian data scientist has built this site and runs everything independently, there is no "big government" behind this project. Please be patient with him. If you want to suggest improvements to PulseVote, please use the 'PulseVote' voting topic. And in true Canadian fashion, if you find something with the site is broken, sorry in advance!</p>
+                                    </>
+                                )}>F.A.Q.</span>
+
+                                <span onClick={() => setAboutText(
+                                    <>
+                                        <p><strong>Want to advertise with us?</strong></p>
+                                        <p>PulseVote offers interactive ad placements within topic feeds. Reach geo-targeted audiences with sponsored messages that blend seamlessly into the user experience.</p>
+
+                                        <p>In the future, we will offer an automated system to submit your sponsor info, message, and link. For now, please email us at:{" "}
+                                            <a
+                                                href="mailto:ads@pulsevote.org"
+                                                style={{ color: darkMode ? '#ccc' : '#0077cc', textDecoration: 'underline' }}
+                                            >
+                                                ads@pulsevote.org
+                                            </a>
+                                        </p>
+                                    </>
+                                )}>Advertise with Us</span>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -999,7 +1204,7 @@ export default function App() {
 
             <div className="app-main" style={{ flex: 1, display: "flex", overflow: "hidden" }}>
                 <main className="map-column" style={{ flex: 1 }}>
-                    <MapContainer center={[20, 0]} zoom={2} className="main-map" whenCreated={setMap} preferCanvas={true} minZoom={2} maxZoom={12}>
+                    <MapContainer center={[20, 0]} zoom={2} className="main-map" whenCreated={mapInstance => mapRef.current = mapInstance} preferCanvas={true} minZoom={2} maxZoom={12}>
                         <TileLayer
                             url={darkMode
                                 ? "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
@@ -1012,7 +1217,7 @@ export default function App() {
                         />
                         <MapSetter onMapReady={setMap} />
 
-                        {selectedTopic && renderPoints.length > 0 && (
+                        {selectedTopic && filteredPoints.length > 0 && (
                             <HeatmapLayer points={renderPoints} />
                         )}
 
@@ -1025,7 +1230,9 @@ export default function App() {
                             <section className="spotlight-section card">
                                 <button className="spotlight-close" onClick={closeUserSpotlight}>✕</button>
                                 <div className="spotlight-content">
-                                    <h3 className="spotlight-title">{selectedUserPoint.topic.title}</h3>
+                                    <h3 className="spotlight-title">
+                                        {topicIcons[selectedTopic.title] || ''} {selectedTopic.title}
+                                    </h3>
                                     <p>Your stance: <strong>{selectedUserPoint.stance}</strong></p>
                                     <p>Intensity: {selectedUserPoint.intensity} / 100</p>
                                     <p>At: {new Date(selectedUserPoint.created_at).toLocaleString()}</p>
@@ -1049,8 +1256,12 @@ export default function App() {
                         <section id="spotlight-section" className="spotlight-section card">
                             <button className="spotlight-close" onClick={closeSpotlight}>✕</button>
                             <div className="spotlight-content">
-                                <h3 className="spotlight-title">{selectedTopic.title}</h3>
-                                <p className="spotlight-count">{renderPoints.length} vote{renderPoints.length !== 1 ? "s" : ""}</p>
+                                <h3 className="spotlight-title">
+                                    {topicIcons[selectedTopic.title] || ''} {selectedTopic.title}
+                                </h3>
+                                <p className="spotlight-count">
+                                    {filteredPoints.length} of {heatPoints.length} votes visible
+                                </p>
                                 <button onClick={() => handleShare(selectedTopic.id)} className="share-button">Share</button>
                                 <div className="stance-summary">
                                     {["-No", "No", "Neutral", "Yes", "Yes+"].map(s => (
@@ -1059,10 +1270,21 @@ export default function App() {
                                             <div className="stance-value">{stancePercentages[s]}%</div>
                                         </div>
                                     ))}
+                                    <div className={`stance-box ${getAvgBoxColor(avgStanceScore)}`}>
+                                        <div className="stance-label">AVG</div>
+                                        <div className="stance-value">{avgStanceScore}</div>
+                                    </div>
                                 </div>
                                 <p className="spotlight-meta">By: <strong>{selectedTopic.created_by}</strong><br />On: {new Date(selectedTopic.created_at).toLocaleString()}</p>
                                 {selectedTopic.description ? (
-                                    <p className="spotlight-desc" style={{ margin: "2rem 0" }}>{selectedTopic.description}</p>
+                                    <p className="spotlight-desc" style={{ margin: "2rem 0" }}>
+                                        {selectedTopic.description.split('\n').map((line, index) => (
+                                            <React.Fragment key={index}>
+                                                {line}
+                                                <br />
+                                            </React.Fragment>
+                                        ))}
+                                    </p>
                                 ) : (
                                     <p className="spotlight-desc muted" style={{ margin: "2rem 0" }}>No description provided.</p>
                                 )}
@@ -1120,12 +1342,37 @@ export default function App() {
                                             <form onSubmit={handleCreateTopic} className="compact-form create-topic-form">
                                                 <label>Topic</label>
                                                 <select value={selectedPresetTitle} onChange={e => setSelectedPresetTitle(e.target.value)} required>
-                                                    {["<< Select >>", "Agriculture and Agri-Food", "Elections", "Employment and Social Development", "Environment and Climate Change", "Entertainment", "Finance", "Fisheries and Oceans", "Global Affairs", "Health", "Heritage", "Immigration, Refugees and Citizenship", "Indigenous Services", "Infrastructure", "Innovation, Science and Economic Development", "Justice", "Local Affairs", "National Defence", "Natural Resources", "Public Safety", "Public Services and Procurement", "Transport", "Veterans Affairs"].map(opt => (
-                                                        <option key={opt} value={opt}>{opt}</option>
+                                                    {[
+                                                        { label: "<< Select >>", value: "<< Select >>" },
+                                                        { label: "🌾 Agriculture and Agri-Food", value: "Agriculture and Agri-Food" },
+                                                        { label: "🗳️ Elections", value: "Elections" },
+                                                        { label: "💼 Employment and Social Development", value: "Employment and Social Development" },
+                                                        { label: "🌱 Environment and Climate Change", value: "Environment and Climate Change" },
+                                                        { label: "🎭 Entertainment", value: "Entertainment" },
+                                                        { label: "💰 Finance", value: "Finance" },
+                                                        { label: "🐟 Fisheries and Oceans", value: "Fisheries and Oceans" },
+                                                        { label: "🌍 Global Affairs", value: "Global Affairs" },
+                                                        { label: "🏥 Health", value: "Health" },
+                                                        { label: "🏛️ Heritage", value: "Heritage" },
+                                                        { label: "🛂 Immigration, Refugees and Citizenship", value: "Immigration, Refugees and Citizenship" },
+                                                        { label: "🧑‍🤝‍🧑 Indigenous Services", value: "Indigenous Services" },
+                                                        { label: "🏗️ Infrastructure", value: "Infrastructure" },
+                                                        { label: "🔬 Innovation, Science and Economic Development", value: "Innovation, Science and Economic Development" },
+                                                        { label: "⚖️ Justice", value: "Justice" },
+                                                        { label: "🏘️ Local Affairs", value: "Local Affairs" },
+                                                        { label: "🛡️ National Defence", value: "National Defence" },
+                                                        { label: "⛏️ Natural Resources", value: "Natural Resources" },
+                                                        { label: "🚨 Public Safety", value: "Public Safety" },
+                                                        { label: "📦 Public Services and Procurement", value: "Public Services and Procurement" },
+                                                        { label: "💡 PulseVote - Site Suggestions", value: "PulseVote - Site Suggestions" },
+                                                        { label: "🚗 Transport", value: "Transport" },
+                                                        { label: "🎖️ Veterans Affairs", value: "Veterans Affairs" }
+                                                    ].map(opt => (
+                                                        <option key={opt.value} value={opt.value}>{opt.label}</option>
                                                     ))}
                                                 </select>
                                                 <textarea
-                                                    placeholder="Description (required)"
+                                                    placeholder={`Topic (required)\n\nDescription`}
                                                     value={newDescription}
                                                     onChange={(e) => {
                                                         setNewDescription(e.target.value);
@@ -1192,9 +1439,17 @@ export default function App() {
                                                 <AdCard key={`ad-${item.adIndex}`} adIndex={item.adIndex} />
                                             ) : (
                                                 <li key={item.id} className="feed-item feed-item--clickable" onClick={() => handleSelectTopic(item)} role="button" tabIndex={0}>
-                                                    <div className="feed-title">{item.title}</div>
-                                                    {item.description && <div className="feed-desc">{item.description}</div>}
-                                                    {item.created_at && <div className="feed-date">{new Date(item.created_at).toLocaleString()}</div>}
+                                                    <div className="feed-left">
+                                                        <div className="feed-title">
+                                                            <span className="topic-icon">{topicIcons[item.title] || ''}</span>
+                                                            <span>{item.title}</span>
+                                                        </div>
+                                                        {item.description && <div className="feed-desc">{item.description}</div>}
+                                                        {item.created_at && <div className="feed-date">{new Date(item.created_at).toLocaleString()}</div>}
+                                                    </div>
+                                                    <div className="feed-right">
+                                                        <div className="feed-votes">{item.vote_count || 0} votes</div>
+                                                    </div>
                                                 </li>
                                             )
                                         )}
