@@ -1789,19 +1789,12 @@ body.dark-mode .stance-box.avg-neutral {
         margin-top: 0.25rem;
     }
 
-    .map-style-card.selected {
-        border: 2px solid var(--accent-color);
-        box-shadow: 0 0 10px var(--accent-color);
-        transform: scale(1.05);
-        background-color: var(--selected-bg);
+    .map-style-card.selected::after {
+        content: "✔";
+        position: absolute;
+        top: 6px;
+        right: 6px;
+        font-size: 1rem;
+        color: var(--accent-color);
     }
-
-        .map-style-card.selected::after {
-            content: "✔";
-            position: absolute;
-            top: 6px;
-            right: 6px;
-            font-size: 1rem;
-            color: var(--accent-color);
-        }
 

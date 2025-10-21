@@ -272,8 +272,8 @@ function HeatmapLayer({ points }) {
 
             // Create heatmap layer with stance-specific color
             const heat = L.heatLayer(heatData, {
-                radius: 40,
-                blur: 30,
+                radius: 50,
+                blur: 10,
                 maxZoom: 12,
                 minOpacity: 0.2,
                 max: 1.0,
