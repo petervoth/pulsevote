@@ -305,6 +305,11 @@ export default function App() {
     const [map, setMap] = useState(null);
     const [user, setUser] = useState(null);
     const [profile, setProfile] = useState(null);
+    // Map visualization options
+    const [mapOptionsOpen, setMapOptionsOpen] = useState(false);
+    const [showHeatmap, setShowHeatmap] = useState(true);
+    const [showTwinkles, setShowTwinkles] = useState(true);
+    const [selectedMapStyle, setSelectedMapStyle] = useState("heatmap");
 
     // Map bounds. Might be trash if everything works while this is commented-out.
     //const bounds = mapRef.current.getBounds();
@@ -1089,6 +1094,14 @@ export default function App() {
                 </h1>
                 <div className="header-right">
                     <button
+                        onClick={() => setMapOptionsOpen(o => !o)}
+                        className="map-options-toggle"
+                        aria-label="Map options"
+                        title="Map visualization options"
+                    >
+                        🗺️
+                    </button>
+                    <button
                         onClick={() => setDarkMode(!darkMode)}
                         className="dark-mode-toggle"
                         aria-label="Toggle dark mode"
@@ -1196,6 +1209,34 @@ export default function App() {
                                         </p>
                                     </>
                                 )}>Advertise with Us</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+            
+            {mapOptionsOpen && (
+                <div className="modal-overlay" onClick={() => setMapOptionsOpen(false)}>
+                    <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+                        <button className="modal-close" onClick={() => setMapOptionsOpen(false)}>✕</button>
+                        <h2 className="modal-title">Map Visualization Options</h2>
+                        <div className="modal-body">
+                            <div className="map-style-options">
+                                <div
+                                    className={`map-style-card ${selectedMapStyle === "heatmap" ? "selected" : ""}`}
+                                    onClick={() => setSelectedMapStyle("heatmap")}
+                                >
+                                    <img src="/images/heatmap-icon.png" alt="Heatmap" />
+                                    <span>Heatmap</span>
+                                </div>
+
+                                <div
+                                    className={`map-style-card ${selectedMapStyle === "choropleth" ? "selected" : ""}`}
+                                    onClick={() => setSelectedMapStyle("choropleth")}
+                                >
+                                    <img src="/images/choropleth-icon.png" alt="Choropleth" />
+                                    <span>Choropleth</span>
+                                </div>
                             </div>
                         </div>
                     </div>

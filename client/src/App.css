@@ -1731,4 +1731,77 @@ body.dark-mode .stance-box.avg-neutral {
     color: #f9f9f9;
 }
 
+/* Styling for map view toggle button*/
+.map-options-toggle {
+    font-size: 1.2rem;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0.4rem 0.6rem;
+    margin-right: 0.5rem;
+    border-radius: 6px;
+    transition: background 0.3s ease, transform 0.2s ease;
+    color: inherit;
+}
+
+    .map-options-toggle:hover {
+        background: rgba(0, 0, 0, 0.1);
+        transform: scale(1.1);
+    }
+
+.dark-mode .map-options-toggle:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+/* Styling for icons in Map view toggle modal*/
+.map-style-options {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    margin-top: 1rem;
+}
+
+.map-style-card {
+    cursor: pointer;
+    border: 2px solid transparent;
+    border-radius: 10px;
+    padding: 0.5rem;
+    width: 100px;
+    text-align: center;
+    transition: border 0.3s ease, transform 0.2s ease, box-shadow 0.3s ease;
+    background-color: var(--card-bg);
+    color: var(--text-color);
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+    .map-style-card img {
+        width: 60px;
+        height: 60px;
+        object-fit: contain;
+        margin-bottom: 0.5rem;
+    }
+
+    .map-style-card span {
+        font-size: 0.85rem;
+        margin-top: 0.25rem;
+    }
+
+    .map-style-card.selected {
+        border: 2px solid var(--accent-color);
+        box-shadow: 0 0 10px var(--accent-color);
+        transform: scale(1.05);
+        background-color: var(--selected-bg);
+    }
+
+        .map-style-card.selected::after {
+            content: "✔";
+            position: absolute;
+            top: 6px;
+            right: 6px;
+            font-size: 1rem;
+            color: var(--accent-color);
+        }
 
