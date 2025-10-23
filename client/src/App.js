@@ -354,7 +354,7 @@ function ChoroplethLayer({ points }) {
 
         const updateGrid = () => {
             const bounds = map.getBounds();
-            const geoJSON = generateGridGeoJSON(bounds, 4); // Adjust grid size here (default: 2)
+            const geoJSON = generateGridGeoJSON(bounds, 5); // Adjust grid size here (default: 2)
             setGridGeoJSON(geoJSON);
             setMapKey(prev => prev + 1);
         };
