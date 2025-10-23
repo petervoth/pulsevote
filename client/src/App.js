@@ -1,10 +1,9 @@
 ﻿// src/App.js
-
 import React, { useState, useEffect, useRef, useMemo } from "react";
 import { useLocation } from "react-router-dom";
 import L from "leaflet";
 import "leaflet.heat";
-import { MapContainer, TileLayer, Circle, useMap } from "react-leaflet";
+import { MapContainer, TileLayer, Circle, useMap, GeoJSON } from "react-leaflet";
 import { io } from "socket.io-client";
 import { supabase } from "./supabaseClient";
 import "leaflet/dist/leaflet.css";
@@ -88,6 +87,7 @@ const FILTERED_WORDS = [
     "asshole",
     // Add more words as needed
 ];
+
 function containsFilteredWords(text) {
     const lowerText = text.toLowerCase();
     return FILTERED_WORDS.some(word => lowerText.includes(word));
@@ -117,7 +117,6 @@ function MapSetter({ onMapReady }) {
 
 function AdCard({ adIndex }) {
     const ad = AD_DATA[adIndex % AD_DATA.length];
-
     return (
         <li
             className="feed-item ad-card"
@@ -223,9 +222,54 @@ function getAvgBoxColor(avg) {
     if (avg < 1.0) return 'stance-yes';
     return 'stance-yes-strong';
 }
+
+// Generate grid-based GeoJSON for choropleth
+function generateGridGeoJSON(bounds, gridSize = 5) {
+    const features = [];
+    const { _southWest, _northEast } = bounds;
+    const latMin = _southWest.lat;
+    const latMax = _northEast.lat;
+    const lngMin = _southWest.lng;
+    const lngMax = _northEast.lng;
+
+    for (let lat = latMin; lat < latMax; lat += gridSize) {
+        for (let lng = lngMin; lng < lngMax; lng += gridSize) {
+            const cellLatMax = Math.min(lat + gridSize, latMax);
+            const cellLngMax = Math.min(lng + gridSize, lngMax);
+
+            features.push({
+                type: "Feature",
+                properties: {
+                    id: `${lat}_${lng}`,
+                    bounds: {
+                        latMin: lat,
+                        latMax: cellLatMax,
+                        lngMin: lng,
+                        lngMax: cellLngMax
+                    }
+                },
+                geometry: {
+                    type: "Polygon",
+                    coordinates: [[
+                        [lng, lat],
+                        [cellLngMax, lat],
+                        [cellLngMax, cellLatMax],
+                        [lng, cellLatMax],
+                        [lng, lat]
+                    ]]
+                }
+            });
+        }
+    }
+
+    return {
+        type: "FeatureCollection",
+        features
+    };
+}
+
 function HeatmapLayer({ points }) {
     const map = useMap();
-
     useEffect(() => {
         if (!map || points.length === 0) return;
 
@@ -299,20 +343,134 @@ function HeatmapLayer({ points }) {
 
     return null;
 }
+
+function ChoroplethLayer({ points }) {
+    const map = useMap();
+    const [gridGeoJSON, setGridGeoJSON] = useState(null);
+    const [mapKey, setMapKey] = useState(0);
+
+    useEffect(() => {
+        if (!map) return;
+
+        const updateGrid = () => {
+            const bounds = map.getBounds();
+            const geoJSON = generateGridGeoJSON(bounds, 0.5); // Adjust grid size here (default: 2)
+            setGridGeoJSON(geoJSON);
+            setMapKey(prev => prev + 1);
+        };
+
+        updateGrid();
+
+        // Update grid when map moves/zooms
+        //map.on('moveend', updateGrid);
+        //map.on('zoomend', updateGrid);
+
+        //return () => {
+        //    map.off('moveend', updateGrid);
+        //    map.off('zoomend', updateGrid);
+        //};
+    }, [map]);
+
+    const calculateAvgForCell = (cellBounds) => {
+        const pointsInCell = points.filter(p =>
+            p.lat >= cellBounds.latMin &&
+            p.lat < cellBounds.latMax &&
+            p.lng >= cellBounds.lngMin &&
+            p.lng < cellBounds.lngMax
+        );
+
+        if (pointsInCell.length === 0) return null;
+
+        const totalScore = pointsInCell.reduce((sum, p) => {
+            const weight = stanceWeights[p.stance] ?? 0;
+            return sum + weight;
+        }, 0);
+
+        return totalScore / pointsInCell.length;
+    };
+
+    const getColorForAvg = (avg) => {
+        if (avg === null) return 'transparent';
+        if (avg < -1) return STANCE_COLOR["-No"];
+        if (avg < -0.1) return STANCE_COLOR["No"];
+        if (avg < 0.1) return STANCE_COLOR["Neutral"];
+        if (avg < 1.0) return STANCE_COLOR["Yes"];
+        return STANCE_COLOR["Yes+"];
+    };
+
+    const style = (feature) => {
+        const avg = calculateAvgForCell(feature.properties.bounds);
+        return {
+            fillColor: getColorForAvg(avg),
+            fillOpacity: avg === null ? 0 : 0.6,
+            color: '#666',
+            weight: 1,
+            opacity: 0.3
+        };
+    };
+
+    const onEachFeature = (feature, layer) => {
+        const avg = calculateAvgForCell(feature.properties.bounds);
+
+        layer.on({
+            click: () => {
+                if (avg !== null) {
+                    const popupContent = `
+            <div style="text-align: center; padding: 8px;">
+              <strong>Average Score</strong><br/>
+              ${avg.toFixed(2)}
+            </div>
+          `;
+                    layer.bindPopup(popupContent).openPopup();
+                }
+            },
+            mouseover: (e) => {
+                if (avg !== null) {
+                    const layer = e.target;
+                    layer.setStyle({
+                        fillOpacity: 0.8,
+                        weight: 2,
+                        opacity: 0.6
+                    });
+                }
+            },
+            mouseout: (e) => {
+                if (avg !== null) {
+                    const layer = e.target;
+                    layer.setStyle({
+                        fillOpacity: 0.6,
+                        weight: 1,
+                        opacity: 0.3
+                    });
+                }
+            }
+        });
+    };
+
+    if (!gridGeoJSON) return null;
+
+    return (
+        <GeoJSON
+            data={gridGeoJSON}
+            style={style}
+            onEachFeature={onEachFeature}
+            key={mapKey}
+        />
+    );
+}
+
 export default function App() {
     // Map & user
     const mapRef = useRef(null);
     const [map, setMap] = useState(null);
     const [user, setUser] = useState(null);
     const [profile, setProfile] = useState(null);
+
     // Map visualization options
     const [mapOptionsOpen, setMapOptionsOpen] = useState(false);
     const [showHeatmap, setShowHeatmap] = useState(true);
     const [showTwinkles, setShowTwinkles] = useState(true);
     const [selectedMapStyle, setSelectedMapStyle] = useState("heatmap");
-
-    // Map bounds. Might be trash if everything works while this is commented-out.
-    //const bounds = mapRef.current.getBounds();
 
     // Pop-up Extra Text - About Us, etc.
     const [aboutText, setAboutText] = useState('');
@@ -410,7 +568,6 @@ export default function App() {
         async function loadSharedTopic() {
             const params = new URLSearchParams(location.search);
             const topicId = params.get("topic");
-
             if (!topicId) return;
 
             try {
@@ -432,7 +589,6 @@ export default function App() {
                     const topic = await res.json();
                     setTopics(prev => (prev.some(t => t.id === topic.id) ? prev : [topic, ...prev]));
                     setSelectedTopic(topic);
-
                     // Load points for this topic
                     const pointsRes = await fetch(`${API_BASE}/points?topic_id=${encodeURIComponent(topic.id)}`);
                     if (pointsRes.ok) {
@@ -450,14 +606,12 @@ export default function App() {
     useEffect(() => {
         async function tryLoadTopic() {
             if (!topicIdFromURL) return;
-
             // First, try to find it in already-loaded topics
             const match = topics.find(t => String(t.id) === String(topicIdFromURL));
             if (match) {
                 setSelectedTopic(match);
                 return;
             }
-
             // If not found, fetch it directly
             try {
                 const res = await fetch(`${API_BASE}/topics/${topicIdFromURL}`);
@@ -516,7 +670,6 @@ export default function App() {
     async function getLocationName(lat, lng) {
         try {
             await new Promise(resolve => setTimeout(resolve, 1000));
-
             const response = await fetch(
                 `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=10&addressdetails=1`,
                 {
@@ -535,13 +688,13 @@ export default function App() {
             if (data && data.address) {
                 const city = data.address.city || data.address.town || data.address.village || data.address.suburb;
                 const country = data.address.country;
-
                 if (city && country) {
                     return `${city}, ${country}`;
                 } else if (country) {
                     return country;
                 }
             }
+
             return "Unknown Location";
         } catch (error) {
             console.error("Error fetching location name:", error);
@@ -555,16 +708,19 @@ export default function App() {
             setUserHistory([]);
             return;
         }
+
         const { data, error } = await supabase
             .from("points")
             .select("id, stance, intensity, created_at, topics(id)")
             .eq("user_id", user.id)
             .order("created_at", { ascending: false });
+
         if (error) {
             console.error("Error fetching history:", error);
             setUserHistory([]);
             return;
         }
+
         const rows = data.map(({ topics, ...p }) => ({ ...p, topic: topics }));
         setUserHistory(rows);
     }
@@ -581,6 +737,7 @@ export default function App() {
             return next;
         });
     };
+
     const closeUserSpotlight = () => {
         setUserSpotlightOpen(false);
         setSelectedUserPoint(null);
@@ -596,10 +753,8 @@ export default function App() {
     // Filtered Points
     const filteredPoints = useMemo(() => {
         if (!useMapView || !visibleBounds) return heatPoints;
-
         const sw = visibleBounds.getSouthWest();
         const ne = visibleBounds.getNorthEast();
-
         return heatPoints.filter(p => (
             p.lat >= sw.lat &&
             p.lat <= ne.lat &&
@@ -676,12 +831,14 @@ export default function App() {
                 fetchProfile(session.user.id);
             }
         })();
+
         const { data: { subscription } } = supabase.auth.onAuthStateChange((_e, sess) => {
             const u = sess?.user ?? null;
             setUser(u);
             if (u) fetchProfile(u.id);
             else setProfile(null);
         });
+
         return () => subscription.unsubscribe();
     }, []);
 
@@ -692,11 +849,13 @@ export default function App() {
         if (error) return alert("Sign up failed: " + error.message);
         alert("Check your email to confirm sign up.");
     };
+
     const handleLogin = async e => {
         e.preventDefault();
         const { error } = await supabase.auth.signInWithPassword({ email: loginEmail, password: loginPassword });
         if (error) return alert("Login failed: " + error.message);
     };
+
     const handleLogout = async () => {
         await supabase.auth.signOut();
         setUser(null);
@@ -708,11 +867,11 @@ export default function App() {
         if (!user) return alert("Please sign in.");
         if (profile?.homebase_set) return alert("Homebase already set.");
         if (!navigator.geolocation) return alert("Geolocation not available.");
+
         navigator.geolocation.getCurrentPosition(
             async pos => {
                 const { latitude, longitude } = pos.coords;
                 const now = new Date().toISOString();
-
                 const { data, error } = await supabase
                     .from("profiles")
                     .upsert({
@@ -748,13 +907,11 @@ export default function App() {
         const confirmReset = window.confirm(
             "Are you sure you want to reset your homebase? This can only be done once every 180 days."
         );
-
         if (!confirmReset) return;
 
         navigator.geolocation.getCurrentPosition(
             async pos => {
                 const { latitude, longitude } = pos.coords;
-
                 const res = await fetch(`${API_BASE}/profiles/${user.id}/reset-homebase`, {
                     method: "PUT",
                     headers: { "Content-Type": "application/json" },
@@ -762,7 +919,6 @@ export default function App() {
                 });
 
                 const data = await res.json();
-
                 if (!res.ok) {
                     if (res.status === 429) {
                         return alert(data.message || "You can only reset homebase once every 180 days.");
@@ -804,7 +960,6 @@ export default function App() {
         });
 
         const data = await res.json();
-
         if (!res.ok) {
             console.error("Create topic failed:", data);
             if (res.status === 429) {
@@ -856,10 +1011,12 @@ export default function App() {
                 lng: profile.home_lng,
             }),
         });
+
         const pt = await res.json();
         if (res.ok) {
             setHeatPoints(prev => mergeMostRecentPerUser(prev, [pt]));
         }
+
         setEngageStance("");
     };
 
@@ -867,6 +1024,7 @@ export default function App() {
     const handleSelectTopic = async t => {
         setSelectedTopic(t);
         setHeatPoints([]);
+
         try {
             const res = await fetch(`${API_BASE}/points?topic_id=${encodeURIComponent(t.id)}`);
             if (res.ok) {
@@ -888,14 +1046,17 @@ export default function App() {
     const PAGE_SIZE = 20;
     const loadNextPage = async () => {
         if (!hasMore) return;
+
         try {
             const res = await fetch(`${API_BASE}/topics?limit=${PAGE_SIZE}&offset=${page * PAGE_SIZE}`);
             const rows = await res.json();
+
             setTopics(prev => {
                 const ids = new Set(prev.map(t => t.id));
                 const filtered = rows.filter(r => !ids.has(r.id));
                 return [...prev, ...filtered];
             });
+
             setHasMore(rows.length === PAGE_SIZE);
             setPage(p => p + 1);
         } catch (err) {
@@ -910,12 +1071,15 @@ export default function App() {
     useEffect(() => {
         const container = feedRef.current;
         if (!container) return;
+
         const sentinel = container.querySelector("#topic-list-sentinel");
         if (!sentinel) return;
+
         const obs = new IntersectionObserver(
             ([entry]) => entry.isIntersecting && loadNextPage(),
             { root: container, rootMargin: "200px" }
         );
+
         obs.observe(sentinel);
         return () => obs.disconnect();
     }, [hasMore]);
@@ -923,6 +1087,7 @@ export default function App() {
     // Socket.IO real-time
     useEffect(() => {
         if (!selectedTopic?.id) return;
+
         socket.emit("subscribe_topic", { topic_id: selectedTopic.id });
         return () => socket.emit("unsubscribe_topic", { topic_id: selectedTopic.id });
     }, [selectedTopic]);
@@ -932,12 +1097,15 @@ export default function App() {
             if (!t?.id) return;
             setTopics(prev => (prev.some(x => x.id === t.id) ? prev : [t, ...prev]));
         };
+
         const onNewPoint = p => {
             if (!p?.user_id) return;
             setHeatPoints(prev => mergeMostRecentPerUser(prev, [p]));
         };
+
         socket.on("new_topic", onNewTopic);
         socket.on("new_point", onNewPoint);
+
         return () => {
             socket.off("new_topic", onNewTopic);
             socket.off("new_point", onNewPoint);
@@ -962,7 +1130,7 @@ export default function App() {
                     lng: p.lng,
                     radius: km * 1000,
                     color: STANCE_COLOR[p.stance] || "#666",
-                    stance: p.stance,  // ADD THIS LINE - keep the original stance value
+                    stance: p.stance,
                 };
             });
     }, [heatPoints]);
@@ -997,8 +1165,7 @@ export default function App() {
         if (!map || selectedTopic) return;
 
         const twinkleLayerGroup = L.layerGroup().addTo(map);
-
-        const stanceColors = Object.values(STANCE_COLOR); // Grab your 5 defined colors
+        const stanceColors = Object.values(STANCE_COLOR);
 
         twinkleMarkers.forEach((marker, i) => {
             const delay = (Math.random() * 2).toFixed(2);
@@ -1007,12 +1174,12 @@ export default function App() {
 
             const icon = L.divIcon({
                 className: 'twinkle-marker',
-                html: `<div class="twinkle-dot" style="
-        animation-delay: ${delay}s;
-        animation-duration: ${duration}s;
-        background: ${color};
-        box-shadow: 0 0 6px ${color};
-      "></div>`,
+                html: `<div class="twinkle-dot" style=" 
+          animation-delay: ${delay}s; 
+          animation-duration: ${duration}s; 
+          background: ${color}; 
+          box-shadow: 0 0 6px ${color}; 
+        "></div>`,
                 iconSize: [12, 12],
                 iconAnchor: [6, 6]
             });
@@ -1038,10 +1205,8 @@ export default function App() {
 
     const visiblePoints = useMemo(() => {
         if (!visibleBounds) return heatPoints;
-
         const sw = visibleBounds.getSouthWest();
         const ne = visibleBounds.getNorthEast();
-
         return heatPoints.filter(p => (
             p.lat >= sw.lat &&
             p.lat <= ne.lat &&
@@ -1063,12 +1228,10 @@ export default function App() {
 
     const avgStanceScore = useMemo(() => {
         if (!visiblePoints.length) return '–';
-
         const totalScore = visiblePoints.reduce((sum, p) => {
             const weight = stanceWeights[p.stance] ?? 0;
             return sum + weight;
         }, 0);
-
         const avg = totalScore / visiblePoints.length;
         return avg.toFixed(2);
     }, [visiblePoints]);
@@ -1092,6 +1255,7 @@ export default function App() {
                 >
                     PulseVote
                 </h1>
+
                 <div className="header-right">
                     <button
                         onClick={() => setMapOptionsOpen(o => !o)}
@@ -1101,6 +1265,7 @@ export default function App() {
                     >
                         🗺️
                     </button>
+
                     <button
                         onClick={() => setDarkMode(!darkMode)}
                         className="dark-mode-toggle"
@@ -1109,6 +1274,7 @@ export default function App() {
                     >
                         {darkMode ? '☀️' : '🌙'}
                     </button>
+
                     {user && (
                         <div className="header-user-line">
                             <button className="header-email mono clickable" onClick={toggleUserSpotlight}>
@@ -1154,11 +1320,10 @@ export default function App() {
                             }}>
                                 {aboutText || `Welcome to PulseVote — a platform where your voice matters and location tells a story.
 
-                                Create topics, share your stance, and see how opinions cluster across the map. Each vote creates a visual pulse that represents the intensity and distribution of public sentiment.
+Create topics, share your stance, and see how opinions cluster across the map. Each vote creates a visual pulse that represents the intensity and distribution of public sentiment.
 
-                                Set your homebase, engage with topics that matter to you, and be part of a geo-social movement that brings transparency to public opinion.`}
+Set your homebase, engage with topics that matter to you, and be part of a geo-social movement that brings transparency to public opinion.`}
                             </div>
-
                             <div style={{
                                 display: 'flex',
                                 justifyContent: 'space-around',
@@ -1173,32 +1338,24 @@ export default function App() {
                                         <p><strong>Frequently Asked Questions:</strong></p>
                                         <p>1. <strong>What is PulseVote?</strong><br />
                                             A geo-social dashboard for sharing and visualizing opinions.</p>
-
                                         <p>2. <strong>Do I need an account?</strong><br />
                                             No, but setting a homebase unlocks more features.</p>
-
                                         <p>3. <strong>Can I create my own topics?</strong><br />
-                                            Yes! Just click “Create a New Topic” and start engaging.</p>
-
+                                            Yes! Just click "Create a New Topic" and start engaging.</p>
                                         <p>4. <strong>Are there any limitations when making a topic?</strong><br />
                                             Yes. Though moderation is very minimal on the site, certain words have been blocked to improve the user experience on PulseVote. You are also limited to creating only 1 voting topic in a 24 hour period to reduce spam.</p>
-
                                         <p>5. <strong>Are there any limitations when voting?</strong><br />
-                                            No! Return to a topic and change your vote as often as you would like. For user-safety, there is no accessible voitng history so your most recent selection is always included in the live results.</p>
-
+                                            No! Return to a topic and change your vote as often as you would like. For user-safety, there is no accessible voting history so your most recent selection is always included in the live results.</p>
                                         <p>6. <strong>Are these votes legally binding or used anywhere?</strong><br />
-                                            Not yet. In a perfect world, we would trust our police forces to always protect us from any encroachment on our personal freedoms. This in turn would allow us to trust a public voting system without fear of reprocussions, harassment, or assault. For now, PulseVote is a thought-experiment to give the world a voice and to show everyone there are more of us than you think. You deserve to take part in specific vote topics, not just electing the leaders who decide for you but keep letting you down term after term.</p>
-
+                                            Not yet. In a perfect world, we would trust our police forces to always protect us from any encroachment on our personal freedoms. This in turn would allow us to trust a public voting system without fear of repercussions, harassment, or assault. For now, PulseVote is a thought-experiment to give the world a voice and to show everyone there are more of us than you think. You deserve to take part in specific vote topics, not just electing the leaders who decide for you but keep letting you down term after term.</p>
                                         <p>7. <strong>Who runs PulseVote?</strong><br />
                                             A lone Canadian data scientist has built this site and runs everything independently, there is no "big government" behind this project. Please be patient with him. If you want to suggest improvements to PulseVote, please use the 'PulseVote' voting topic. And in true Canadian fashion, if you find something with the site is broken, sorry in advance!</p>
                                     </>
                                 )}>F.A.Q.</span>
-
                                 <span onClick={() => setAboutText(
                                     <>
                                         <p><strong>Want to advertise with us?</strong></p>
                                         <p>PulseVote offers interactive ad placements within topic feeds. Reach geo-targeted audiences with sponsored messages that blend seamlessly into the user experience.</p>
-
                                         <p>In the future, we will offer an automated system to submit your sponsor info, message, and link. For now, please email us at:{" "}
                                             <a
                                                 href="mailto:ads@pulsevote.org"
@@ -1214,7 +1371,7 @@ export default function App() {
                     </div>
                 </div>
             )}
-            
+
             {mapOptionsOpen && (
                 <div className="modal-overlay" onClick={() => setMapOptionsOpen(false)}>
                     <div className="modal-content" onClick={(e) => e.stopPropagation()}>
@@ -1229,7 +1386,6 @@ export default function App() {
                                     <img src="/images/heatmap-icon.png" alt="Heatmap" />
                                     <span>Heatmap</span>
                                 </div>
-
                                 <div
                                     className={`map-style-card ${selectedMapStyle === "choropleth" ? "selected" : ""}`}
                                     onClick={() => setSelectedMapStyle("choropleth")}
@@ -1245,23 +1401,34 @@ export default function App() {
 
             <div className="app-main" style={{ flex: 1, display: "flex", overflow: "hidden" }}>
                 <main className="map-column" style={{ flex: 1 }}>
-                    <MapContainer center={[20, 0]} zoom={2} className="main-map" whenCreated={mapInstance => mapRef.current = mapInstance} preferCanvas={true} minZoom={2} maxZoom={12}>
+                    <MapContainer
+                        center={[20, 0]}
+                        zoom={2}
+                        className="main-map"
+                        whenCreated={mapInstance => mapRef.current = mapInstance}
+                        preferCanvas={true}
+                        minZoom={2}
+                        maxZoom={12}
+                    >
                         <TileLayer
                             url={darkMode
                                 ? "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
                                 : "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
                             }
                             attribution={darkMode
-                                ? '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
-                                : '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                                ? '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors © <a href="https://carto.com/attributions">CARTO</a>'
+                                : '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
                             }
                         />
                         <MapSetter onMapReady={setMap} />
 
-                        {selectedTopic && filteredPoints.length > 0 && (
+                        {selectedTopic && filteredPoints.length > 0 && selectedMapStyle === "heatmap" && (
                             <HeatmapLayer points={renderPoints} />
                         )}
 
+                        {selectedTopic && filteredPoints.length > 0 && selectedMapStyle === "choropleth" && (
+                            <ChoroplethLayer points={heatPoints} />
+                        )}
                     </MapContainer>
                 </main>
 
@@ -1288,7 +1455,25 @@ export default function App() {
                                         <p style={{ fontSize: "0.9rem", color: "#666", margin: "0.5rem 0" }}>
                                             {profile.home_lat.toFixed(4)}, {profile.home_lng.toFixed(4)}
                                         </p>
-                                        <button onClick={resetHomebase} style={{ marginTop: "1rem", padding: "0.5rem 1.5rem", background: "#FE6100", color: "white", border: "none", borderRadius: "6px", cursor: "pointer", fontSize: "0.9rem", fontWeight: "bold", transition: "background 0.2s ease" }} onMouseEnter={(e) => e.target.style.background = "#E55500"} onMouseLeave={(e) => e.target.style.background = "#FE6100"}>Reset Homebase</button>
+                                        <button
+                                            onClick={resetHomebase}
+                                            style={{
+                                                marginTop: "1rem",
+                                                padding: "0.5rem 1.5rem",
+                                                background: "#FE6100",
+                                                color: "white",
+                                                border: "none",
+                                                borderRadius: "6px",
+                                                cursor: "pointer",
+                                                fontSize: "0.9rem",
+                                                fontWeight: "bold",
+                                                transition: "background 0.2s ease"
+                                            }}
+                                            onMouseEnter={(e) => e.target.style.background = "#E55500"}
+                                            onMouseLeave={(e) => e.target.style.background = "#FE6100"}
+                                        >
+                                            Reset Homebase
+                                        </button>
                                     </>
                                 )}
                             </section>
@@ -1304,6 +1489,7 @@ export default function App() {
                                     {filteredPoints.length} of {heatPoints.length} votes visible
                                 </p>
                                 <button onClick={() => handleShare(selectedTopic.id)} className="share-button">Share</button>
+
                                 <div className="stance-summary">
                                     {["-No", "No", "Neutral", "Yes", "Yes+"].map(s => (
                                         <div key={s} className="stance-box">
@@ -1316,7 +1502,12 @@ export default function App() {
                                         <div className="stance-value">{avgStanceScore}</div>
                                     </div>
                                 </div>
-                                <p className="spotlight-meta">By: <strong>{selectedTopic.created_by}</strong><br />On: {new Date(selectedTopic.created_at).toLocaleString()}</p>
+
+                                <p className="spotlight-meta">
+                                    By: <strong>{selectedTopic.created_by}</strong><br />
+                                    On: {new Date(selectedTopic.created_at).toLocaleString()}
+                                </p>
+
                                 {selectedTopic.description ? (
                                     <p className="spotlight-desc" style={{ margin: "2rem 0" }}>
                                         {selectedTopic.description.split('\n').map((line, index) => (
@@ -1329,6 +1520,7 @@ export default function App() {
                                 ) : (
                                     <p className="spotlight-desc muted" style={{ margin: "2rem 0" }}>No description provided.</p>
                                 )}
+
                                 <div className="spotlight-engage">
                                     <h4 style={{ margin: "0 0 0.5rem" }}>Engage with this Topic</h4>
                                     {!user ? (
@@ -1337,15 +1529,31 @@ export default function App() {
                                         <form onSubmit={handleEngage} className="compact-form">
                                             <div className="radios" role="radiogroup">
                                                 {["-No", "No", "Neutral", "Yes", "Yes+"].map(s => (
-                                                    <label key={s}><input type="radio" name="engage-stance" value={s} checked={engageStance === s} onChange={e => setEngageStance(e.target.value)} style={{ accentColor: STANCE_COLOR[s] }} />{" "}{s}</label>
+                                                    <label key={s}>
+                                                        <input
+                                                            type="radio"
+                                                            name="engage-stance"
+                                                            value={s}
+                                                            checked={engageStance === s}
+                                                            onChange={e => setEngageStance(e.target.value)}
+                                                            style={{ accentColor: STANCE_COLOR[s] }}
+                                                        />
+                                                        {" "}{s}
+                                                    </label>
                                                 ))}
                                             </div>
                                             <div className="stance-bar">
                                                 {["-No", "No", "Neutral", "Yes", "Yes+"].map(s => (
-                                                    <div key={s} className="stance-segment" style={{ backgroundColor: STANCE_COLOR[s] }} />
+                                                    <div
+                                                        key={s}
+                                                        className="stance-segment"
+                                                        style={{ backgroundColor: STANCE_COLOR[s] }}
+                                                    />
                                                 ))}
                                             </div>
-                                            <div className="engage-actions"><button type="submit" disabled={!engageStance}>Engage</button></div>
+                                            <div className="engage-actions">
+                                                <button type="submit" disabled={!engageStance}>Engage</button>
+                                            </div>
                                         </form>
                                     )}
                                 </div>
@@ -1358,16 +1566,40 @@ export default function App() {
                                     <div className="auth-box card">
                                         <h3>Sign Up</h3>
                                         <form onSubmit={handleSignUp} className="compact-form">
-                                            <input type="email" placeholder="Email" value={signUpEmail} onChange={e => setSignUpEmail(e.target.value)} required />
-                                            <input type="password" placeholder="Password" value={signUpPassword} onChange={e => setSignUpPassword(e.target.value)} required />
+                                            <input
+                                                type="email"
+                                                placeholder="Email"
+                                                value={signUpEmail}
+                                                onChange={e => setSignUpEmail(e.target.value)}
+                                                required
+                                            />
+                                            <input
+                                                type="password"
+                                                placeholder="Password"
+                                                value={signUpPassword}
+                                                onChange={e => setSignUpPassword(e.target.value)}
+                                                required
+                                            />
                                             <button type="submit">Sign Up</button>
                                         </form>
                                     </div>
                                     <div className="auth-box card">
                                         <h3>Login</h3>
                                         <form onSubmit={handleLogin} className="compact-form">
-                                            <input type="email" placeholder="Email" value={loginEmail} onChange={e => setLoginEmail(e.target.value)} required />
-                                            <input type="password" placeholder="Password" value={loginPassword} onChange={e => setLoginPassword(e.target.value)} required />
+                                            <input
+                                                type="email"
+                                                placeholder="Email"
+                                                value={loginEmail}
+                                                onChange={e => setLoginEmail(e.target.value)}
+                                                required
+                                            />
+                                            <input
+                                                type="password"
+                                                placeholder="Password"
+                                                value={loginPassword}
+                                                onChange={e => setLoginPassword(e.target.value)}
+                                                required
+                                            />
                                             <button type="submit">Login</button>
                                         </form>
                                     </div>
@@ -1377,12 +1609,22 @@ export default function App() {
                                     <section className="create-section card">
                                         <div className="accordion-header">
                                             <h3>Create a New Topic</h3>
-                                            <button className={`accordion-toggle ${createOpen ? "open" : ""}`} onClick={() => setCreateOpen(o => !o)} aria-expanded={createOpen}>{createOpen ? "−" : "+"}</button>
+                                            <button
+                                                className={`accordion-toggle ${createOpen ? "open" : ""}`}
+                                                onClick={() => setCreateOpen(o => !o)}
+                                                aria-expanded={createOpen}
+                                            >
+                                                {createOpen ? "−" : "+"}
+                                            </button>
                                         </div>
                                         <div className={`accordion-body ${createOpen ? "expanded" : ""}`}>
                                             <form onSubmit={handleCreateTopic} className="compact-form create-topic-form">
                                                 <label>Topic</label>
-                                                <select value={selectedPresetTitle} onChange={e => setSelectedPresetTitle(e.target.value)} required>
+                                                <select
+                                                    value={selectedPresetTitle}
+                                                    onChange={e => setSelectedPresetTitle(e.target.value)}
+                                                    required
+                                                >
                                                     {[
                                                         { label: "<< Select >>", value: "<< Select >>" },
                                                         { label: "🌾 Agriculture and Agri-Food", value: "Agriculture and Agri-Food" },
@@ -1424,12 +1666,26 @@ export default function App() {
                                                 />
                                                 <div className="radios">
                                                     {["-No", "No", "Neutral", "Yes", "Yes+"].map(s => (
-                                                        <label key={s}><input type="radio" name="create-stance" value={s} checked={stance === s} onChange={e => setStance(e.target.value)} style={{ accentColor: STANCE_COLOR[s] }} />{" "}{s}</label>
+                                                        <label key={s}>
+                                                            <input
+                                                                type="radio"
+                                                                name="create-stance"
+                                                                value={s}
+                                                                checked={stance === s}
+                                                                onChange={e => setStance(e.target.value)}
+                                                                style={{ accentColor: STANCE_COLOR[s] }}
+                                                            />
+                                                            {" "}{s}
+                                                        </label>
                                                     ))}
                                                 </div>
                                                 <div className="stance-bar">
                                                     {["-No", "No", "Neutral", "Yes", "Yes+"].map(s => (
-                                                        <div key={s} className="stance-segment" style={{ backgroundColor: STANCE_COLOR[s] }} />
+                                                        <div
+                                                            key={s}
+                                                            className="stance-segment"
+                                                            style={{ backgroundColor: STANCE_COLOR[s] }}
+                                                        />
                                                     ))}
                                                 </div>
                                                 <button
@@ -1444,23 +1700,55 @@ export default function App() {
 
                                     <section className="accordion-section card">
                                         <div className="accordion-header" style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                                            <div style={{ flex: 1, textAlign: "center" }}><h3 style={{ margin: 0, fontWeight: "normal" }}>Filters</h3></div>
-                                            <button className={`accordion-toggle ${filterOpen ? "open" : ""}`} onClick={() => setFilterOpen(o => !o)} aria-expanded={filterOpen}>{filterOpen ? "−" : "+"}</button>
+                                            <div style={{ flex: 1, textAlign: "center" }}>
+                                                <h3 style={{ margin: 0, fontWeight: "normal" }}>Filters</h3>
+                                            </div>
+                                            <button
+                                                className={`accordion-toggle ${filterOpen ? "open" : ""}`}
+                                                onClick={() => setFilterOpen(o => !o)}
+                                                aria-expanded={filterOpen}
+                                            >
+                                                {filterOpen ? "−" : "+"}
+                                            </button>
                                         </div>
                                         <div className={`accordion-body ${filterOpen ? "expanded" : ""}`}>
                                             <form className="compact-form">
-                                                <input type="text" placeholder="Search description..." value={searchText} onChange={e => setSearchText(e.target.value)} style={{ marginBottom: "0rem", width: "100%", height: "2.5rem", padding: "0rem" }} />
-                                                <select value={filterTitle} onChange={e => setFilterTitle(e.target.value)} style={{ marginBottom: "0rem", width: "100%", height: "2.5rem", padding: "0rem" }}>
+                                                <input
+                                                    type="text"
+                                                    placeholder="Search description..."
+                                                    value={searchText}
+                                                    onChange={e => setSearchText(e.target.value)}
+                                                    style={{ marginBottom: "0rem", width: "100%", height: "2.5rem", padding: "0rem" }}
+                                                />
+                                                <select
+                                                    value={filterTitle}
+                                                    onChange={e => setFilterTitle(e.target.value)}
+                                                    style={{ marginBottom: "0rem", width: "100%", height: "2.5rem", padding: "0rem" }}
+                                                >
                                                     <option value="">All Titles</option>
                                                     {Array.from(new Set(topics.map(t => t.title))).map(title => (
                                                         <option key={title} value={title}>{title}</option>
                                                     ))}
                                                 </select>
                                                 <div style={{ display: "flex", gap: "0.5rem", marginBottom: "0.5rem" }}>
-                                                    <input type="date" value={startDate} onChange={e => setStartDate(e.target.value)} style={{ flex: 1, height: "2.5rem", padding: "0.5rem" }} />
-                                                    <input type="date" value={endDate} onChange={e => setEndDate(e.target.value)} style={{ flex: 1, height: "2.5rem", padding: "0.5rem" }} />
+                                                    <input
+                                                        type="date"
+                                                        value={startDate}
+                                                        onChange={e => setStartDate(e.target.value)}
+                                                        style={{ flex: 1, height: "2.5rem", padding: "0.5rem" }}
+                                                    />
+                                                    <input
+                                                        type="date"
+                                                        value={endDate}
+                                                        onChange={e => setEndDate(e.target.value)}
+                                                        style={{ flex: 1, height: "2.5rem", padding: "0.5rem" }}
+                                                    />
                                                 </div>
-                                                <select value={sortOption} onChange={e => setSortOption(e.target.value)} style={{ marginBottom: "0.5rem", width: "100%", height: "2.5rem", padding: "0.5rem" }}>
+                                                <select
+                                                    value={sortOption}
+                                                    onChange={e => setSortOption(e.target.value)}
+                                                    style={{ marginBottom: "0.5rem", width: "100%", height: "2.5rem", padding: "0.5rem" }}
+                                                >
                                                     <option value="newest">Newest to Oldest</option>
                                                     <option value="oldest">Oldest to Newest</option>
                                                     <option value="mostVotes">Most Votes</option>
@@ -1479,7 +1767,13 @@ export default function App() {
                                             item.isAd ? (
                                                 <AdCard key={`ad-${item.adIndex}`} adIndex={item.adIndex} />
                                             ) : (
-                                                <li key={item.id} className="feed-item feed-item--clickable" onClick={() => handleSelectTopic(item)} role="button" tabIndex={0}>
+                                                <li
+                                                    key={item.id}
+                                                    className="feed-item feed-item--clickable"
+                                                    onClick={() => handleSelectTopic(item)}
+                                                    role="button"
+                                                    tabIndex={0}
+                                                >
                                                     <div className="feed-left">
                                                         <div className="feed-title">
                                                             <span className="topic-icon">{topicIcons[item.title] || ''}</span>
