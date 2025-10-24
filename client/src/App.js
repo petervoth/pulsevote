@@ -385,9 +385,11 @@ function ChoroplethLayer({ points }) {
         updateGrid();
 
         //Update grid when map zooms (but not when panning)
+        map.on('moveend', updateGrid);
         map.on('zoomend', updateGrid);
 
         return () => {
+            map.off('moveend', updateGrid);
             map.off('zoomend', updateGrid);
         };
     }, [map]);
@@ -577,7 +579,7 @@ export default function App() {
             setVisibleBounds(map.getBounds());
         };
 
-        //map.on('moveend', handleMove);
+        map.on('moveend', handleMove);
         setVisibleBounds(map.getBounds()); // initial bounds
 
         return () => {
