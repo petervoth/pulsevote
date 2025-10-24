@@ -349,26 +349,47 @@ function ChoroplethLayer({ points }) {
     const [gridGeoJSON, setGridGeoJSON] = useState(null);
     const [mapKey, setMapKey] = useState(0);
 
+    // Calculate grid size based on zoom level
+    const getGridSizeForZoom = (zoom) => {
+        // Zoom level ranges from 2 (world view) to 12 (max zoom)
+        // Grid size ranges from 12 (zoomed out) to 0.2 (zoomed in)
+
+        if (zoom <= 2) return 12;      // World view: 12 degree cells
+        if (zoom <= 3) return 8;       // Continental: 8 degree cells
+        if (zoom <= 4) return 5;       // Large regions: 5 degree cells
+        if (zoom <= 5) return 3;       // Countries: 3 degree cells
+        if (zoom <= 6) return 2;       // States/provinces: 2 degree cells
+        if (zoom <= 7) return 1;       // Large cities: 1 degree cells
+        if (zoom <= 8) return 0.5;     // Cities: 0.5 degree cells
+        if (zoom <= 9) return 0.3;     // Neighborhoods: 0.3 degree cells
+        if (zoom <= 10) return 0.2;    // Streets: 0.2 degree cells
+        if (zoom <= 11) return 0.15;   // Blocks: 0.15 degree cells
+        return 0.1;                     // Max zoom: 0.1 degree cells
+    };
+
     useEffect(() => {
         if (!map) return;
 
         const updateGrid = () => {
             const bounds = map.getBounds();
-            const geoJSON = generateGridGeoJSON(bounds, 12); // Adjust grid size here (default: 12)
+            const zoom = map.getZoom();
+            const gridSize = getGridSizeForZoom(zoom);
+
+            console.log(`Zoom: ${zoom}, Grid Size: ${gridSize}`); // For debugging
+
+            const geoJSON = generateGridGeoJSON(bounds, gridSize);
             setGridGeoJSON(geoJSON);
             setMapKey(prev => prev + 1);
         };
 
         updateGrid();
 
-        // Update grid when map moves/zooms
-        //map.on('moveend', updateGrid);
-        //map.on('zoomend', updateGrid);
+        //Update grid when map zooms (but not when panning)
+        map.on('zoomend', updateGrid);
 
-        //return () => {
-        //    map.off('moveend', updateGrid);
-        //    map.off('zoomend', updateGrid);
-        //};
+        return () => {
+            map.off('zoomend', updateGrid);
+        };
     }, [map]);
 
     const calculateAvgForCell = (cellBounds) => {
@@ -556,12 +577,12 @@ export default function App() {
             setVisibleBounds(map.getBounds());
         };
 
-        map.on('moveend', handleMove);
-        setVisibleBounds(map.getBounds()); // initial bounds
+        //map.on('moveend', handleMove);
+        //setVisibleBounds(map.getBounds()); // initial bounds
 
-        return () => {
-            map.off('moveend', handleMove);
-        };
+        //return () => {
+        //    map.off('moveend', handleMove);
+        //};
     }, [map]);
 
     useEffect(() => {
