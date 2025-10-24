@@ -578,11 +578,11 @@ export default function App() {
         };
 
         //map.on('moveend', handleMove);
-        //setVisibleBounds(map.getBounds()); // initial bounds
+        setVisibleBounds(map.getBounds()); // initial bounds
 
-        //return () => {
-        //    map.off('moveend', handleMove);
-        //};
+        return () => {
+            map.off('moveend', handleMove);
+        };
     }, [map]);
 
     useEffect(() => {
