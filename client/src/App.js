@@ -362,9 +362,9 @@ function ChoroplethLayer({ points }) {
         if (zoom <= 7) return 1;       // Large cities: 1 degree cells
         if (zoom <= 8) return 0.5;     // Cities: 0.5 degree cells
         if (zoom <= 9) return 0.3;     // Neighborhoods: 0.3 degree cells
-        if (zoom <= 10) return 0.2;    // Streets: 0.2 degree cells
-        if (zoom <= 11) return 0.15;   // Blocks: 0.15 degree cells
-        return 0.1;                     // Max zoom: 0.1 degree cells
+        if (zoom <= 10) return 0.15;    // Streets: 0.15 degree cells
+        if (zoom <= 11) return 0.02;   // Blocks: 0.02 degree cells
+        return 0.01;                     // Max zoom: 0.01 degree cells
     };
 
     useEffect(() => {
