@@ -482,6 +482,235 @@ function ChoroplethLayer({ points }) {
     );
 }
 
+function CustomChoroplethLayer({ points }) {
+    const map = useMap();
+    const [geoJSONData, setGeoJSONData] = useState(null);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
+
+    // Load the custom GeoJSON file
+    useEffect(() => {
+        async function loadGeoJSON() {
+            try {
+                // Try multiple possible paths
+                const paths = [
+                    '/custom.geo.json',  // Renamed with .json extension
+                    '/custom.geo',       // Original name
+                    `${process.env.PUBLIC_URL}/custom.geo.json`,  // With PUBLIC_URL
+                    `${process.env.PUBLIC_URL}/custom.geo`
+                ];
+
+                let data = null;
+                let lastError = null;
+
+                for (const path of paths) {
+                    try {
+                        console.log(`Trying to fetch from: ${path}`);
+                        const response = await fetch(path);
+
+                        if (response.ok) {
+                            const text = await response.text();
+                            data = JSON.parse(text);
+                            console.log('Successfully loaded GeoJSON from:', path);
+                            break;
+                        } else {
+                            lastError = `HTTP ${response.status} from ${path}`;
+                        }
+                    } catch (err) {
+                        lastError = err.message;
+                        continue;
+                    }
+                }
+
+                if (!data) {
+                    throw new Error(`Failed to load custom GeoJSON. Last error: ${lastError}`);
+                }
+
+                setGeoJSONData(data);
+                setLoading(false);
+            } catch (error) {
+                console.error('Error loading custom.geo:', error);
+                setError(error.message);
+                setLoading(false);
+            }
+        }
+
+        loadGeoJSON();
+    }, []);
+
+    // Calculate average for each GeoJSON feature based on points inside
+    const calculateAvgForFeature = (feature) => {
+        if (!feature.geometry) return null;
+
+        // Helper to check if point is inside polygon
+        const pointInPolygon = (lat, lng, coords) => {
+            // Ray casting algorithm
+            let inside = false;
+            const x = lng;
+            const y = lat;
+
+            for (let i = 0, j = coords.length - 1; i < coords.length; j = i++) {
+                const xi = coords[i][0];
+                const yi = coords[i][1];
+                const xj = coords[j][0];
+                const yj = coords[j][1];
+
+                const intersect = ((yi > y) !== (yj > y)) &&
+                    (x < (xj - xi) * (y - yi) / (yj - yi) + xi);
+                if (intersect) inside = !inside;
+            }
+
+            return inside;
+        };
+
+        // Get coordinates based on geometry type
+        let coords = [];
+        if (feature.geometry.type === 'Polygon') {
+            coords = feature.geometry.coordinates[0];
+        } else if (feature.geometry.type === 'MultiPolygon') {
+            // For MultiPolygon, check all polygons
+            const pointsInFeature = points.filter(p => {
+                return feature.geometry.coordinates.some(polygon => {
+                    return pointInPolygon(p.lat, p.lng, polygon[0]);
+                });
+            });
+
+            if (pointsInFeature.length === 0) return null;
+
+            const totalScore = pointsInFeature.reduce((sum, p) => {
+                const weight = stanceWeights[p.stance] ?? 0;
+                return sum + weight;
+            }, 0);
+
+            return totalScore / pointsInFeature.length;
+        }
+
+        // Filter points that fall within this feature
+        const pointsInFeature = points.filter(p =>
+            pointInPolygon(p.lat, p.lng, coords)
+        );
+
+        if (pointsInFeature.length === 0) return null;
+
+        const totalScore = pointsInFeature.reduce((sum, p) => {
+            const weight = stanceWeights[p.stance] ?? 0;
+            return sum + weight;
+        }, 0);
+
+        return totalScore / pointsInFeature.length;
+    };
+
+    const getColorForAvg = (avg) => {
+        if (avg === null) return 'transparent';
+        if (avg < -1) return STANCE_COLOR["-No"];
+        if (avg < -0.1) return STANCE_COLOR["No"];
+        if (avg < 0.1) return STANCE_COLOR["Neutral"];
+        if (avg < 1.0) return STANCE_COLOR["Yes"];
+        return STANCE_COLOR["Yes+"];
+    };
+
+    const style = (feature) => {
+        const avg = calculateAvgForFeature(feature);
+        return {
+            fillColor: getColorForAvg(avg),
+            fillOpacity: avg === null ? 0 : 0.6,
+            color: '#666',
+            weight: 1,
+            opacity: 0.5
+        };
+    };
+
+    const onEachFeature = (feature, layer) => {
+        const avg = calculateAvgForFeature(feature);
+
+        layer.on({
+            click: () => {
+                const name = feature.properties?.name || feature.properties?.NAME || 'Region';
+                const popupContent = `
+          <div style="text-align: center; padding: 8px;">
+            <strong>${name}</strong><br/>
+            ${avg !== null ? `Average Score: ${avg.toFixed(2)}` : 'No data'}
+          </div>
+        `;
+                layer.bindPopup(popupContent).openPopup();
+            },
+            mouseover: (e) => {
+                if (avg !== null) {
+                    const layer = e.target;
+                    layer.setStyle({
+                        fillOpacity: 0.8,
+                        weight: 2,
+                        opacity: 0.8
+                    });
+                }
+            },
+            mouseout: (e) => {
+                if (avg !== null) {
+                    const layer = e.target;
+                    layer.setStyle({
+                        fillOpacity: 0.6,
+                        weight: 1,
+                        opacity: 0.5
+                    });
+                }
+            }
+        });
+    };
+
+    if (loading) {
+        return (
+            <div style={{
+                position: 'absolute',
+                top: '50%',
+                left: '50%',
+                transform: 'translate(-50%, -50%)',
+                zIndex: 1000,
+                background: 'white',
+                padding: '1rem',
+                borderRadius: '4px',
+                boxShadow: '0 2px 8px rgba(0,0,0,0.2)'
+            }}>
+                Loading map data...
+            </div>
+        );
+    }
+
+    if (error) {
+        return (
+            <div style={{
+                position: 'absolute',
+                top: '50%',
+                left: '50%',
+                transform: 'translate(-50%, -50%)',
+                zIndex: 1000,
+                background: '#fee',
+                color: '#c00',
+                padding: '1rem',
+                borderRadius: '4px',
+                boxShadow: '0 2px 8px rgba(0,0,0,0.2)',
+                maxWidth: '400px'
+            }}>
+                <strong>Error loading map:</strong><br />
+                {error}
+                <br /><br />
+                <small>Make sure custom.geo.json is in the /public folder</small>
+            </div>
+        );
+    }
+
+    if (!geoJSONData) {
+        return null;
+    }
+
+    return (
+        <GeoJSON
+            data={geoJSONData}
+            style={style}
+            onEachFeature={onEachFeature}
+        />
+    );
+}
+
 export default function App() {
     // Map & user
     const mapRef = useRef(null);
@@ -1414,7 +1643,14 @@ Set your homebase, engage with topics that matter to you, and be part of a geo-s
                                     onClick={() => setSelectedMapStyle("choropleth")}
                                 >
                                     <img src="/images/choropleth-icon.png" alt="Choropleth" />
-                                    <span>Choropleth</span>
+                                    <span>Grid Choropleth</span>
+                                </div>
+                                <div
+                                    className={`map-style-card ${selectedMapStyle === "custom-choropleth" ? "selected" : ""}`}
+                                    onClick={() => setSelectedMapStyle("custom-choropleth")}
+                                >
+                                    <img src="/images/custom-choropleth-icon.png" alt="Custom Choropleth" />
+                                    <span>Regional Choropleth</span>
                                 </div>
                             </div>
                         </div>
@@ -1451,6 +1687,10 @@ Set your homebase, engage with topics that matter to you, and be part of a geo-s
 
                         {selectedTopic && filteredPoints.length > 0 && selectedMapStyle === "choropleth" && (
                             <ChoroplethLayer points={heatPoints} />
+                        )}
+
+                        {selectedTopic && filteredPoints.length > 0 && selectedMapStyle === "custom-choropleth" && (
+                            <CustomChoroplethLayer points={heatPoints} />
                         )}
                     </MapContainer>
                 </main>
