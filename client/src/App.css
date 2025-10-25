@@ -94,9 +94,13 @@ button {
     /* Site title */
     .app-header h1,
     .header-left .site-title {
+        flex: 0 0 auto;
+        text-align: left !important;
+        font-size: 0.9rem;
         margin: 0;
-        font-size: 1.05rem;
-        font-weight: 600;
+        margin-left: -1rem; /* Pull it left to align with email below */
+        padding: 0;
+        order: 1;
     }
 
 /* Main area: occupies remaining viewport space below header */
