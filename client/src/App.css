@@ -777,18 +777,24 @@ body.dark-mode {
 }
 
 .dark-mode-toggle {
-    background: #f0f0f0;
-    border: none;
-    border-radius: 20px;
-    padding: 8px 16px;
-    cursor: pointer;
     font-size: 1.2rem;
-    margin-right: 1rem;
-    transition: all 0.3s ease;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0.4rem 0.6rem;
+    margin-right: 0.5rem;
+    border-radius: 6px;
+    transition: background 0.3s ease, transform 0.2s ease;
+    color: inherit;
 }
 
-body.dark-mode .dark-mode-toggle {
-    background: #444;
+    .dark-mode-toggle:hover {
+        background: rgba(0, 0, 0, 0.1);
+        transform: scale(1.1);
+    }
+
+.dark-mode .dark-mode-toggle:hover {
+    background: rgba(255, 255, 255, 0.1);
 }
 
 body.dark-mode .app-header {
