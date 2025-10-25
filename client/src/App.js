@@ -236,7 +236,6 @@ function generateGridGeoJSON(bounds, gridSize = 5) {
         for (let lng = lngMin; lng < lngMax; lng += gridSize) {
             const cellLatMax = Math.min(lat + gridSize, latMax);
             const cellLngMax = Math.min(lng + gridSize, lngMax);
-
             features.push({
                 type: "Feature",
                 properties: {
@@ -270,6 +269,7 @@ function generateGridGeoJSON(bounds, gridSize = 5) {
 
 function HeatmapLayer({ points }) {
     const map = useMap();
+
     useEffect(() => {
         if (!map || points.length === 0) return;
 
@@ -351,20 +351,17 @@ function ChoroplethLayer({ points }) {
 
     // Calculate grid size based on zoom level
     const getGridSizeForZoom = (zoom) => {
-        // Zoom level ranges from 2 (world view) to 12 (max zoom)
-        // Grid size ranges from 12 (zoomed out) to 0.2 (zoomed in)
-
-        if (zoom <= 2) return 12;      // World view: 12 degree cells
-        if (zoom <= 3) return 8;       // Continental: 8 degree cells
-        if (zoom <= 4) return 5;       // Large regions: 5 degree cells
-        if (zoom <= 5) return 3;       // Countries: 3 degree cells
-        if (zoom <= 6) return 2;       // States/provinces: 2 degree cells
-        if (zoom <= 7) return 1;       // Large cities: 1 degree cells
-        if (zoom <= 8) return 0.5;     // Cities: 0.5 degree cells
-        if (zoom <= 9) return 0.3;     // Neighborhoods: 0.3 degree cells
-        if (zoom <= 10) return 0.15;    // Streets: 0.15 degree cells
-        if (zoom <= 11) return 0.02;   // Blocks: 0.02 degree cells
-        return 0.01;                     // Max zoom: 0.01 degree cells
+        if (zoom <= 2) return 12;
+        if (zoom <= 3) return 8;
+        if (zoom <= 4) return 5;
+        if (zoom <= 5) return 3;
+        if (zoom <= 6) return 2;
+        if (zoom <= 7) return 1;
+        if (zoom <= 8) return 0.5;
+        if (zoom <= 9) return 0.3;
+        if (zoom <= 10) return 0.15;
+        if (zoom <= 11) return 0.02;
+        return 0.01;
     };
 
     useEffect(() => {
@@ -374,9 +371,7 @@ function ChoroplethLayer({ points }) {
             const bounds = map.getBounds();
             const zoom = map.getZoom();
             const gridSize = getGridSizeForZoom(zoom);
-
-            console.log(`Zoom: ${zoom}, Grid Size: ${gridSize}`); // For debugging
-
+            console.log(`Zoom: ${zoom}, Grid Size: ${gridSize}`);
             const geoJSON = generateGridGeoJSON(bounds, gridSize);
             setGridGeoJSON(geoJSON);
             setMapKey(prev => prev + 1);
@@ -384,7 +379,6 @@ function ChoroplethLayer({ points }) {
 
         updateGrid();
 
-        //Update grid when map zooms (but not when panning)
         map.on('moveend', updateGrid);
         map.on('zoomend', updateGrid);
 
@@ -434,7 +428,6 @@ function ChoroplethLayer({ points }) {
 
     const onEachFeature = (feature, layer) => {
         const avg = calculateAvgForCell(feature.properties.bounds);
-
         layer.on({
             click: () => {
                 if (avg !== null) {
@@ -488,15 +481,13 @@ function CustomChoroplethLayer({ points }) {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
-    // Load the custom GeoJSON file
     useEffect(() => {
         async function loadGeoJSON() {
             try {
-                // Try multiple possible paths
                 const paths = [
-                    '/custom.geo.json',  // Renamed with .json extension
-                    '/custom.geo',       // Original name
-                    `${process.env.PUBLIC_URL}/custom.geo.json`,  // With PUBLIC_URL
+                    '/custom.geo.json',
+                    '/custom.geo',
+                    `${process.env.PUBLIC_URL}/custom.geo.json`,
                     `${process.env.PUBLIC_URL}/custom.geo`
                 ];
 
@@ -507,7 +498,6 @@ function CustomChoroplethLayer({ points }) {
                     try {
                         console.log(`Trying to fetch from: ${path}`);
                         const response = await fetch(path);
-
                         if (response.ok) {
                             const text = await response.text();
                             data = JSON.parse(text);
@@ -538,13 +528,10 @@ function CustomChoroplethLayer({ points }) {
         loadGeoJSON();
     }, []);
 
-    // Calculate average for each GeoJSON feature based on points inside
     const calculateAvgForFeature = (feature) => {
         if (!feature.geometry) return null;
 
-        // Helper to check if point is inside polygon
         const pointInPolygon = (lat, lng, coords) => {
-            // Ray casting algorithm
             let inside = false;
             const x = lng;
             const y = lat;
@@ -559,16 +546,13 @@ function CustomChoroplethLayer({ points }) {
                     (x < (xj - xi) * (y - yi) / (yj - yi) + xi);
                 if (intersect) inside = !inside;
             }
-
             return inside;
         };
 
-        // Get coordinates based on geometry type
         let coords = [];
         if (feature.geometry.type === 'Polygon') {
             coords = feature.geometry.coordinates[0];
         } else if (feature.geometry.type === 'MultiPolygon') {
-            // For MultiPolygon, check all polygons
             const pointsInFeature = points.filter(p => {
                 return feature.geometry.coordinates.some(polygon => {
                     return pointInPolygon(p.lat, p.lng, polygon[0]);
@@ -585,7 +569,6 @@ function CustomChoroplethLayer({ points }) {
             return totalScore / pointsInFeature.length;
         }
 
-        // Filter points that fall within this feature
         const pointsInFeature = points.filter(p =>
             pointInPolygon(p.lat, p.lng, coords)
         );
@@ -622,7 +605,6 @@ function CustomChoroplethLayer({ points }) {
 
     const onEachFeature = (feature, layer) => {
         const avg = calculateAvgForFeature(feature);
-
         layer.on({
             click: () => {
                 const name = feature.properties?.name || feature.properties?.NAME || 'Region';
@@ -710,13 +692,15 @@ function CustomChoroplethLayer({ points }) {
         />
     );
 }
-
 export default function App() {
     // Map & user
     const mapRef = useRef(null);
     const [map, setMap] = useState(null);
     const [user, setUser] = useState(null);
     const [profile, setProfile] = useState(null);
+
+    // Expander for mobile
+    const [mapExpanded, setMapExpanded] = useState(false);
 
     // Map visualization options
     const [mapOptionsOpen, setMapOptionsOpen] = useState(false);
@@ -730,7 +714,7 @@ export default function App() {
     // Dark mode - load from localStorage on mount
     const [darkMode, setDarkMode] = useState(() => {
         const savedMode = localStorage.getItem('darkMode');
-        return savedMode === 'true'; // Convert string to boolean
+        return savedMode === 'true';
     });
 
     // About modal
@@ -809,12 +793,62 @@ export default function App() {
         };
 
         map.on('moveend', handleMove);
-        setVisibleBounds(map.getBounds()); // initial bounds
+        setVisibleBounds(map.getBounds());
 
         return () => {
             map.off('moveend', handleMove);
         };
     }, [map]);
+
+    // ===== NEW: Force map to reload tiles and invalidate size =====
+    useEffect(() => {
+        if (!map) return;
+
+        // Invalidate size when map becomes available
+        setTimeout(() => {
+            map.invalidateSize();
+        }, 100);
+
+        // Add event listeners for various scenarios that might cause tile loading issues
+        const handleResize = () => {
+            map.invalidateSize();
+        };
+
+        const handleOrientationChange = () => {
+            setTimeout(() => {
+                map.invalidateSize();
+            }, 200);
+        };
+
+        // Listen for window resize
+        window.addEventListener('resize', handleResize);
+
+        // Listen for orientation changes (mobile)
+        window.addEventListener('orientationchange', handleOrientationChange);
+
+        // Also invalidate when the map moves or zooms
+        map.on('moveend', () => {
+            map.invalidateSize();
+        });
+
+        return () => {
+            window.removeEventListener('resize', handleResize);
+            window.removeEventListener('orientationchange', handleOrientationChange);
+            map.off('moveend');
+        };
+    }, [map]);
+
+    // ===== NEW: Handle spotlight toggle specifically =====
+    useEffect(() => {
+        if (!map) return;
+
+        // When mapExpanded state changes, invalidate map size after animation completes
+        const timer = setTimeout(() => {
+            map.invalidateSize();
+        }, 350);
+
+        return () => clearTimeout(timer);
+    }, [map, mapExpanded]);
 
     useEffect(() => {
         async function loadSharedTopic() {
@@ -823,11 +857,9 @@ export default function App() {
             if (!topicId) return;
 
             try {
-                // First check if topic is already loaded
                 const existing = topics.find(t => String(t.id) === String(topicId));
                 if (existing) {
                     setSelectedTopic(existing);
-                    // Load points for this topic
                     const res = await fetch(`${API_BASE}/points?topic_id=${encodeURIComponent(existing.id)}`);
                     if (res.ok) {
                         setHeatPoints(await res.json());
@@ -835,13 +867,11 @@ export default function App() {
                     return;
                 }
 
-                // If not in topics list, fetch it from server
                 const res = await fetch(`${API_BASE}/topics/${topicId}`);
                 if (res.ok) {
                     const topic = await res.json();
                     setTopics(prev => (prev.some(t => t.id === topic.id) ? prev : [topic, ...prev]));
                     setSelectedTopic(topic);
-                    // Load points for this topic
                     const pointsRes = await fetch(`${API_BASE}/points?topic_id=${encodeURIComponent(topic.id)}`);
                     if (pointsRes.ok) {
                         setHeatPoints(await pointsRes.json());
@@ -858,13 +888,13 @@ export default function App() {
     useEffect(() => {
         async function tryLoadTopic() {
             if (!topicIdFromURL) return;
-            // First, try to find it in already-loaded topics
+
             const match = topics.find(t => String(t.id) === String(topicIdFromURL));
             if (match) {
                 setSelectedTopic(match);
                 return;
             }
-            // If not found, fetch it directly
+
             try {
                 const res = await fetch(`${API_BASE}/topics/${topicIdFromURL}`);
                 if (res.ok) {
@@ -882,7 +912,6 @@ export default function App() {
         tryLoadTopic();
     }, [topicIdFromURL]);
 
-    // Apply dark mode class to body and save to localStorage
     useEffect(() => {
         if (darkMode) {
             document.body.classList.add('dark-mode');
@@ -893,7 +922,6 @@ export default function App() {
         }
     }, [darkMode]);
 
-    // Fetch profile from Supabase
     async function fetchProfile(userId) {
         const { data, error } = await supabase
             .from("profiles")
@@ -918,7 +946,6 @@ export default function App() {
         }
     }
 
-    // Reverse geocode coordinates to get location name
     async function getLocationName(lat, lng) {
         try {
             await new Promise(resolve => setTimeout(resolve, 1000));
@@ -936,7 +963,6 @@ export default function App() {
             }
 
             const data = await response.json();
-
             if (data && data.address) {
                 const city = data.address.city || data.address.town || data.address.village || data.address.suburb;
                 const country = data.address.country;
@@ -946,7 +972,6 @@ export default function App() {
                     return country;
                 }
             }
-
             return "Unknown Location";
         } catch (error) {
             console.error("Error fetching location name:", error);
@@ -954,7 +979,6 @@ export default function App() {
         }
     }
 
-    // Fetch logged‐in user's history
     async function fetchUserHistory() {
         if (!user?.id) {
             setUserHistory([]);
@@ -977,7 +1001,6 @@ export default function App() {
         setUserHistory(rows);
     }
 
-    // Toggle user‐history spotlight
     const toggleUserSpotlight = () => {
         setUserSpotlightOpen(open => {
             const next = !open;
@@ -995,14 +1018,12 @@ export default function App() {
         setSelectedUserPoint(null);
     };
 
-    // Deduplicate topics by ID
     const uniqueTopics = useMemo(() => {
         const m = new Map();
         topics.forEach(t => m.set(t.id, t));
         return Array.from(m.values());
     }, [topics]);
 
-    // Filtered Points
     const filteredPoints = useMemo(() => {
         if (!useMapView || !visibleBounds) return heatPoints;
         const sw = visibleBounds.getSouthWest();
@@ -1015,7 +1036,6 @@ export default function App() {
         ));
     }, [heatPoints, visibleBounds, useMapView]);
 
-    // Filter topics
     const filteredTopics = useMemo(() => {
         let result = uniqueTopics.filter(t => {
             const matchesText = searchText
@@ -1047,7 +1067,6 @@ export default function App() {
         return result;
     }, [uniqueTopics, searchText, filterTitle, startDate, endDate, sortOption]);
 
-    // Insert ads every 8 items
     const topicsWithAds = useMemo(() => {
         const result = [];
         filteredTopics.forEach((topic, index) => {
@@ -1059,7 +1078,6 @@ export default function App() {
         return result;
     }, [filteredTopics]);
 
-    // Sharing button
     const handleShare = topicId => {
         const shareUrl = `${window.location.origin}/?topic=${topicId}`;
         if (navigator.share) {
@@ -1074,7 +1092,6 @@ export default function App() {
         }
     };
 
-    // Supabase auth listener
     useEffect(() => {
         (async () => {
             const { data: { session } } = await supabase.auth.getSession();
@@ -1094,7 +1111,6 @@ export default function App() {
         return () => subscription.unsubscribe();
     }, []);
 
-    // Auth handlers
     const handleSignUp = async e => {
         e.preventDefault();
         const { error } = await supabase.auth.signUp({ email: signUpEmail, password: signUpPassword });
@@ -1114,7 +1130,6 @@ export default function App() {
         setProfile(null);
     };
 
-    // Set homebase
     const setHomebase = () => {
         if (!user) return alert("Please sign in.");
         if (profile?.homebase_set) return alert("Homebase already set.");
@@ -1124,6 +1139,7 @@ export default function App() {
             async pos => {
                 const { latitude, longitude } = pos.coords;
                 const now = new Date().toISOString();
+
                 const { data, error } = await supabase
                     .from("profiles")
                     .upsert({
@@ -1150,7 +1166,6 @@ export default function App() {
         );
     };
 
-    // Reset homebase (with 180-day limit)
     const resetHomebase = async () => {
         if (!user) return alert("Please sign in.");
         if (!profile?.homebase_set) return alert("No homebase to reset.");
@@ -1164,6 +1179,7 @@ export default function App() {
         navigator.geolocation.getCurrentPosition(
             async pos => {
                 const { latitude, longitude } = pos.coords;
+
                 const res = await fetch(`${API_BASE}/profiles/${user.id}/reset-homebase`, {
                     method: "PUT",
                     headers: { "Content-Type": "application/json" },
@@ -1171,6 +1187,7 @@ export default function App() {
                 });
 
                 const data = await res.json();
+
                 if (!res.ok) {
                     if (res.status === 429) {
                         return alert(data.message || "You can only reset homebase once every 180 days.");
@@ -1186,7 +1203,6 @@ export default function App() {
         );
     };
 
-    // Handle topic creation
     const handleCreateTopic = async e => {
         e.preventDefault();
         if (!user) return alert("Sign in first.");
@@ -1212,6 +1228,7 @@ export default function App() {
         });
 
         const data = await res.json();
+
         if (!res.ok) {
             console.error("Create topic failed:", data);
             if (res.status === 429) {
@@ -1241,7 +1258,6 @@ export default function App() {
         alert("Topic created successfully!");
     };
 
-    // Submit a vote on the selected topic
     const handleEngage = async e => {
         e.preventDefault();
         if (!user?.id || !profile?.homebase_set) {
@@ -1268,11 +1284,9 @@ export default function App() {
         if (res.ok) {
             setHeatPoints(prev => mergeMostRecentPerUser(prev, [pt]));
         }
-
         setEngageStance("");
     };
 
-    // When a topic in the feed is clicked
     const handleSelectTopic = async t => {
         setSelectedTopic(t);
         setHeatPoints([]);
@@ -1287,15 +1301,14 @@ export default function App() {
         }
     };
 
-    // Close the topic spotlight
     const closeSpotlight = () => {
         setSelectedTopic(null);
         setHeatPoints([]);
         setEngageStance("");
     };
 
-    // Pagination & infinite scroll
     const PAGE_SIZE = 20;
+
     const loadNextPage = async () => {
         if (!hasMore) return;
 
@@ -1336,10 +1349,8 @@ export default function App() {
         return () => obs.disconnect();
     }, [hasMore]);
 
-    // Socket.IO real-time
     useEffect(() => {
         if (!selectedTopic?.id) return;
-
         socket.emit("subscribe_topic", { topic_id: selectedTopic.id });
         return () => socket.emit("unsubscribe_topic", { topic_id: selectedTopic.id });
     }, [selectedTopic]);
@@ -1364,7 +1375,6 @@ export default function App() {
         };
     }, []);
 
-    // Heatmap & twinkle points
     const renderPoints = useMemo(() => {
         return mergeMostRecentPerUser([], heatPoints)
             .map(p => ({
@@ -1412,7 +1422,6 @@ export default function App() {
             .filter(p => !isNaN(p.lat) && !isNaN(p.lng));
     }, [twinklePoints]);
 
-    // Twinkle effect stuff
     useEffect(() => {
         if (!map || selectedTopic) return;
 
@@ -1426,11 +1435,11 @@ export default function App() {
 
             const icon = L.divIcon({
                 className: 'twinkle-marker',
-                html: `<div class="twinkle-dot" style=" 
-          animation-delay: ${delay}s; 
-          animation-duration: ${duration}s; 
-          background: ${color}; 
-          box-shadow: 0 0 6px ${color}; 
+                html: `<div class="twinkle-dot" style="
+          animation-delay: ${delay}s;
+          animation-duration: ${duration}s;
+          background: ${color};
+          box-shadow: 0 0 6px ${color};
         "></div>`,
                 iconSize: [12, 12],
                 iconAnchor: [6, 6]
@@ -1507,7 +1516,6 @@ export default function App() {
                 >
                     PulseVote
                 </h1>
-
                 <div className="header-right">
                     <button
                         onClick={() => setMapOptionsOpen(o => !o)}
@@ -1517,7 +1525,16 @@ export default function App() {
                     >
                         🗺️
                     </button>
-
+                    {selectedTopic && (
+                        <button
+                            onClick={() => setMapExpanded(!mapExpanded)}
+                            className="map-expand-toggle mobile-only"
+                            aria-label={mapExpanded ? "Shrink map" : "Expand map"}
+                            title={mapExpanded ? "Shrink map view" : "Expand map view"}
+                        >
+                            {mapExpanded ? '⬇️' : '⬆️'}
+                        </button>
+                    )}
                     <button
                         onClick={() => setDarkMode(!darkMode)}
                         className="dark-mode-toggle"
@@ -1526,7 +1543,6 @@ export default function App() {
                     >
                         {darkMode ? '☀️' : '🌙'}
                     </button>
-
                     {user && (
                         <div className="header-user-line">
                             <button className="header-email mono clickable" onClick={toggleUserSpotlight}>
@@ -1586,14 +1602,14 @@ Set your homebase, engage with topics that matter to you, and be part of a geo-s
                             }}>
                                 <span onClick={() => setAboutText(`PulseVote is a geo-social dashboard that visualizes public sentiment by location. It empowers users to share opinions, discover regional trends, and engage in civic dialogue.`)}>About Us</span>
                                 <span onClick={() => setAboutText(
-                                    <>
+                                    <div>
                                         <p><strong>Frequently Asked Questions:</strong></p>
                                         <p>1. <strong>What is PulseVote?</strong><br />
                                             A geo-social dashboard for sharing and visualizing opinions.</p>
                                         <p>2. <strong>Do I need an account?</strong><br />
                                             No, but setting a homebase unlocks more features.</p>
                                         <p>3. <strong>Can I create my own topics?</strong><br />
-                                            Yes! Just click "Create a New Topic" and start engaging.</p>
+                                            Yes! Just click &quot;Create a New Topic&quot; and start engaging.</p>
                                         <p>4. <strong>Are there any limitations when making a topic?</strong><br />
                                             Yes. Though moderation is very minimal on the site, certain words have been blocked to improve the user experience on PulseVote. You are also limited to creating only 1 voting topic in a 24 hour period to reduce spam.</p>
                                         <p>5. <strong>Are there any limitations when voting?</strong><br />
@@ -1601,8 +1617,8 @@ Set your homebase, engage with topics that matter to you, and be part of a geo-s
                                         <p>6. <strong>Are these votes legally binding or used anywhere?</strong><br />
                                             Not yet. In a perfect world, we would trust our police forces to always protect us from any encroachment on our personal freedoms. This in turn would allow us to trust a public voting system without fear of repercussions, harassment, or assault. For now, PulseVote is a thought-experiment to give the world a voice and to show everyone there are more of us than you think. You deserve to take part in specific vote topics, not just electing the leaders who decide for you but keep letting you down term after term.</p>
                                         <p>7. <strong>Who runs PulseVote?</strong><br />
-                                            A lone Canadian data scientist has built this site and runs everything independently, there is no "big government" behind this project. Please be patient with him. If you want to suggest improvements to PulseVote, please use the 'PulseVote' voting topic. And in true Canadian fashion, if you find something with the site is broken, sorry in advance!</p>
-                                    </>
+                                            A lone Canadian data scientist has built this site and runs everything independently, there is no &quot;big government&quot; behind this project. Please be patient with him. If you want to suggest improvements to PulseVote, please use the &apos;PulseVote&apos; voting topic. And in true Canadian fashion, if you find something with the site is broken, sorry in advance!</p>
+                                    </div>
                                 )}>F.A.Q.</span>
                                 <span onClick={() => setAboutText(
                                     <>
@@ -1610,456 +1626,456 @@ Set your homebase, engage with topics that matter to you, and be part of a geo-s
                                         <p>PulseVote offers interactive ad placements within topic feeds. Reach geo-targeted audiences with sponsored messages that blend seamlessly into the user experience.</p>
                                         <p>In the future, we will offer an automated system to submit your sponsor info, message, and link. For now, please email us at:{" "}
                                             <a
-                                                href="mailto:ads@pulsevote.org"
-                                                style={{ color: darkMode ? '#ccc' : '#0077cc', textDecoration: 'underline' }}
+                                            href="mailto:ads@pulsevote.org"
+                                            style={{ color: darkMode ? '#ccc' : '#0077cc', textDecoration: 'underline' }}
                                             >
-                                                ads@pulsevote.org
-                                            </a>
-                                        </p>
-                                    </>
-                                )}>Advertise with Us</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            )}
-
-            {mapOptionsOpen && (
-                <div className="modal-overlay" onClick={() => setMapOptionsOpen(false)}>
-                    <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-                        <button className="modal-close" onClick={() => setMapOptionsOpen(false)}>✕</button>
-                        <h2 className="modal-title">Map Visualization Options</h2>
-                        <div className="modal-body">
-                            <div className="map-style-options">
-                                <div
-                                    className={`map-style-card ${selectedMapStyle === "heatmap" ? "selected" : ""}`}
-                                    onClick={() => setSelectedMapStyle("heatmap")}
-                                >
-                                    <img src="/images/heatmap-icon.png" alt="Heatmap" />
-                                    <span>Heatmap</span>
-                                </div>
-                                <div
-                                    className={`map-style-card ${selectedMapStyle === "choropleth" ? "selected" : ""}`}
-                                    onClick={() => setSelectedMapStyle("choropleth")}
-                                >
-                                    <img src="/images/choropleth-icon.png" alt="Choropleth" />
-                                    <span>Grid Choropleth</span>
-                                </div>
-                                <div
-                                    className={`map-style-card ${selectedMapStyle === "custom-choropleth" ? "selected" : ""}`}
-                                    onClick={() => setSelectedMapStyle("custom-choropleth")}
-                                >
-                                    <img src="/images/custom-choropleth-icon.png" alt="Custom Choropleth" />
-                                    <span>Regional Choropleth</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            )}
-
-            <div className="app-main" style={{ flex: 1, display: "flex", overflow: "hidden" }}>
-                <main className="map-column" style={{ flex: 1 }}>
-                    <MapContainer
-                        center={[20, 0]}
-                        zoom={2}
-                        className="main-map"
-                        whenCreated={mapInstance => mapRef.current = mapInstance}
-                        preferCanvas={true}
-                        minZoom={2}
-                        maxZoom={12}
-                    >
-                        <TileLayer
-                            url={darkMode
-                                ? "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
-                                : "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                            }
-                            attribution={darkMode
-                                ? '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors © <a href="https://carto.com/attributions">CARTO</a>'
-                                : '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-                            }
-                        />
-                        <MapSetter onMapReady={setMap} />
-
-                        {selectedTopic && filteredPoints.length > 0 && selectedMapStyle === "heatmap" && (
-                            <HeatmapLayer points={renderPoints} />
-                        )}
-
-                        {selectedTopic && filteredPoints.length > 0 && selectedMapStyle === "choropleth" && (
-                            <ChoroplethLayer points={heatPoints} />
-                        )}
-
-                        {selectedTopic && filteredPoints.length > 0 && selectedMapStyle === "custom-choropleth" && (
-                            <CustomChoroplethLayer points={heatPoints} />
-                        )}
-                    </MapContainer>
-                </main>
-
-                <aside className="right-column">
-                    {userSpotlightOpen ? (
-                        selectedUserPoint ? (
-                            <section className="spotlight-section card">
-                                <button className="spotlight-close" onClick={closeUserSpotlight}>✕</button>
-                                <div className="spotlight-content">
-                                    <h3 className="spotlight-title">
-                                        {topicIcons[selectedTopic.title] || ''} {selectedTopic.title}
-                                    </h3>
-                                    <p>Your stance: <strong>{selectedUserPoint.stance}</strong></p>
-                                    <p>Intensity: {selectedUserPoint.intensity} / 100</p>
-                                    <p>At: {new Date(selectedUserPoint.created_at).toLocaleString()}</p>
-                                </div>
-                            </section>
-                        ) : (
-                            <section className="feed-section card" style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "2rem", textAlign: "center" }}>
-                                <h3 style={{ marginBottom: "0.5rem" }}>Homebase</h3>
-                                <p style={{ fontSize: "1.2rem", fontWeight: "bold", margin: "0.5rem 0" }}>{homebaseName}</p>
-                                {profile?.home_lat && profile?.home_lng && (
-                                    <>
-                                        <p style={{ fontSize: "0.9rem", color: "#666", margin: "0.5rem 0" }}>
-                                            {profile.home_lat.toFixed(4)}, {profile.home_lng.toFixed(4)}
-                                        </p>
-                                        <button
-                                            onClick={resetHomebase}
-                                            style={{
-                                                marginTop: "1rem",
-                                                padding: "0.5rem 1.5rem",
-                                                background: "#FE6100",
-                                                color: "white",
-                                                border: "none",
-                                                borderRadius: "6px",
-                                                cursor: "pointer",
-                                                fontSize: "0.9rem",
-                                                fontWeight: "bold",
-                                                transition: "background 0.2s ease"
-                                            }}
-                                            onMouseEnter={(e) => e.target.style.background = "#E55500"}
-                                            onMouseLeave={(e) => e.target.style.background = "#FE6100"}
-                                        >
-                                            Reset Homebase
-                                        </button>
-                                    </>
-                                )}
-                            </section>
-                        )
-                    ) : selectedTopic ? (
-                        <section id="spotlight-section" className="spotlight-section card">
-                            <button className="spotlight-close" onClick={closeSpotlight}>✕</button>
-                            <div className="spotlight-content">
-                                <h3 className="spotlight-title">
-                                    {topicIcons[selectedTopic.title] || ''} {selectedTopic.title}
-                                </h3>
-                                <p className="spotlight-count">
-                                    {filteredPoints.length} of {heatPoints.length} votes visible
-                                </p>
-                                <button onClick={() => handleShare(selectedTopic.id)} className="share-button">Share</button>
-
-                                <div className="stance-summary">
-                                    {["-No", "No", "Neutral", "Yes", "Yes+"].map(s => (
-                                        <div key={s} className="stance-box">
-                                            <div className="stance-label">{s}</div>
-                                            <div className="stance-value">{stancePercentages[s]}%</div>
-                                        </div>
-                                    ))}
-                                    <div className={`stance-box ${getAvgBoxColor(avgStanceScore)}`}>
-                                        <div className="stance-label">AVG</div>
-                                        <div className="stance-value">{avgStanceScore}</div>
-                                    </div>
-                                </div>
-
-                                <p className="spotlight-meta">
-                                    By: <strong>{selectedTopic.created_by}</strong><br />
-                                    On: {new Date(selectedTopic.created_at).toLocaleString()}
-                                </p>
-
-                                {selectedTopic.description ? (
-                                    <p className="spotlight-desc" style={{ margin: "2rem 0" }}>
-                                        {selectedTopic.description.split('\n').map((line, index) => (
-                                            <React.Fragment key={index}>
-                                                {line}
-                                                <br />
-                                            </React.Fragment>
-                                        ))}
+                                            ads@pulsevote.org
+                                        </a>
                                     </p>
-                                ) : (
-                                    <p className="spotlight-desc muted" style={{ margin: "2rem 0" }}>No description provided.</p>
-                                )}
+                  </>
+                )}>Advertise with Us</span>
+                    </div>
+                </div>
+          </div>
+        </div >
+      )
+}
 
-                                <div className="spotlight-engage">
-                                    <h4 style={{ margin: "0 0 0.5rem" }}>Engage with this Topic</h4>
-                                    {!user ? (
-                                        <div style={{ color: "#666", fontSize: "0.95rem" }}>Sign in and set a homebase to engage.</div>
-                                    ) : (
-                                        <form onSubmit={handleEngage} className="compact-form">
-                                            <div className="radios" role="radiogroup">
-                                                {["-No", "No", "Neutral", "Yes", "Yes+"].map(s => (
-                                                    <label key={s}>
-                                                        <input
-                                                            type="radio"
-                                                            name="engage-stance"
-                                                            value={s}
-                                                            checked={engageStance === s}
-                                                            onChange={e => setEngageStance(e.target.value)}
-                                                            style={{ accentColor: STANCE_COLOR[s] }}
-                                                        />
-                                                        {" "}{s}
-                                                    </label>
-                                                ))}
-                                            </div>
-                                            <div className="stance-bar">
-                                                {["-No", "No", "Neutral", "Yes", "Yes+"].map(s => (
-                                                    <div
-                                                        key={s}
-                                                        className="stance-segment"
-                                                        style={{ backgroundColor: STANCE_COLOR[s] }}
-                                                    />
-                                                ))}
-                                            </div>
-                                            <div className="engage-actions">
-                                                <button type="submit" disabled={!engageStance}>Engage</button>
-                                            </div>
-                                        </form>
-                                    )}
-                                </div>
-                            </div>
-                        </section>
-                    ) : (
-                        <>
-                            {!user ? (
-                                <section className="auth-section">
-                                    <div className="auth-box card">
-                                        <h3>Sign Up</h3>
-                                        <form onSubmit={handleSignUp} className="compact-form">
-                                            <input
-                                                type="email"
-                                                placeholder="Email"
-                                                value={signUpEmail}
-                                                onChange={e => setSignUpEmail(e.target.value)}
-                                                required
-                                            />
-                                            <input
-                                                type="password"
-                                                placeholder="Password"
-                                                value={signUpPassword}
-                                                onChange={e => setSignUpPassword(e.target.value)}
-                                                required
-                                            />
-                                            <button type="submit">Sign Up</button>
-                                        </form>
-                                    </div>
-                                    <div className="auth-box card">
-                                        <h3>Login</h3>
-                                        <form onSubmit={handleLogin} className="compact-form">
-                                            <input
-                                                type="email"
-                                                placeholder="Email"
-                                                value={loginEmail}
-                                                onChange={e => setLoginEmail(e.target.value)}
-                                                required
-                                            />
-                                            <input
-                                                type="password"
-                                                placeholder="Password"
-                                                value={loginPassword}
-                                                onChange={e => setLoginPassword(e.target.value)}
-                                                required
-                                            />
-                                            <button type="submit">Login</button>
-                                        </form>
-                                    </div>
-                                </section>
-                            ) : (
-                                <>
-                                    <section className="create-section card">
-                                        <div className="accordion-header">
-                                            <h3>Create a New Topic</h3>
-                                            <button
-                                                className={`accordion-toggle ${createOpen ? "open" : ""}`}
-                                                onClick={() => setCreateOpen(o => !o)}
-                                                aria-expanded={createOpen}
-                                            >
-                                                {createOpen ? "−" : "+"}
-                                            </button>
-                                        </div>
-                                        <div className={`accordion-body ${createOpen ? "expanded" : ""}`}>
-                                            <form onSubmit={handleCreateTopic} className="compact-form create-topic-form">
-                                                <label>Topic</label>
-                                                <select
-                                                    value={selectedPresetTitle}
-                                                    onChange={e => setSelectedPresetTitle(e.target.value)}
-                                                    required
-                                                >
-                                                    {[
-                                                        { label: "<< Select >>", value: "<< Select >>" },
-                                                        { label: "🌾 Agriculture and Agri-Food", value: "Agriculture and Agri-Food" },
-                                                        { label: "🗳️ Elections", value: "Elections" },
-                                                        { label: "💼 Employment and Social Development", value: "Employment and Social Development" },
-                                                        { label: "🌱 Environment and Climate Change", value: "Environment and Climate Change" },
-                                                        { label: "🎭 Entertainment", value: "Entertainment" },
-                                                        { label: "💰 Finance", value: "Finance" },
-                                                        { label: "🐟 Fisheries and Oceans", value: "Fisheries and Oceans" },
-                                                        { label: "🌍 Global Affairs", value: "Global Affairs" },
-                                                        { label: "🏥 Health", value: "Health" },
-                                                        { label: "🏛️ Heritage", value: "Heritage" },
-                                                        { label: "🛂 Immigration, Refugees and Citizenship", value: "Immigration, Refugees and Citizenship" },
-                                                        { label: "🧑‍🤝‍🧑 Indigenous Services", value: "Indigenous Services" },
-                                                        { label: "🏗️ Infrastructure", value: "Infrastructure" },
-                                                        { label: "🔬 Innovation, Science and Economic Development", value: "Innovation, Science and Economic Development" },
-                                                        { label: "⚖️ Justice", value: "Justice" },
-                                                        { label: "🏘️ Local Affairs", value: "Local Affairs" },
-                                                        { label: "🛡️ National Defence", value: "National Defence" },
-                                                        { label: "⛏️ Natural Resources", value: "Natural Resources" },
-                                                        { label: "🚨 Public Safety", value: "Public Safety" },
-                                                        { label: "📦 Public Services and Procurement", value: "Public Services and Procurement" },
-                                                        { label: "💡 PulseVote - Site Suggestions", value: "PulseVote - Site Suggestions" },
-                                                        { label: "🚗 Transport", value: "Transport" },
-                                                        { label: "🎖️ Veterans Affairs", value: "Veterans Affairs" }
-                                                    ].map(opt => (
-                                                        <option key={opt.value} value={opt.value}>{opt.label}</option>
-                                                    ))}
-                                                </select>
-                                                <textarea
-                                                    placeholder={`Topic (required)\n\nDescription`}
-                                                    value={newDescription}
-                                                    onChange={(e) => {
-                                                        setNewDescription(e.target.value);
-                                                        setHasFilteredWords(containsFilteredWords(e.target.value));
-                                                    }}
-                                                    rows={5}
-                                                    required
-                                                />
-                                                <div className="radios">
-                                                    {["-No", "No", "Neutral", "Yes", "Yes+"].map(s => (
-                                                        <label key={s}>
-                                                            <input
-                                                                type="radio"
-                                                                name="create-stance"
-                                                                value={s}
-                                                                checked={stance === s}
-                                                                onChange={e => setStance(e.target.value)}
-                                                                style={{ accentColor: STANCE_COLOR[s] }}
-                                                            />
-                                                            {" "}{s}
-                                                        </label>
-                                                    ))}
-                                                </div>
-                                                <div className="stance-bar">
-                                                    {["-No", "No", "Neutral", "Yes", "Yes+"].map(s => (
-                                                        <div
-                                                            key={s}
-                                                            className="stance-segment"
-                                                            style={{ backgroundColor: STANCE_COLOR[s] }}
-                                                        />
-                                                    ))}
-                                                </div>
-                                                <button
-                                                    type="submit"
-                                                    disabled={selectedPresetTitle === "<< Select >>" || hasFilteredWords}
-                                                >
-                                                    Create Topic
-                                                </button>
-                                            </form>
-                                        </div>
-                                    </section>
-
-                                    <section className="accordion-section card">
-                                        <div className="accordion-header" style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                                            <div style={{ flex: 1, textAlign: "center" }}>
-                                                <h3 style={{ margin: 0, fontWeight: "normal" }}>Filters</h3>
-                                            </div>
-                                            <button
-                                                className={`accordion-toggle ${filterOpen ? "open" : ""}`}
-                                                onClick={() => setFilterOpen(o => !o)}
-                                                aria-expanded={filterOpen}
-                                            >
-                                                {filterOpen ? "−" : "+"}
-                                            </button>
-                                        </div>
-                                        <div className={`accordion-body ${filterOpen ? "expanded" : ""}`}>
-                                            <form className="compact-form">
-                                                <input
-                                                    type="text"
-                                                    placeholder="Search description..."
-                                                    value={searchText}
-                                                    onChange={e => setSearchText(e.target.value)}
-                                                    style={{ marginBottom: "0rem", width: "100%", height: "2.5rem", padding: "0rem" }}
-                                                />
-                                                <select
-                                                    value={filterTitle}
-                                                    onChange={e => setFilterTitle(e.target.value)}
-                                                    style={{ marginBottom: "0rem", width: "100%", height: "2.5rem", padding: "0rem" }}
-                                                >
-                                                    <option value="">All Titles</option>
-                                                    {Array.from(new Set(topics.map(t => t.title))).map(title => (
-                                                        <option key={title} value={title}>{title}</option>
-                                                    ))}
-                                                </select>
-                                                <div style={{ display: "flex", gap: "0.5rem", marginBottom: "0.5rem" }}>
-                                                    <input
-                                                        type="date"
-                                                        value={startDate}
-                                                        onChange={e => setStartDate(e.target.value)}
-                                                        style={{ flex: 1, height: "2.5rem", padding: "0.5rem" }}
-                                                    />
-                                                    <input
-                                                        type="date"
-                                                        value={endDate}
-                                                        onChange={e => setEndDate(e.target.value)}
-                                                        style={{ flex: 1, height: "2.5rem", padding: "0.5rem" }}
-                                                    />
-                                                </div>
-                                                <select
-                                                    value={sortOption}
-                                                    onChange={e => setSortOption(e.target.value)}
-                                                    style={{ marginBottom: "0.5rem", width: "100%", height: "2.5rem", padding: "0.5rem" }}
-                                                >
-                                                    <option value="newest">Newest to Oldest</option>
-                                                    <option value="oldest">Oldest to Newest</option>
-                                                    <option value="mostVotes">Most Votes</option>
-                                                    <option value="leastVotes">Least Votes</option>
-                                                </select>
-                                            </form>
-                                        </div>
-                                    </section>
-                                </>
-                            )}
-
-                            <section className="feed-section card" style={{ flex: 1, padding: 0 }}>
-                                <div className="feed-list" ref={feedRef} style={{ flex: 1, overflowY: "auto", padding: "0rem" }}>
-                                    <ul>
-                                        {topicsWithAds.map((item, index) =>
-                                            item.isAd ? (
-                                                <AdCard key={`ad-${item.adIndex}`} adIndex={item.adIndex} />
-                                            ) : (
-                                                <li
-                                                    key={item.id}
-                                                    className="feed-item feed-item--clickable"
-                                                    onClick={() => handleSelectTopic(item)}
-                                                    role="button"
-                                                    tabIndex={0}
-                                                >
-                                                    <div className="feed-left">
-                                                        <div className="feed-title">
-                                                            <span className="topic-icon">{topicIcons[item.title] || ''}</span>
-                                                            <span>{item.title}</span>
-                                                        </div>
-                                                        {item.description && <div className="feed-desc">{item.description}</div>}
-                                                        {item.created_at && <div className="feed-date">{new Date(item.created_at).toLocaleString()}</div>}
-                                                    </div>
-                                                    <div className="feed-right">
-                                                        <div className="feed-votes">{item.vote_count || 0} votes</div>
-                                                    </div>
-                                                </li>
-                                            )
-                                        )}
-                                    </ul>
-                                    <div id="topic-list-sentinel" style={{ height: 1 }} />
-                                    {!hasMore && <p style={{ textAlign: "center", color: "#666" }}>No more topics</p>}
-                                </div>
-                            </section>
-                        </>
-                    )}
-                </aside>
+{
+    mapOptionsOpen && (
+        <div className="modal-overlay" onClick={() => setMapOptionsOpen(false)}>
+            <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+                <button className="modal-close" onClick={() => setMapOptionsOpen(false)}>✕</button>
+                <h2 className="modal-title">Map Visualization Options</h2>
+                <div className="modal-body">
+                    <div className="map-style-options">
+                        <div
+                            className={`map-style-card ${selectedMapStyle === "heatmap" ? "selected" : ""}`}
+                            onClick={() => setSelectedMapStyle("heatmap")}
+                        >
+                            <img src="/images/heatmap-icon.png" alt="Heatmap" />
+                            <span>Heatmap</span>
+                        </div>
+                        <div
+                            className={`map-style-card ${selectedMapStyle === "choropleth" ? "selected" : ""}`}
+                            onClick={() => setSelectedMapStyle("choropleth")}
+                        >
+                            <img src="/images/choropleth-icon.png" alt="Choropleth" />
+                            <span>Grid Choropleth</span>
+                        </div>
+                        <div
+                            className={`map-style-card ${selectedMapStyle === "custom-choropleth" ? "selected" : ""}`}
+                            onClick={() => setSelectedMapStyle("custom-choropleth")}
+                        >
+                            <img src="/images/custom-choropleth-icon.png" alt="Custom Choropleth" />
+                            <span>Regional Choropleth</span>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
-    );
+    )
+}
+
+<div className="app-main" style={{ flex: 1, display: "flex", overflow: "hidden" }}>
+    <main className="map-column" style={{ flex: 1 }}>
+        <MapContainer
+            center={[20, 0]}
+            zoom={2}
+            className="main-map"
+            whenCreated={mapInstance => mapRef.current = mapInstance}
+            preferCanvas={true}
+            minZoom={2}
+            maxZoom={12}
+        >
+            <TileLayer
+                url={darkMode
+                    ? "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
+                    : "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                }
+                attribution={darkMode
+                    ? '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors © <a href="https://carto.com/attributions">CARTO</a>'
+                    : '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                }
+                keepBuffer={2}
+                updateWhenIdle={false}
+                updateWhenZooming={true}
+                updateInterval={100}
+            />
+            <MapSetter onMapReady={setMap} />
+            {selectedTopic && filteredPoints.length > 0 && selectedMapStyle === "heatmap" && (
+                <HeatmapLayer points={renderPoints} />
+            )}
+            {selectedTopic && filteredPoints.length > 0 && selectedMapStyle === "choropleth" && (
+                <ChoroplethLayer points={heatPoints} />
+            )}
+            {selectedTopic && filteredPoints.length > 0 && selectedMapStyle === "custom-choropleth" && (
+                <CustomChoroplethLayer points={heatPoints} />
+            )}
+        </MapContainer>
+    </main>
+
+    <aside className="right-column">
+        {userSpotlightOpen ? (
+            selectedUserPoint ? (
+                <section className="spotlight-section card">
+                    <button className="spotlight-close" onClick={closeUserSpotlight}>✕</button>
+                    <div className="spotlight-content">
+                        <h3 className="spotlight-title">
+                            {topicIcons[selectedTopic.title] || ''} {selectedTopic.title}
+                        </h3>
+                        <p>Your stance: <strong>{selectedUserPoint.stance}</strong></p>
+                        <p>Intensity: {selectedUserPoint.intensity} / 100</p>
+                        <p>At: {new Date(selectedUserPoint.created_at).toLocaleString()}</p>
+                    </div>
+                </section>
+            ) : (
+                <section className="feed-section card" style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "2rem", textAlign: "center" }}>
+                    <h3 style={{ marginBottom: "0.5rem" }}>Homebase</h3>
+                    <p style={{ fontSize: "1.2rem", fontWeight: "bold", margin: "0.5rem 0" }}>{homebaseName}</p>
+                    {profile?.home_lat && profile?.home_lng && (
+                        <>
+                            <p style={{ fontSize: "0.9rem", color: "#666", margin: "0.5rem 0" }}>
+                                {profile.home_lat.toFixed(4)}, {profile.home_lng.toFixed(4)}
+                            </p>
+                            <button
+                                onClick={resetHomebase}
+                                style={{
+                                    marginTop: "1rem",
+                                    padding: "0.5rem 1.5rem",
+                                    background: "#FE6100",
+                                    color: "white",
+                                    border: "none",
+                                    borderRadius: "6px",
+                                    cursor: "pointer",
+                                    fontSize: "0.9rem",
+                                    fontWeight: "bold",
+                                    transition: "background 0.2s ease"
+                                }}
+                                onMouseEnter={(e) => e.target.style.background = "#E55500"}
+                                onMouseLeave={(e) => e.target.style.background = "#FE6100"}
+                            >
+                                Reset Homebase
+                            </button>
+                        </>
+                    )}
+                </section>
+            )
+        ) : selectedTopic ? (
+            <section id="spotlight-section" className={`spotlight-section card ${mapExpanded ? 'spotlight-minimized' : ''}`}>
+                <button className="spotlight-close" onClick={closeSpotlight}>✕</button>
+                <div className="spotlight-content">
+                    <h3 className="spotlight-title">
+                        {topicIcons[selectedTopic.title] || ''} {selectedTopic.title}
+                    </h3>
+                    <p className="spotlight-count">
+                        {filteredPoints.length} of {heatPoints.length} votes visible
+                    </p>
+                    <button onClick={() => handleShare(selectedTopic.id)} className="share-button">Share</button>
+                    <div className="stance-summary">
+                        {["-No", "No", "Neutral", "Yes", "Yes+"].map(s => (
+                            <div key={s} className="stance-box">
+                                <div className="stance-label">{s}</div>
+                                <div className="stance-value">{stancePercentages[s]}%</div>
+                            </div>
+                        ))}
+                        <div className={`stance-box ${getAvgBoxColor(avgStanceScore)}`}>
+                            <div className="stance-label">AVG</div>
+                            <div className="stance-value">{avgStanceScore}</div>
+                        </div>
+                    </div>
+                    <p className="spotlight-meta">
+                        By: <strong>{selectedTopic.created_by}</strong><br />
+                        On: {new Date(selectedTopic.created_at).toLocaleString()}
+                    </p>
+                    {selectedTopic.description ? (
+                        <p className="spotlight-desc" style={{ margin: "2rem 0" }}>
+                            {selectedTopic.description.split('\n').map((line, index) => (
+                                <React.Fragment key={index}>
+                                    {line}
+                                    <br />
+                                </React.Fragment>
+                            ))}
+                        </p>
+                    ) : (
+                        <p className="spotlight-desc muted" style={{ margin: "2rem 0" }}>No description provided.</p>
+                    )}
+                    <div className="spotlight-engage">
+                        <h4 style={{ margin: "0 0 0.5rem" }}>Engage with this Topic</h4>
+                        {!user ? (
+                            <div style={{ color: "#666", fontSize: "0.95rem" }}>Sign in and set a homebase to engage.</div>
+                        ) : (
+                            <form onSubmit={handleEngage} className="compact-form">
+                                <div className="radios" role="radiogroup">
+                                    {["-No", "No", "Neutral", "Yes", "Yes+"].map(s => (
+                                        <label key={s}>
+                                            <input
+                                                type="radio"
+                                                name="engage-stance"
+                                                value={s}
+                                                checked={engageStance === s}
+                                                onChange={e => setEngageStance(e.target.value)}
+                                                style={{ accentColor: STANCE_COLOR[s] }}
+                                            />
+                                            {" "}{s}
+                                        </label>
+                                    ))}
+                                </div>
+                                <div className="stance-bar">
+                                    {["-No", "No", "Neutral", "Yes", "Yes+"].map(s => (
+                                        <div
+                                            key={s}
+                                            className="stance-segment"
+                                            style={{ backgroundColor: STANCE_COLOR[s] }}
+                                        />
+                                    ))}
+                                </div>
+                                <div className="engage-actions">
+                                    <button type="submit" disabled={!engageStance}>Engage</button>
+                                </div>
+                            </form>
+                        )}
+                    </div>
+                </div>
+            </section>
+        ) : (
+            <>
+                {!user ? (
+                    <section className="auth-section">
+                        <div className="auth-box card">
+                            <h3>Sign Up</h3>
+                            <form onSubmit={handleSignUp} className="compact-form">
+                                <input
+                                    type="email"
+                                    placeholder="Email"
+                                    value={signUpEmail}
+                                    onChange={e => setSignUpEmail(e.target.value)}
+                                    required
+                                />
+                                <input
+                                    type="password"
+                                    placeholder="Password"
+                                    value={signUpPassword}
+                                    onChange={e => setSignUpPassword(e.target.value)}
+                                    required
+                                />
+                                <button type="submit">Sign Up</button>
+                            </form>
+                        </div>
+                        <div className="auth-box card">
+                            <h3>Login</h3>
+                            <form onSubmit={handleLogin} className="compact-form">
+                                <input
+                                    type="email"
+                                    placeholder="Email"
+                                    value={loginEmail}
+                                    onChange={e => setLoginEmail(e.target.value)}
+                                    required
+                                />
+                                <input
+                                    type="password"
+                                    placeholder="Password"
+                                    value={loginPassword}
+                                    onChange={e => setLoginPassword(e.target.value)}
+                                    required
+                                />
+                                <button type="submit">Login</button>
+                            </form>
+                        </div>
+                    </section>
+                ) : (
+                    <>
+                        <section className="create-section card">
+                            <div className="accordion-header">
+                                <h3>Create a New Topic</h3>
+                                <button
+                                    className={`accordion-toggle ${createOpen ? "open" : ""}`}
+                                    onClick={() => setCreateOpen(o => !o)}
+                                    aria-expanded={createOpen}
+                                >
+                                    {createOpen ? "−" : "+"}
+                                </button>
+                            </div>
+                            <div className={`accordion-body ${createOpen ? "expanded" : ""}`}>
+                                <form onSubmit={handleCreateTopic} className="compact-form create-topic-form">
+                                    <label>Topic</label>
+                                    <select
+                                        value={selectedPresetTitle}
+                                        onChange={e => setSelectedPresetTitle(e.target.value)}
+                                        required
+                                    >
+                                        {[
+                                            { label: "<< Select >>", value: "<< Select >>" },
+                                            { label: "🌾 Agriculture and Agri-Food", value: "Agriculture and Agri-Food" },
+                                            { label: "🗳️ Elections", value: "Elections" },
+                                            { label: "💼 Employment and Social Development", value: "Employment and Social Development" },
+                                            { label: "🌱 Environment and Climate Change", value: "Environment and Climate Change" },
+                                            { label: "🎭 Entertainment", value: "Entertainment" },
+                                            { label: "💰 Finance", value: "Finance" },
+                                            { label: "🐟 Fisheries and Oceans", value: "Fisheries and Oceans" },
+                                            { label: "🌍 Global Affairs", value: "Global Affairs" },
+                                            { label: "🏥 Health", value: "Health" },
+                                            { label: "🏛️ Heritage", value: "Heritage" },
+                                            { label: "🛂 Immigration, Refugees and Citizenship", value: "Immigration, Refugees and Citizenship" },
+                                            { label: "🧑‍🤝‍🧑 Indigenous Services", value: "Indigenous Services" },
+                                            { label: "🏗️ Infrastructure", value: "Infrastructure" },
+                                            { label: "🔬 Innovation, Science and Economic Development", value: "Innovation, Science and Economic Development" },
+                                            { label: "⚖️ Justice", value: "Justice" },
+                                            { label: "🏘️ Local Affairs", value: "Local Affairs" },
+                                            { label: "🛡️ National Defence", value: "National Defence" },
+                                            { label: "⛏️ Natural Resources", value: "Natural Resources" },
+                                            { label: "🚨 Public Safety", value: "Public Safety" },
+                                            { label: "📦 Public Services and Procurement", value: "Public Services and Procurement" },
+                                            { label: "💡 PulseVote - Site Suggestions", value: "PulseVote - Site Suggestions" },
+                                            { label: "🚗 Transport", value: "Transport" },
+                                            { label: "🎖️ Veterans Affairs", value: "Veterans Affairs" }
+                                        ].map(opt => (
+                                            <option key={opt.value} value={opt.value}>{opt.label}</option>
+                                        ))}
+                                    </select>
+                                    <textarea
+                                        placeholder={`Topic (required)\n\nDescription`}
+                                        value={newDescription}
+                                        onChange={(e) => {
+                                            setNewDescription(e.target.value);
+                                            setHasFilteredWords(containsFilteredWords(e.target.value));
+                                        }}
+                                        rows={5}
+                                        required
+                                    />
+                                    <div className="radios">
+                                        {["-No", "No", "Neutral", "Yes", "Yes+"].map(s => (
+                                            <label key={s}>
+                                                <input
+                                                    type="radio"
+                                                    name="create-stance"
+                                                    value={s}
+                                                    checked={stance === s}
+                                                    onChange={e => setStance(e.target.value)}
+                                                    style={{ accentColor: STANCE_COLOR[s] }}
+                                                />
+                                                {" "}{s}
+                                            </label>
+                                        ))}
+                                    </div>
+                                    <div className="stance-bar">
+                                        {["-No", "No", "Neutral", "Yes", "Yes+"].map(s => (
+                                            <div
+                                                key={s}
+                                                className="stance-segment"
+                                                style={{ backgroundColor: STANCE_COLOR[s] }}
+                                            />
+                                        ))}
+                                    </div>
+                                    <button
+                                        type="submit"
+                                        disabled={selectedPresetTitle === "<< Select >>" || hasFilteredWords}
+                                    >
+                                        Create Topic
+                                    </button>
+                                </form>
+                            </div>
+                        </section>
+
+                        <section className="accordion-section card">
+                            <div className="accordion-header" style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                                <div style={{ flex: 1, textAlign: "center" }}>
+                                    <h3 style={{ margin: 0, fontWeight: "normal" }}>Filters</h3>
+                                </div>
+                                <button
+                                    className={`accordion-toggle ${filterOpen ? "open" : ""}`}
+                                    onClick={() => setFilterOpen(o => !o)}
+                                    aria-expanded={filterOpen}
+                                >
+                                    {filterOpen ? "−" : "+"}
+                                </button>
+                            </div>
+                            <div className={`accordion-body ${filterOpen ? "expanded" : ""}`}>
+                                <form className="compact-form">
+                                    <input
+                                        type="text"
+                                        placeholder="Search description..."
+                                        value={searchText}
+                                        onChange={e => setSearchText(e.target.value)}
+                                        style={{ marginBottom: "0rem", width: "100%", height: "2.5rem", padding: "0rem" }}
+                                    />
+                                    <select
+                                        value={filterTitle}
+                                        onChange={e => setFilterTitle(e.target.value)}
+                                        style={{ marginBottom: "0rem", width: "100%", height: "2.5rem", padding: "0rem" }}
+                                    >
+                                        <option value="">All Titles</option>
+                                        {Array.from(new Set(topics.map(t => t.title))).map(title => (
+                                            <option key={title} value={title}>{title}</option>
+                                        ))}
+                                    </select>
+                                    <div style={{ display: "flex", gap: "0.5rem", marginBottom: "0.5rem" }}>
+                                        <input
+                                            type="date"
+                                            value={startDate}
+                                            onChange={e => setStartDate(e.target.value)}
+                                            style={{ flex: 1, height: "2.5rem", padding: "0.5rem" }}
+                                        />
+                                        <input
+                                            type="date"
+                                            value={endDate}
+                                            onChange={e => setEndDate(e.target.value)}
+                                            style={{ flex: 1, height: "2.5rem", padding: "0.5rem" }}
+                                        />
+                                    </div>
+                                    <select
+                                        value={sortOption}
+                                        onChange={e => setSortOption(e.target.value)}
+                                        style={{ marginBottom: "0.5rem", width: "100%", height: "2.5rem", padding: "0.5rem" }}
+                                    >
+                                        <option value="newest">Newest to Oldest</option>
+                                        <option value="oldest">Oldest to Newest</option>
+                                        <option value="mostVotes">Most Votes</option>
+                                        <option value="leastVotes">Least Votes</option>
+                                    </select>
+                                </form>
+                            </div>
+                        </section>
+                    </>
+                )}
+
+                <section className="feed-section card" style={{ flex: 1, padding: 0 }}>
+                    <div className="feed-list" ref={feedRef} style={{ flex: 1, overflowY: "auto", padding: "0rem" }}>
+                        <ul>
+                            {topicsWithAds.map((item, index) =>
+                                item.isAd ? (
+                                    <AdCard key={`ad-${item.adIndex}`} adIndex={item.adIndex} />
+                                ) : (
+                                    <li
+                                        key={item.id}
+                                        className="feed-item feed-item--clickable"
+                                        onClick={() => handleSelectTopic(item)}
+                                        role="button"
+                                        tabIndex={0}
+                                    >
+                                        <div className="feed-left">
+                                            <div className="feed-title">
+                                                <span className="topic-icon">{topicIcons[item.title] || ''}</span>
+                                                <span>{item.title}</span>
+                                            </div>
+                                            {item.description && <div className="feed-desc">{item.description}</div>}
+                                            {item.created_at && <div className="feed-date">{new Date(item.created_at).toLocaleString()}</div>}
+                                        </div>
+                                        <div className="feed-right">
+                                            <div className="feed-votes">{item.vote_count || 0} votes</div>
+                                        </div>
+                                    </li>
+                                )
+                            )}
+                        </ul>
+                        <div id="topic-list-sentinel" style={{ height: 1 }} />
+                        {!hasMore && <p style={{ textAlign: "center", color: "#666" }}>No more topics</p>}
+                    </div>
+                </section>
+            </>
+        )}
+    </aside>
+</div>
+    </div >
+  );
 }
