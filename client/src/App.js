@@ -219,7 +219,7 @@ function getAvgBoxColor(avg) {
     if (avg < -1) return 'stance-no-strong';
     if (avg < -0.1) return 'stance-no';
     if (avg < 0.1) return 'stance-neutral';
-    if (avg < 1.0) return 'stance-yes';
+    if (avg <= 1.00) return 'stance-yes';
     return 'stance-yes-strong';
 }
 
@@ -411,7 +411,7 @@ function ChoroplethLayer({ points }) {
         if (avg < -1) return STANCE_COLOR["-No"];
         if (avg < -0.1) return STANCE_COLOR["No"];
         if (avg < 0.1) return STANCE_COLOR["Neutral"];
-        if (avg < 1.0) return STANCE_COLOR["Yes"];
+        if (avg <= 1.00) return STANCE_COLOR["Yes"];
         return STANCE_COLOR["Yes+"];
     };
 
@@ -588,7 +588,7 @@ function CustomChoroplethLayer({ points }) {
         if (avg < -1) return STANCE_COLOR["-No"];
         if (avg < -0.1) return STANCE_COLOR["No"];
         if (avg < 0.1) return STANCE_COLOR["Neutral"];
-        if (avg < 1.0) return STANCE_COLOR["Yes"];
+        if (avg <= 1.00) return STANCE_COLOR["Yes"];
         return STANCE_COLOR["Yes+"];
     };
 
