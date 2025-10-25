@@ -1,11 +1,11 @@
 ﻿/* App.css — full merged stylesheet
-   - pure-flex layout so map and sidebar match heights
-   - only sidebar scrolls internally
-   - feed list fills the card
-   - create accordion and topic spotlight view
-   - feed descriptions truncated to a single-line preview
-   - full-width Engage button in spotlight
-   - topic list: no bullets and left padding matches right side
+- pure-flex layout so map and sidebar match heights
+- only sidebar scrolls internally
+- feed list fills the card
+- create accordion and topic spotlight view
+- feed descriptions truncated to a single-line preview
+- full-width Engage button in spotlight
+- topic list: no bullets and left padding matches right side
 */
 
 /* Basic resets */
@@ -211,6 +211,7 @@ button {
    heading removed; feed-list now fills the card completely
    list-style removed and left-padding aligned with card padding
 */
+
 .feed-section {
     display: flex;
     flex-direction: column;
@@ -284,6 +285,7 @@ button {
 /* --------------------------
    Spotlight view (selected topic)
    -------------------------- */
+
 .spotlight-section {
     position: relative; /* so close button can be absolute */
     padding: 1rem;
@@ -500,6 +502,7 @@ button {
 /* --------------------------
    Create accordion styles
    -------------------------- */
+
 .create-section.card,
 .create-section.card > .accordion-header,
 .create-section.card > .accordion-body {
@@ -571,6 +574,7 @@ button {
 /* --------------------------
    Header right-justified user info + buttons
    -------------------------- */
+
 .header-right {
     display: flex;
     align-items: center;
@@ -1119,6 +1123,50 @@ body.dark-mode .leaflet-control-zoom-out {
     box-shadow: 0 0 6px rgba(255, 215, 0, 0.5);
 }
 
+/* Desktop Header Layout - reset any mobile overrides */
+@media (min-width: 481px) {
+    .app-header {
+        display: flex;
+        flex-wrap: nowrap;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0.5rem 1rem;
+    }
+
+    .site-title {
+        order: 1;
+        margin-left: 0;
+        flex: 0 0 auto;
+    }
+
+    .header-right {
+        order: 2;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        flex: 0 0 auto;
+    }
+
+    .map-options-toggle,
+    .map-expand-toggle,
+    .dark-mode-toggle {
+        order: 1;
+    }
+
+    .header-user-line {
+        order: 2;
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        gap: 0.6rem;
+    }
+
+    .header-logout {
+        position: static !important;
+        order: 3;
+    }
+}
+
 /* ========================================
    MOBILE RESPONSIVE DESIGN
    ======================================== */
@@ -1134,10 +1182,10 @@ body.dark-mode .leaflet-control-zoom-out {
 
     /* Hide map on tablets, show feed full-width */
     .map-column {
-    display: flex !important;
-    flex-direction: column;
-    width: 100%;
-    min-height: 250px;
+        display: flex !important;
+        flex-direction: column;
+        width: 100%;
+        min-height: 250px;
     }
 
     /* Sidebar becomes full-width */
@@ -1284,7 +1332,6 @@ body.dark-mode .leaflet-control-zoom-out {
     }
 
     /* Stance summary adjustments */
-    
     .stance-label {
         font-size: 0.65rem;
     }
@@ -1332,7 +1379,6 @@ body.dark-mode .leaflet-control-zoom-out {
     html, body {
         overflow-x: hidden;
     }
-
 }
 
 /* Small phones (480px and below) */
@@ -1418,7 +1464,7 @@ body.dark-mode .leaflet-control-zoom-out {
         box-shadow: 0 1px 3px rgba(0,0,0,0.1);
     }
 
-     /* Tighter overall spacing */
+    /* Tighter overall spacing */
     .app-root {
         height: 100vh;
     }
@@ -1837,7 +1883,6 @@ body.dark-mode .stance-box.avg-neutral {
 
 /* Mobile spotlight minimized state - only on mobile */
 @media (max-width: 768px) {
-
     /* Remove map borders on mobile by default */
     .map-column {
         border-radius: 0 !important;
