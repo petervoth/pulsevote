@@ -78,6 +78,13 @@ const AD_DATA = [
     },
 ];
 
+// Ad Pricing Constants
+const AD_PRICING = {
+    7: 35,   // 7 days = $35
+    14: 60,  // 14 days = $60
+    30: 100  // 30 days = $100
+};
+
 // Word filter for topic descriptions
 const FILTERED_WORDS = [
     "fuck",
@@ -236,6 +243,7 @@ function generateGridGeoJSON(bounds, gridSize = 5) {
         for (let lng = lngMin; lng < lngMax; lng += gridSize) {
             const cellLatMax = Math.min(lat + gridSize, latMax);
             const cellLngMax = Math.min(lng + gridSize, lngMax);
+
             features.push({
                 type: "Feature",
                 properties: {
@@ -260,6 +268,7 @@ function generateGridGeoJSON(bounds, gridSize = 5) {
             });
         }
     }
+
     return {
         type: "FeatureCollection",
         features
@@ -378,7 +387,6 @@ function ChoroplethLayer({ points }) {
         };
 
         updateGrid();
-
         map.on('moveend', updateGrid);
         map.on('zoomend', updateGrid);
 
@@ -693,6 +701,58 @@ function CustomChoroplethLayer({ points }) {
     );
 }
 
+// Image validation function
+const validateImage = (file) => {
+    return new Promise((resolve, reject) => {
+        // Check file size (max 5MB)
+        const maxSize = 5 * 1024 * 1024; // 5MB in bytes
+        if (file.size > maxSize) {
+            reject('Image must be less than 5MB');
+            return;
+        }
+
+        // Check file type
+        const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+        if (!validTypes.includes(file.type)) {
+            reject('Image must be JPG, PNG, or WebP format');
+            return;
+        }
+
+        // Check dimensions
+        const img = new Image();
+        img.onload = () => {
+            const width = img.width;
+            const height = img.height;
+
+            // Require exact or larger dimensions (we can crop/resize later)
+            // Target: 280x160 (maintains aspect ratio of 1.75:1)
+            const minWidth = 280;
+            const minHeight = 160;
+            const aspectRatio = width / height;
+            const targetAspectRatio = 1.75;
+
+            if (width < minWidth || height < minHeight) {
+                reject(`Image must be at least ${minWidth}x${minHeight} pixels`);
+                return;
+            }
+
+            // Allow some flexibility in aspect ratio (±0.1)
+            if (Math.abs(aspectRatio - targetAspectRatio) > 0.15) {
+                reject('Image aspect ratio should be close to 16:9 (recommended: 280x160)');
+                return;
+            }
+
+            resolve(true);
+        };
+
+        img.onerror = () => {
+            reject('Failed to load image');
+        };
+
+        img.src = URL.createObjectURL(file);
+    });
+};
+
 export default function App() {
     // Map & user
     const mapRef = useRef(null);
@@ -720,6 +780,20 @@ export default function App() {
 
     // About modal
     const [aboutModalOpen, setAboutModalOpen] = useState(false);
+
+    // Ad submission modal state
+    const [adSubmissionOpen, setAdSubmissionOpen] = useState(false);
+    const [adFormData, setAdFormData] = useState({
+        companyName: '',
+        adText: '',
+        linkUrl: '',
+        email: '',
+        duration: 7, // default 7 days
+        imageFile: null,
+        imagePreview: null
+    });
+    const [adFormErrors, setAdFormErrors] = useState({});
+    const [adFormSubmitting, setAdFormSubmitting] = useState(false);
 
     // Location name for homebase
     const [homebaseName, setHomebaseName] = useState("Loading...");
@@ -785,6 +859,159 @@ export default function App() {
     // Listener that updates whenever the map moves or zooms
     const [useMapView, setUseMapView] = useState(true);
     const [visibleBounds, setVisibleBounds] = useState(null);
+
+    // Ad form handlers
+    const handleAdFormChange = (field, value) => {
+        setAdFormData(prev => ({
+            ...prev,
+            [field]: value
+        }));
+
+        // Clear error for this field when user types
+        if (adFormErrors[field]) {
+            setAdFormErrors(prev => ({
+                ...prev,
+                [field]: null
+            }));
+        }
+    };
+
+    const handleImageUpload = async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        try {
+            await validateImage(file);
+
+            // Create preview URL
+            const previewUrl = URL.createObjectURL(file);
+
+            setAdFormData(prev => ({
+                ...prev,
+                imageFile: file,
+                imagePreview: previewUrl
+            }));
+
+            setAdFormErrors(prev => ({
+                ...prev,
+                image: null
+            }));
+        } catch (error) {
+            setAdFormErrors(prev => ({
+                ...prev,
+                image: error
+            }));
+            e.target.value = ''; // Reset file input
+        }
+    };
+
+    const validateAdForm = () => {
+        const errors = {};
+
+        if (!adFormData.companyName.trim()) {
+            errors.companyName = 'Company name is required';
+        }
+
+        if (!adFormData.adText.trim()) {
+            errors.adText = 'Ad text is required';
+        } else if (adFormData.adText.length > 100) {
+            errors.adText = 'Ad text must be 100 characters or less';
+        }
+
+        if (!adFormData.linkUrl.trim()) {
+            errors.linkUrl = 'Link URL is required';
+        } else {
+            // Basic URL validation
+            try {
+                new URL(adFormData.linkUrl.startsWith('http') ? adFormData.linkUrl : `https://${adFormData.linkUrl}`);
+            } catch {
+                errors.linkUrl = 'Please enter a valid URL';
+            }
+        }
+
+        if (!adFormData.email.trim()) {
+            errors.email = 'Email is required';
+        } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(adFormData.email)) {
+            errors.email = 'Please enter a valid email';
+        }
+
+        if (!adFormData.imageFile) {
+            errors.image = 'Ad image is required';
+        }
+
+        setAdFormErrors(errors);
+        return Object.keys(errors).length === 0;
+    };
+
+    const handleAdSubmit = async (e) => {
+        e.preventDefault();
+
+        if (!validateAdForm()) {
+            return;
+        }
+
+        setAdFormSubmitting(true);
+
+        try {
+            // Create FormData for file upload
+            const formData = new FormData();
+            formData.append('companyName', adFormData.companyName);
+            formData.append('adText', adFormData.adText);
+            formData.append('linkUrl', adFormData.linkUrl);
+            formData.append('email', adFormData.email);
+            formData.append('duration', adFormData.duration);
+            formData.append('amount', AD_PRICING[adFormData.duration]);
+            formData.append('image', adFormData.imageFile);
+
+            // TODO: This endpoint needs to be created in your backend
+            const response = await fetch(`${API_BASE}/api/ad-submissions`, {
+                method: 'POST',
+                body: formData
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to submit ad');
+            }
+
+            const result = await response.json();
+
+            // Success! Show confirmation
+            alert(`Thank you! Your ad submission has been received. We'll review it and contact you at ${adFormData.email} within 24 hours.\n\nSubmission ID: ${result.id}`);
+
+            // Reset form
+            setAdFormData({
+                companyName: '',
+                adText: '',
+                linkUrl: '',
+                email: '',
+                duration: 7,
+                imageFile: null,
+                imagePreview: null
+            });
+            setAdSubmissionOpen(false);
+            setAboutModalOpen(false);
+
+        } catch (error) {
+            console.error('Error submitting ad:', error);
+            alert('Failed to submit ad. Please try again or contact us at ads@pulsevote.org');
+        } finally {
+            setAdFormSubmitting(false);
+        }
+    };
+
+    const resetAdForm = () => {
+        setAdFormData({
+            companyName: '',
+            adText: '',
+            linkUrl: '',
+            email: '',
+            duration: 7,
+            imageFile: null,
+            imagePreview: null
+        });
+        setAdFormErrors({});
+        setAdSubmissionOpen(false);
+    };
 
     useEffect(() => {
         if (!map || typeof map.getBounds !== 'function') return;
@@ -873,6 +1100,7 @@ export default function App() {
                     const topic = await res.json();
                     setTopics(prev => (prev.some(t => t.id === topic.id) ? prev : [topic, ...prev]));
                     setSelectedTopic(topic);
+
                     const pointsRes = await fetch(`${API_BASE}/points?topic_id=${encodeURIComponent(topic.id)}`);
                     if (pointsRes.ok) {
                         setHeatPoints(await pointsRes.json());
@@ -882,12 +1110,14 @@ export default function App() {
                 console.error("Error loading shared topic:", err);
             }
         }
+
         loadSharedTopic();
     }, [location.search, topics]);
 
     useEffect(() => {
         async function tryLoadTopic() {
             if (!topicIdFromURL) return;
+
             const match = topics.find(t => String(t.id) === String(topicIdFromURL));
             if (match) {
                 setSelectedTopic(match);
@@ -907,6 +1137,7 @@ export default function App() {
                 console.error("Error fetching topic by ID:", err);
             }
         }
+
         tryLoadTopic();
     }, [topicIdFromURL]);
 
@@ -961,7 +1192,6 @@ export default function App() {
             }
 
             const data = await response.json();
-
             if (data && data.address) {
                 const city = data.address.city || data.address.town || data.address.village || data.address.suburb;
                 const country = data.address.country;
@@ -1138,6 +1368,7 @@ export default function App() {
                 redirectTo: window.location.origin
             }
         });
+
         if (error) {
             console.error(`${provider} sign-in error:`, error);
             alert(`Failed to sign in with ${provider}: ${error.message}`);
@@ -1201,7 +1432,6 @@ export default function App() {
                 });
 
                 const data = await res.json();
-
                 if (!res.ok) {
                     if (res.status === 429) {
                         return alert(data.message || "You can only reset homebase once every 180 days.");
@@ -1242,7 +1472,6 @@ export default function App() {
         });
 
         const data = await res.json();
-
         if (!res.ok) {
             console.error("Create topic failed:", data);
             if (res.status === 429) {
@@ -1295,11 +1524,9 @@ export default function App() {
         });
 
         const pt = await res.json();
-
         if (res.ok) {
             setHeatPoints(prev => mergeMostRecentPerUser(prev, [pt]));
         }
-
         setEngageStance("");
     };
 
@@ -1367,6 +1594,7 @@ export default function App() {
 
     useEffect(() => {
         if (!selectedTopic?.id) return;
+
         socket.emit("subscribe_topic", { topic_id: selectedTopic.id });
         return () => socket.emit("unsubscribe_topic", { topic_id: selectedTopic.id });
     }, [selectedTopic]);
@@ -1568,6 +1796,7 @@ export default function App() {
                             <button className="header-email mono clickable" onClick={toggleUserSpotlight}>
                                 {user.email}
                             </button>
+
                             {profile?.homebase_set ? (
                                 <button
                                     className="header-home mono clickable"
@@ -1582,6 +1811,7 @@ export default function App() {
                                     Set Homebase
                                 </button>
                             )}
+
                             <button className="header-logout" onClick={handleLogout} aria-label="Logout">
                                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                                     <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
@@ -1612,6 +1842,7 @@ Create topics, share your stance, and see how opinions cluster across the map. E
 
 Set your homebase, engage with topics that matter to you, and be part of a geo-social movement that brings transparency to public opinion.`}
                             </div>
+
                             <div style={{
                                 display: 'flex',
                                 justifyContent: 'space-around',
@@ -1640,62 +1871,498 @@ Set your homebase, engage with topics that matter to you, and be part of a geo-s
                                             A lone Canadian data scientist has built this site and runs everything independently, there is no "big government" behind this project. Please be patient with him. If you want to suggest improvements to PulseVote, please use the 'PulseVote' voting topic. And in true Canadian fashion, if you find something with the site is broken, sorry in advance!</p>
                                     </div>
                                 )}>F.A.Q.</span>
-                                <span onClick={() => setAboutText(
-                                    <>
-                                        <p><strong>Want to advertise with us?</strong></p>
-                                        <p>PulseVote offers interactive ad placements within topic feeds. Reach geo-targeted audiences with sponsored messages that blend seamlessly into the user experience.</p>
-                                        <p>In the future, we will offer an automated system to submit your sponsor info, message, and link. For now, please email us at:{" "}
-                                            <a
-                                                href="mailto:ads@pulsevote.org"
-                                                style={{ color: darkMode ? '#ccc' : '#0077cc', textDecoration: 'underline' }}
-                                            >
-                                                ads@pulsevote.org
-                                            </a>
-                                        </p>
-                                    </>
-                                )}>Advertise with Us</span>
+                                <span onClick={() => {
+                                    setAboutModalOpen(false);
+                                    setAdSubmissionOpen(true);
+                                }}>Advertise with Us</span>
                             </div>
                         </div>
                     </div>
-                </div >
-            )
-            }
+                </div>
+            )}
 
-            {
-                mapOptionsOpen && (
-                    <div className="modal-overlay" onClick={() => setMapOptionsOpen(false)}>
-                        <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-                            <button className="modal-close" onClick={() => setMapOptionsOpen(false)}>✕</button>
-                            <h2 className="modal-title">Map Visualization Options</h2>
-                            <div className="modal-body">
-                                <div className="map-style-options">
-                                    <div
-                                        className={`map-style-card ${selectedMapStyle === "heatmap" ? "selected" : ""}`}
-                                        onClick={() => setSelectedMapStyle("heatmap")}
-                                    >
-                                        <img src="/images/heatmap-icon.png" alt="Heatmap" />
-                                        <span>Heatmap</span>
+            {/* Ad Submission Modal */}
+            {adSubmissionOpen && (
+                <div className="modal-overlay" onClick={() => resetAdForm()}>
+                    <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '600px' }}>
+                        <button className="modal-close" onClick={() => resetAdForm()}>✕</button>
+                        <h2 className="modal-title">Submit Your Advertisement</h2>
+                        <div className="modal-body">
+                            <p style={{
+                                fontSize: '0.9rem',
+                                color: darkMode ? '#ccc' : '#666',
+                                marginBottom: '1.5rem'
+                            }}>
+                                Reach our engaged community with your message. Ads appear in the topic feed and are clearly marked as sponsored content.
+                            </p>
+
+                            <form onSubmit={handleAdSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                                {/* Company Name */}
+                                <div>
+                                    <label style={{
+                                        display: 'block',
+                                        marginBottom: '0.5rem',
+                                        fontWeight: '600',
+                                        color: darkMode ? '#e0e0e0' : '#333'
+                                    }}>
+                                        Company/Organization Name *
+                                    </label>
+                                    <input
+                                        type="text"
+                                        value={adFormData.companyName}
+                                        onChange={(e) => handleAdFormChange('companyName', e.target.value)}
+                                        placeholder="Your company name"
+                                        style={{
+                                            width: '100%',
+                                            padding: '0.75rem',
+                                            borderRadius: '6px',
+                                            border: `1px solid ${adFormErrors.companyName ? '#dc3545' : '#ddd'}`,
+                                            fontSize: '1rem',
+                                            backgroundColor: darkMode ? '#2d2d2d' : '#fff',
+                                            color: darkMode ? '#e0e0e0' : '#333'
+                                        }}
+                                    />
+                                    {adFormErrors.companyName && (
+                                        <span style={{ color: '#dc3545', fontSize: '0.85rem', marginTop: '0.25rem' }}>
+                                            {adFormErrors.companyName}
+                                        </span>
+                                    )}
+                                </div>
+
+                                {/* Ad Text */}
+                                <div>
+                                    <label style={{
+                                        display: 'block',
+                                        marginBottom: '0.5rem',
+                                        fontWeight: '600',
+                                        color: darkMode ? '#e0e0e0' : '#333'
+                                    }}>
+                                        Ad Text * <span style={{ fontSize: '0.85rem', fontWeight: 'normal', color: '#666' }}>
+                                            ({adFormData.adText.length}/100 characters)
+                                        </span>
+                                    </label>
+                                    <textarea
+                                        value={adFormData.adText}
+                                        onChange={(e) => handleAdFormChange('adText', e.target.value)}
+                                        placeholder="Your compelling ad message (max 100 characters)"
+                                        maxLength={100}
+                                        rows={3}
+                                        style={{
+                                            width: '100%',
+                                            padding: '0.75rem',
+                                            borderRadius: '6px',
+                                            border: `1px solid ${adFormErrors.adText ? '#dc3545' : '#ddd'}`,
+                                            fontSize: '1rem',
+                                            resize: 'vertical',
+                                            backgroundColor: darkMode ? '#2d2d2d' : '#fff',
+                                            color: darkMode ? '#e0e0e0' : '#333'
+                                        }}
+                                    />
+                                    {adFormErrors.adText && (
+                                        <span style={{ color: '#dc3545', fontSize: '0.85rem', marginTop: '0.25rem' }}>
+                                            {adFormErrors.adText}
+                                        </span>
+                                    )}
+                                </div>
+
+                                {/* Link URL */}
+                                <div>
+                                    <label style={{
+                                        display: 'block',
+                                        marginBottom: '0.5rem',
+                                        fontWeight: '600',
+                                        color: darkMode ? '#e0e0e0' : '#333'
+                                    }}>
+                                        Link URL *
+                                    </label>
+                                    <input
+                                        type="text"
+                                        value={adFormData.linkUrl}
+                                        onChange={(e) => handleAdFormChange('linkUrl', e.target.value)}
+                                        placeholder="https://yourwebsite.com"
+                                        style={{
+                                            width: '100%',
+                                            padding: '0.75rem',
+                                            borderRadius: '6px',
+                                            border: `1px solid ${adFormErrors.linkUrl ? '#dc3545' : '#ddd'}`,
+                                            fontSize: '1rem',
+                                            backgroundColor: darkMode ? '#2d2d2d' : '#fff',
+                                            color: darkMode ? '#e0e0e0' : '#333'
+                                        }}
+                                    />
+                                    {adFormErrors.linkUrl && (
+                                        <span style={{ color: '#dc3545', fontSize: '0.85rem', marginTop: '0.25rem' }}>
+                                            {adFormErrors.linkUrl}
+                                        </span>
+                                    )}
+                                </div>
+
+                                {/* Contact Email */}
+                                <div>
+                                    <label style={{
+                                        display: 'block',
+                                        marginBottom: '0.5rem',
+                                        fontWeight: '600',
+                                        color: darkMode ? '#e0e0e0' : '#333'
+                                    }}>
+                                        Contact Email *
+                                    </label>
+                                    <input
+                                        type="email"
+                                        value={adFormData.email}
+                                        onChange={(e) => handleAdFormChange('email', e.target.value)}
+                                        placeholder="contact@yourcompany.com"
+                                        style={{
+                                            width: '100%',
+                                            padding: '0.75rem',
+                                            borderRadius: '6px',
+                                            border: `1px solid ${adFormErrors.email ? '#dc3545' : '#ddd'}`,
+                                            fontSize: '1rem',
+                                            backgroundColor: darkMode ? '#2d2d2d' : '#fff',
+                                            color: darkMode ? '#e0e0e0' : '#333'
+                                        }}
+                                    />
+                                    {adFormErrors.email && (
+                                        <span style={{ color: '#dc3545', fontSize: '0.85rem', marginTop: '0.25rem' }}>
+                                            {adFormErrors.email}
+                                        </span>
+                                    )}
+                                    <p style={{
+                                        fontSize: '0.8rem',
+                                        color: darkMode ? '#999' : '#666',
+                                        marginTop: '0.25rem'
+                                    }}>
+                                        We'll use this to contact you about your ad approval and payment.
+                                    </p>
+                                </div>
+
+                                {/* Image Upload */}
+                                <div>
+                                    <label style={{
+                                        display: 'block',
+                                        marginBottom: '0.5rem',
+                                        fontWeight: '600',
+                                        color: darkMode ? '#e0e0e0' : '#333'
+                                    }}>
+                                        Ad Image * <span style={{ fontSize: '0.85rem', fontWeight: 'normal', color: '#666' }}>
+                                            (Recommended: 280x160px, max 5MB)
+                                        </span>
+                                    </label>
+                                    <input
+                                        type="file"
+                                        accept="image/jpeg,image/jpg,image/png,image/webp"
+                                        onChange={handleImageUpload}
+                                        style={{
+                                            width: '100%',
+                                            padding: '0.75rem',
+                                            borderRadius: '6px',
+                                            border: `1px solid ${adFormErrors.image ? '#dc3545' : '#ddd'}`,
+                                            fontSize: '1rem',
+                                            backgroundColor: darkMode ? '#2d2d2d' : '#fff',
+                                            color: darkMode ? '#e0e0e0' : '#333',
+                                            cursor: 'pointer'
+                                        }}
+                                    />
+                                    {adFormErrors.image && (
+                                        <span style={{ color: '#dc3545', fontSize: '0.85rem', marginTop: '0.25rem', display: 'block' }}>
+                                            {adFormErrors.image}
+                                        </span>
+                                    )}
+                                </div>
+
+                                {/* Duration Selection */}
+                                <div>
+                                    <label style={{
+                                        display: 'block',
+                                        marginBottom: '0.5rem',
+                                        fontWeight: '600',
+                                        color: darkMode ? '#e0e0e0' : '#333'
+                                    }}>
+                                        Ad Duration *
+                                    </label>
+                                    <div style={{
+                                        display: 'grid',
+                                        gridTemplateColumns: 'repeat(3, 1fr)',
+                                        gap: '1rem'
+                                    }}>
+                                        {[7, 14, 30].map(days => (
+                                            <label
+                                                key={days}
+                                                style={{
+                                                    padding: '1rem',
+                                                    border: `2px solid ${adFormData.duration === days ? '#0b63a4' : '#ddd'}`,
+                                                    borderRadius: '8px',
+                                                    cursor: 'pointer',
+                                                    textAlign: 'center',
+                                                    backgroundColor: adFormData.duration === days
+                                                        ? (darkMode ? '#1a3a52' : '#e3f2fd')
+                                                        : (darkMode ? '#2d2d2d' : '#fff'),
+                                                    transition: 'all 0.2s ease'
+                                                }}
+                                                onMouseEnter={(e) => {
+                                                    if (adFormData.duration !== days) {
+                                                        e.currentTarget.style.borderColor = '#0b63a4';
+                                                    }
+                                                }}
+                                                onMouseLeave={(e) => {
+                                                    if (adFormData.duration !== days) {
+                                                        e.currentTarget.style.borderColor = '#ddd';
+                                                    }
+                                                }}
+                                            >
+                                                <input
+                                                    type="radio"
+                                                    name="duration"
+                                                    value={days}
+                                                    checked={adFormData.duration === days}
+                                                    onChange={(e) => handleAdFormChange('duration', parseInt(e.target.value))}
+                                                    style={{ display: 'none' }}
+                                                />
+                                                <div style={{
+                                                    fontSize: '1.2rem',
+                                                    fontWeight: 'bold',
+                                                    marginBottom: '0.25rem',
+                                                    color: darkMode ? '#e0e0e0' : '#333'
+                                                }}>
+                                                    {days} days
+                                                </div>
+                                                <div style={{
+                                                    fontSize: '1.5rem',
+                                                    fontWeight: 'bold',
+                                                    color: '#0b63a4'
+                                                }}>
+                                                    ${AD_PRICING[days]}
+                                                </div>
+                                                <div style={{
+                                                    fontSize: '0.75rem',
+                                                    color: darkMode ? '#999' : '#666',
+                                                    marginTop: '0.25rem'
+                                                }}>
+                                                    ${(AD_PRICING[days] / days).toFixed(2)}/day
+                                                </div>
+                                            </label>
+                                        ))}
                                     </div>
-                                    <div
-                                        className={`map-style-card ${selectedMapStyle === "choropleth" ? "selected" : ""}`}
-                                        onClick={() => setSelectedMapStyle("choropleth")}
-                                    >
-                                        <img src="/images/choropleth-icon.png" alt="Choropleth" />
-                                        <span>Grid Choropleth</span>
+                                </div>
+
+                                {/* Live Ad Preview */}
+                                {adFormData.imagePreview && adFormData.adText && (
+                                    <div>
+                                        <label style={{
+                                            display: 'block',
+                                            marginBottom: '0.5rem',
+                                            fontWeight: '600',
+                                            color: darkMode ? '#e0e0e0' : '#333'
+                                        }}>
+                                            How Your Ad Will Appear:
+                                        </label>
+                                        <div
+                                            style={{
+                                                cursor: 'default',
+                                                border: '2px solid rgba(255, 255, 255, 0.3)',
+                                                position: 'relative',
+                                                overflow: 'hidden',
+                                                padding: 0,
+                                                height: '120px',
+                                                borderRadius: '8px'
+                                            }}
+                                        >
+                                            <img
+                                                src={adFormData.imagePreview}
+                                                alt={adFormData.companyName}
+                                                style={{
+                                                    width: '100%',
+                                                    height: '100%',
+                                                    objectFit: 'cover',
+                                                    position: 'absolute',
+                                                    top: 0,
+                                                    left: 0
+                                                }}
+                                            />
+                                            <div style={{
+                                                position: 'absolute',
+                                                top: 0,
+                                                left: 0,
+                                                right: 0,
+                                                bottom: 0,
+                                                background: 'linear-gradient(to bottom, rgba(0,0,0,0.3) 0%, rgba(0,0,0,0.6) 100%)',
+                                                display: 'flex',
+                                                flexDirection: 'column',
+                                                justifyContent: 'center',
+                                                alignItems: 'center',
+                                                padding: '1rem',
+                                                textAlign: 'center'
+                                            }}>
+                                                <div style={{
+                                                    position: 'absolute',
+                                                    top: '8px',
+                                                    right: '8px',
+                                                    background: 'rgba(0,0,0,0.7)',
+                                                    color: '#fff',
+                                                    padding: '4px 8px',
+                                                    borderRadius: '4px',
+                                                    fontSize: '0.7rem',
+                                                    fontWeight: 'bold',
+                                                    letterSpacing: '0.5px'
+                                                }}>
+                                                    SPONSORED
+                                                </div>
+                                                <div style={{
+                                                    fontSize: '1.15rem',
+                                                    fontWeight: 'bold',
+                                                    marginBottom: '0.25rem',
+                                                    color: '#fff',
+                                                    textShadow: '0 2px 8px rgba(0,0,0,0.8)'
+                                                }}>
+                                                    {adFormData.companyName || 'Your Company'}
+                                                </div>
+                                                <div style={{
+                                                    fontSize: '0.85rem',
+                                                    color: '#fff',
+                                                    textShadow: '0 2px 6px rgba(0,0,0,0.8)',
+                                                    marginBottom: '0.5rem'
+                                                }}>
+                                                    {adFormData.adText || 'Your ad text here'}
+                                                </div>
+                                                <div style={{
+                                                    padding: '6px 16px',
+                                                    background: 'rgba(255,255,255,0.25)',
+                                                    borderRadius: '20px',
+                                                    fontSize: '0.8rem',
+                                                    fontWeight: 'bold',
+                                                    color: '#fff',
+                                                    backdropFilter: 'blur(10px)',
+                                                    border: '1px solid rgba(255,255,255,0.3)'
+                                                }}>
+                                                    Learn More →
+                                                </div>
+                                            </div>
+                                        </div>
                                     </div>
-                                    <div
-                                        className={`map-style-card ${selectedMapStyle === "custom-choropleth" ? "selected" : ""}`}
-                                        onClick={() => setSelectedMapStyle("custom-choropleth")}
-                                    >
-                                        <img src="/images/custom-choropleth-icon.png" alt="Custom Choropleth" />
-                                        <span>Regional Choropleth</span>
+                                )}
+
+                                {/* Summary */}
+                                <div style={{
+                                    padding: '1rem',
+                                    backgroundColor: darkMode ? '#1a3a52' : '#e3f2fd',
+                                    borderRadius: '8px',
+                                    border: '1px solid #0b63a4'
+                                }}>
+                                    <div style={{
+                                        display: 'flex',
+                                        justifyContent: 'space-between',
+                                        marginBottom: '0.5rem',
+                                        color: darkMode ? '#e0e0e0' : '#333'
+                                    }}>
+                                        <span>Duration:</span>
+                                        <strong>{adFormData.duration} days</strong>
                                     </div>
+                                    <div style={{
+                                        display: 'flex',
+                                        justifyContent: 'space-between',
+                                        fontSize: '1.2rem',
+                                        fontWeight: 'bold',
+                                        color: darkMode ? '#e0e0e0' : '#333'
+                                    }}>
+                                        <span>Total:</span>
+                                        <span>${AD_PRICING[adFormData.duration]} USD</span>
+                                    </div>
+                                    <p style={{
+                                        fontSize: '0.8rem',
+                                        marginTop: '0.5rem',
+                                        color: darkMode ? '#ccc' : '#666'
+                                    }}>
+                                        Payment will be processed after your ad is reviewed and approved.
+                                    </p>
+                                </div>
+
+                                {/* Submit Button */}
+                                <div style={{ display: 'flex', gap: '1rem', marginTop: '0.5rem' }}>
+                                    <button
+                                        type="button"
+                                        onClick={() => resetAdForm()}
+                                        style={{
+                                            flex: 1,
+                                            padding: '0.75rem',
+                                            fontSize: '1rem',
+                                            fontWeight: '600',
+                                            borderRadius: '6px',
+                                            border: '1px solid #ddd',
+                                            backgroundColor: darkMode ? '#2d2d2d' : '#fff',
+                                            color: darkMode ? '#e0e0e0' : '#333',
+                                            cursor: 'pointer'
+                                        }}
+                                    >
+                                        Cancel
+                                    </button>
+                                    <button
+                                        type="submit"
+                                        disabled={adFormSubmitting}
+                                        style={{
+                                            flex: 2,
+                                            padding: '0.75rem',
+                                            fontSize: '1rem',
+                                            fontWeight: '600',
+                                            borderRadius: '6px',
+                                            border: 'none',
+                                            backgroundColor: adFormSubmitting ? '#999' : '#0b63a4',
+                                            color: '#fff',
+                                            cursor: adFormSubmitting ? 'not-allowed' : 'pointer',
+                                            opacity: adFormSubmitting ? 0.6 : 1
+                                        }}
+                                    >
+                                        {adFormSubmitting ? 'Submitting...' : 'Submit for Review'}
+                                    </button>
+                                </div>
+
+                                <p style={{
+                                    fontSize: '0.75rem',
+                                    color: darkMode ? '#999' : '#666',
+                                    textAlign: 'center',
+                                    marginTop: '0.5rem'
+                                }}>
+                                    By submitting, you agree to our advertising terms and conditions.
+                                    We'll review your ad within 24 hours and contact you at the email provided.
+                                </p>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {mapOptionsOpen && (
+                <div className="modal-overlay" onClick={() => setMapOptionsOpen(false)}>
+                    <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+                        <button className="modal-close" onClick={() => setMapOptionsOpen(false)}>✕</button>
+                        <h2 className="modal-title">Map Visualization Options</h2>
+                        <div className="modal-body">
+                            <div className="map-style-options">
+                                <div
+                                    className={`map-style-card ${selectedMapStyle === "heatmap" ? "selected" : ""}`}
+                                    onClick={() => setSelectedMapStyle("heatmap")}
+                                >
+                                    <img src="/images/heatmap-icon.png" alt="Heatmap" />
+                                    <span>Heatmap</span>
+                                </div>
+                                <div
+                                    className={`map-style-card ${selectedMapStyle === "choropleth" ? "selected" : ""}`}
+                                    onClick={() => setSelectedMapStyle("choropleth")}
+                                >
+                                    <img src="/images/choropleth-icon.png" alt="Choropleth" />
+                                    <span>Grid Choropleth</span>
+                                </div>
+                                <div
+                                    className={`map-style-card ${selectedMapStyle === "custom-choropleth" ? "selected" : ""}`}
+                                    onClick={() => setSelectedMapStyle("custom-choropleth")}
+                                >
+                                    <img src="/images/custom-choropleth-icon.png" alt="Custom Choropleth" />
+                                    <span>Regional Choropleth</span>
                                 </div>
                             </div>
                         </div>
                     </div>
-                )
-            }
+                </div>
+            )}
 
             <div className="app-main" style={{ flex: 1, display: "flex", overflow: "hidden" }}>
                 <main className="map-column" style={{ flex: 1 }}>
@@ -1722,6 +2389,7 @@ Set your homebase, engage with topics that matter to you, and be part of a geo-s
                             updateWhenZooming={true}
                             updateInterval={100}
                         />
+
                         <MapSetter onMapReady={setMap} />
 
                         {selectedTopic && filteredPoints.length > 0 && selectedMapStyle === "heatmap" && (
@@ -1795,6 +2463,7 @@ Set your homebase, engage with topics that matter to you, and be part of a geo-s
                                     {filteredPoints.length} of {heatPoints.length} votes visible
                                 </p>
                                 <button onClick={() => handleShare(selectedTopic.id)} className="share-button">Share</button>
+
                                 <div className="stance-summary">
                                     {["-No", "No", "Neutral", "Yes", "Yes+"].map(s => (
                                         <div key={s} className="stance-box">
@@ -1807,10 +2476,12 @@ Set your homebase, engage with topics that matter to you, and be part of a geo-s
                                         <div className="stance-value">{avgStanceScore}</div>
                                     </div>
                                 </div>
+
                                 <p className="spotlight-meta">
                                     By: <strong>{selectedTopic.created_by}</strong><br />
                                     On: {new Date(selectedTopic.created_at).toLocaleString()}
                                 </p>
+
                                 {selectedTopic.description ? (
                                     <p className="spotlight-desc" style={{ margin: "2rem 0" }}>
                                         {selectedTopic.description.split('\n').map((line, index) => (
@@ -1823,6 +2494,7 @@ Set your homebase, engage with topics that matter to you, and be part of a geo-s
                                 ) : (
                                     <p className="spotlight-desc muted" style={{ margin: "2rem 0" }}>No description provided.</p>
                                 )}
+
                                 <div className="spotlight-engage">
                                     <h4 style={{ margin: "0 0 0.5rem" }}>Engage with this Topic</h4>
                                     {!user ? (
@@ -2289,6 +2961,6 @@ Set your homebase, engage with topics that matter to you, and be part of a geo-s
                     )}
                 </aside>
             </div>
-        </div >
+        </div>
     );
 }
