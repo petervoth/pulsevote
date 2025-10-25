@@ -260,7 +260,6 @@ function generateGridGeoJSON(bounds, gridSize = 5) {
             });
         }
     }
-
     return {
         type: "FeatureCollection",
         features
@@ -372,6 +371,7 @@ function ChoroplethLayer({ points }) {
             const zoom = map.getZoom();
             const gridSize = getGridSizeForZoom(zoom);
             console.log(`Zoom: ${zoom}, Grid Size: ${gridSize}`);
+
             const geoJSON = generateGridGeoJSON(bounds, gridSize);
             setGridGeoJSON(geoJSON);
             setMapKey(prev => prev + 1);
@@ -692,6 +692,7 @@ function CustomChoroplethLayer({ points }) {
         />
     );
 }
+
 export default function App() {
     // Map & user
     const mapRef = useRef(null);
@@ -881,14 +882,12 @@ export default function App() {
                 console.error("Error loading shared topic:", err);
             }
         }
-
         loadSharedTopic();
     }, [location.search, topics]);
 
     useEffect(() => {
         async function tryLoadTopic() {
             if (!topicIdFromURL) return;
-
             const match = topics.find(t => String(t.id) === String(topicIdFromURL));
             if (match) {
                 setSelectedTopic(match);
@@ -908,7 +907,6 @@ export default function App() {
                 console.error("Error fetching topic by ID:", err);
             }
         }
-
         tryLoadTopic();
     }, [topicIdFromURL]);
 
@@ -963,6 +961,7 @@ export default function App() {
             }
 
             const data = await response.json();
+
             if (data && data.address) {
                 const city = data.address.city || data.address.town || data.address.village || data.address.suburb;
                 const country = data.address.country;
@@ -972,6 +971,7 @@ export default function App() {
                     return country;
                 }
             }
+
             return "Unknown Location";
         } catch (error) {
             console.error("Error fetching location name:", error);
@@ -1045,6 +1045,7 @@ export default function App() {
             const created = new Date(t.created_at);
             const afterStart = startDate ? created >= new Date(startDate) : true;
             const beforeEnd = endDate ? created <= new Date(endDate) : true;
+
             return matchesText && matchesTitle && afterStart && beforeEnd;
         });
 
@@ -1137,7 +1138,6 @@ export default function App() {
                 redirectTo: window.location.origin
             }
         });
-
         if (error) {
             console.error(`${provider} sign-in error:`, error);
             alert(`Failed to sign in with ${provider}: ${error.message}`);
@@ -1295,9 +1295,11 @@ export default function App() {
         });
 
         const pt = await res.json();
+
         if (res.ok) {
             setHeatPoints(prev => mergeMostRecentPerUser(prev, [pt]));
         }
+
         setEngageStance("");
     };
 
@@ -1530,6 +1532,7 @@ export default function App() {
                 >
                     PulseVote
                 </h1>
+
                 <div className="header-right">
                     <button
                         onClick={() => setMapOptionsOpen(o => !o)}
@@ -1539,6 +1542,7 @@ export default function App() {
                     >
                         🗺️
                     </button>
+
                     {selectedTopic && (
                         <button
                             onClick={() => setMapExpanded(!mapExpanded)}
@@ -1549,6 +1553,7 @@ export default function App() {
                             {mapExpanded ? '⬇️' : '⬆️'}
                         </button>
                     )}
+
                     <button
                         onClick={() => setDarkMode(!darkMode)}
                         className="dark-mode-toggle"
@@ -1557,6 +1562,7 @@ export default function App() {
                     >
                         {darkMode ? '☀️' : '🌙'}
                     </button>
+
                     {user && (
                         <div className="header-user-line">
                             <button className="header-email mono clickable" onClick={toggleUserSpotlight}>
@@ -1623,7 +1629,7 @@ Set your homebase, engage with topics that matter to you, and be part of a geo-s
                                         <p>2. <strong>Do I need an account?</strong><br />
                                             No, but setting a homebase unlocks more features.</p>
                                         <p>3. <strong>Can I create my own topics?</strong><br />
-                                            Yes! Just click &quot;Create a New Topic&quot; and start engaging.</p>
+                                            Yes! Just click "Create a New Topic" and start engaging.</p>
                                         <p>4. <strong>Are there any limitations when making a topic?</strong><br />
                                             Yes. Though moderation is very minimal on the site, certain words have been blocked to improve the user experience on PulseVote. You are also limited to creating only 1 voting topic in a 24 hour period to reduce spam.</p>
                                         <p>5. <strong>Are there any limitations when voting?</strong><br />
@@ -1631,7 +1637,7 @@ Set your homebase, engage with topics that matter to you, and be part of a geo-s
                                         <p>6. <strong>Are these votes legally binding or used anywhere?</strong><br />
                                             Not yet. In a perfect world, we would trust our police forces to always protect us from any encroachment on our personal freedoms. This in turn would allow us to trust a public voting system without fear of repercussions, harassment, or assault. For now, PulseVote is a thought-experiment to give the world a voice and to show everyone there are more of us than you think. You deserve to take part in specific vote topics, not just electing the leaders who decide for you but keep letting you down term after term.</p>
                                         <p>7. <strong>Who runs PulseVote?</strong><br />
-                                            A lone Canadian data scientist has built this site and runs everything independently, there is no &quot;big government&quot; behind this project. Please be patient with him. If you want to suggest improvements to PulseVote, please use the &apos;PulseVote&apos; voting topic. And in true Canadian fashion, if you find something with the site is broken, sorry in advance!</p>
+                                            A lone Canadian data scientist has built this site and runs everything independently, there is no "big government" behind this project. Please be patient with him. If you want to suggest improvements to PulseVote, please use the 'PulseVote' voting topic. And in true Canadian fashion, if you find something with the site is broken, sorry in advance!</p>
                                     </div>
                                 )}>F.A.Q.</span>
                                 <span onClick={() => setAboutText(
@@ -1640,707 +1646,649 @@ Set your homebase, engage with topics that matter to you, and be part of a geo-s
                                         <p>PulseVote offers interactive ad placements within topic feeds. Reach geo-targeted audiences with sponsored messages that blend seamlessly into the user experience.</p>
                                         <p>In the future, we will offer an automated system to submit your sponsor info, message, and link. For now, please email us at:{" "}
                                             <a
-                                            href="mailto:ads@pulsevote.org"
-                                            style={{ color: darkMode ? '#ccc' : '#0077cc', textDecoration: 'underline' }}
+                                                href="mailto:ads@pulsevote.org"
+                                                style={{ color: darkMode ? '#ccc' : '#0077cc', textDecoration: 'underline' }}
                                             >
-                                            ads@pulsevote.org
-                                        </a>
+                                                ads@pulsevote.org
+                                            </a>
+                                        </p>
+                                    </>
+                                )}>Advertise with Us</span>
+                            </div>
+                        </div>
+                    </div>
+                </div >
+            )
+            }
+
+            {
+                mapOptionsOpen && (
+                    <div className="modal-overlay" onClick={() => setMapOptionsOpen(false)}>
+                        <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+                            <button className="modal-close" onClick={() => setMapOptionsOpen(false)}>✕</button>
+                            <h2 className="modal-title">Map Visualization Options</h2>
+                            <div className="modal-body">
+                                <div className="map-style-options">
+                                    <div
+                                        className={`map-style-card ${selectedMapStyle === "heatmap" ? "selected" : ""}`}
+                                        onClick={() => setSelectedMapStyle("heatmap")}
+                                    >
+                                        <img src="/images/heatmap-icon.png" alt="Heatmap" />
+                                        <span>Heatmap</span>
+                                    </div>
+                                    <div
+                                        className={`map-style-card ${selectedMapStyle === "choropleth" ? "selected" : ""}`}
+                                        onClick={() => setSelectedMapStyle("choropleth")}
+                                    >
+                                        <img src="/images/choropleth-icon.png" alt="Choropleth" />
+                                        <span>Grid Choropleth</span>
+                                    </div>
+                                    <div
+                                        className={`map-style-card ${selectedMapStyle === "custom-choropleth" ? "selected" : ""}`}
+                                        onClick={() => setSelectedMapStyle("custom-choropleth")}
+                                    >
+                                        <img src="/images/custom-choropleth-icon.png" alt="Custom Choropleth" />
+                                        <span>Regional Choropleth</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                )
+            }
+
+            <div className="app-main" style={{ flex: 1, display: "flex", overflow: "hidden" }}>
+                <main className="map-column" style={{ flex: 1 }}>
+                    <MapContainer
+                        center={[20, 0]}
+                        zoom={2}
+                        className="main-map"
+                        whenCreated={mapInstance => mapRef.current = mapInstance}
+                        preferCanvas={true}
+                        minZoom={2}
+                        maxZoom={12}
+                    >
+                        <TileLayer
+                            url={darkMode
+                                ? "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
+                                : "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                            }
+                            attribution={darkMode
+                                ? '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors © <a href="https://carto.com/attributions">CARTO</a>'
+                                : '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                            }
+                            keepBuffer={2}
+                            updateWhenIdle={false}
+                            updateWhenZooming={true}
+                            updateInterval={100}
+                        />
+                        <MapSetter onMapReady={setMap} />
+
+                        {selectedTopic && filteredPoints.length > 0 && selectedMapStyle === "heatmap" && (
+                            <HeatmapLayer points={renderPoints} />
+                        )}
+
+                        {selectedTopic && filteredPoints.length > 0 && selectedMapStyle === "choropleth" && (
+                            <ChoroplethLayer points={heatPoints} />
+                        )}
+
+                        {selectedTopic && filteredPoints.length > 0 && selectedMapStyle === "custom-choropleth" && (
+                            <CustomChoroplethLayer points={heatPoints} />
+                        )}
+                    </MapContainer>
+                </main>
+
+                <aside className="right-column">
+                    {userSpotlightOpen ? (
+                        selectedUserPoint ? (
+                            <section className="spotlight-section card">
+                                <button className="spotlight-close" onClick={closeUserSpotlight}>✕</button>
+                                <div className="spotlight-content">
+                                    <h3 className="spotlight-title">
+                                        {topicIcons[selectedTopic.title] || ''} {selectedTopic.title}
+                                    </h3>
+                                    <p>Your stance: <strong>{selectedUserPoint.stance}</strong></p>
+                                    <p>Intensity: {selectedUserPoint.intensity} / 100</p>
+                                    <p>At: {new Date(selectedUserPoint.created_at).toLocaleString()}</p>
+                                </div>
+                            </section>
+                        ) : (
+                            <section className="feed-section card" style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "2rem", textAlign: "center" }}>
+                                <h3 style={{ marginBottom: "0.5rem" }}>Homebase</h3>
+                                <p style={{ fontSize: "1.2rem", fontWeight: "bold", margin: "0.5rem 0" }}>{homebaseName}</p>
+                                {profile?.home_lat && profile?.home_lng && (
+                                    <>
+                                        <p style={{ fontSize: "0.9rem", color: "#666", margin: "0.5rem 0" }}>
+                                            {profile.home_lat.toFixed(4)}, {profile.home_lng.toFixed(4)}
+                                        </p>
+                                        <button
+                                            onClick={resetHomebase}
+                                            style={{
+                                                marginTop: "1rem",
+                                                padding: "0.5rem 1.5rem",
+                                                background: "#FE6100",
+                                                color: "white",
+                                                border: "none",
+                                                borderRadius: "6px",
+                                                cursor: "pointer",
+                                                fontSize: "0.9rem",
+                                                fontWeight: "bold",
+                                                transition: "background 0.2s ease"
+                                            }}
+                                            onMouseEnter={(e) => e.target.style.background = "#E55500"}
+                                            onMouseLeave={(e) => e.target.style.background = "#FE6100"}
+                                        >
+                                            Reset Homebase
+                                        </button>
+                                    </>
+                                )}
+                            </section>
+                        )
+                    ) : selectedTopic ? (
+                        <section id="spotlight-section" className={`spotlight-section card ${mapExpanded ? 'spotlight-minimized' : ''}`}>
+                            <button className="spotlight-close" onClick={closeSpotlight}>✕</button>
+                            <div className="spotlight-content">
+                                <h3 className="spotlight-title">
+                                    {topicIcons[selectedTopic.title] || ''} {selectedTopic.title}
+                                </h3>
+                                <p className="spotlight-count">
+                                    {filteredPoints.length} of {heatPoints.length} votes visible
+                                </p>
+                                <button onClick={() => handleShare(selectedTopic.id)} className="share-button">Share</button>
+                                <div className="stance-summary">
+                                    {["-No", "No", "Neutral", "Yes", "Yes+"].map(s => (
+                                        <div key={s} className="stance-box">
+                                            <div className="stance-label">{s}</div>
+                                            <div className="stance-value">{stancePercentages[s]}%</div>
+                                        </div>
+                                    ))}
+                                    <div className={`stance-box ${getAvgBoxColor(avgStanceScore)}`}>
+                                        <div className="stance-label">AVG</div>
+                                        <div className="stance-value">{avgStanceScore}</div>
+                                    </div>
+                                </div>
+                                <p className="spotlight-meta">
+                                    By: <strong>{selectedTopic.created_by}</strong><br />
+                                    On: {new Date(selectedTopic.created_at).toLocaleString()}
+                                </p>
+                                {selectedTopic.description ? (
+                                    <p className="spotlight-desc" style={{ margin: "2rem 0" }}>
+                                        {selectedTopic.description.split('\n').map((line, index) => (
+                                            <React.Fragment key={index}>
+                                                {line}
+                                                <br />
+                                            </React.Fragment>
+                                        ))}
                                     </p>
-                  </>
-                )}>Advertise with Us</span>
-                    </div>
-                </div>
-          </div>
-        </div >
-      )
-}
-
-{
-    mapOptionsOpen && (
-        <div className="modal-overlay" onClick={() => setMapOptionsOpen(false)}>
-            <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-                <button className="modal-close" onClick={() => setMapOptionsOpen(false)}>✕</button>
-                <h2 className="modal-title">Map Visualization Options</h2>
-                <div className="modal-body">
-                    <div className="map-style-options">
-                        <div
-                            className={`map-style-card ${selectedMapStyle === "heatmap" ? "selected" : ""}`}
-                            onClick={() => setSelectedMapStyle("heatmap")}
-                        >
-                            <img src="/images/heatmap-icon.png" alt="Heatmap" />
-                            <span>Heatmap</span>
-                        </div>
-                        <div
-                            className={`map-style-card ${selectedMapStyle === "choropleth" ? "selected" : ""}`}
-                            onClick={() => setSelectedMapStyle("choropleth")}
-                        >
-                            <img src="/images/choropleth-icon.png" alt="Choropleth" />
-                            <span>Grid Choropleth</span>
-                        </div>
-                        <div
-                            className={`map-style-card ${selectedMapStyle === "custom-choropleth" ? "selected" : ""}`}
-                            onClick={() => setSelectedMapStyle("custom-choropleth")}
-                        >
-                            <img src="/images/custom-choropleth-icon.png" alt="Custom Choropleth" />
-                            <span>Regional Choropleth</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    )
-}
-
-<div className="app-main" style={{ flex: 1, display: "flex", overflow: "hidden" }}>
-    <main className="map-column" style={{ flex: 1 }}>
-        <MapContainer
-            center={[20, 0]}
-            zoom={2}
-            className="main-map"
-            whenCreated={mapInstance => mapRef.current = mapInstance}
-            preferCanvas={true}
-            minZoom={2}
-            maxZoom={12}
-        >
-            <TileLayer
-                url={darkMode
-                    ? "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
-                    : "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                }
-                attribution={darkMode
-                    ? '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors © <a href="https://carto.com/attributions">CARTO</a>'
-                    : '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-                }
-                keepBuffer={2}
-                updateWhenIdle={false}
-                updateWhenZooming={true}
-                updateInterval={100}
-            />
-            <MapSetter onMapReady={setMap} />
-            {selectedTopic && filteredPoints.length > 0 && selectedMapStyle === "heatmap" && (
-                <HeatmapLayer points={renderPoints} />
-            )}
-            {selectedTopic && filteredPoints.length > 0 && selectedMapStyle === "choropleth" && (
-                <ChoroplethLayer points={heatPoints} />
-            )}
-            {selectedTopic && filteredPoints.length > 0 && selectedMapStyle === "custom-choropleth" && (
-                <CustomChoroplethLayer points={heatPoints} />
-            )}
-        </MapContainer>
-    </main>
-
-    <aside className="right-column">
-        {userSpotlightOpen ? (
-            selectedUserPoint ? (
-                <section className="spotlight-section card">
-                    <button className="spotlight-close" onClick={closeUserSpotlight}>✕</button>
-                    <div className="spotlight-content">
-                        <h3 className="spotlight-title">
-                            {topicIcons[selectedTopic.title] || ''} {selectedTopic.title}
-                        </h3>
-                        <p>Your stance: <strong>{selectedUserPoint.stance}</strong></p>
-                        <p>Intensity: {selectedUserPoint.intensity} / 100</p>
-                        <p>At: {new Date(selectedUserPoint.created_at).toLocaleString()}</p>
-                    </div>
-                </section>
-            ) : (
-                <section className="feed-section card" style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "2rem", textAlign: "center" }}>
-                    <h3 style={{ marginBottom: "0.5rem" }}>Homebase</h3>
-                    <p style={{ fontSize: "1.2rem", fontWeight: "bold", margin: "0.5rem 0" }}>{homebaseName}</p>
-                    {profile?.home_lat && profile?.home_lng && (
+                                ) : (
+                                    <p className="spotlight-desc muted" style={{ margin: "2rem 0" }}>No description provided.</p>
+                                )}
+                                <div className="spotlight-engage">
+                                    <h4 style={{ margin: "0 0 0.5rem" }}>Engage with this Topic</h4>
+                                    {!user ? (
+                                        <div style={{ color: "#666", fontSize: "0.95rem" }}>Sign in and set a homebase to engage.</div>
+                                    ) : (
+                                        <form onSubmit={handleEngage} className="compact-form">
+                                            <div className="radios" role="radiogroup">
+                                                {["-No", "No", "Neutral", "Yes", "Yes+"].map(s => (
+                                                    <label key={s}>
+                                                        <input
+                                                            type="radio"
+                                                            name="engage-stance"
+                                                            value={s}
+                                                            checked={engageStance === s}
+                                                            onChange={e => setEngageStance(e.target.value)}
+                                                            style={{ accentColor: STANCE_COLOR[s] }}
+                                                        />
+                                                        {" "}{s}
+                                                    </label>
+                                                ))}
+                                            </div>
+                                            <div className="stance-bar">
+                                                {["-No", "No", "Neutral", "Yes", "Yes+"].map(s => (
+                                                    <div
+                                                        key={s}
+                                                        className="stance-segment"
+                                                        style={{ backgroundColor: STANCE_COLOR[s] }}
+                                                    />
+                                                ))}
+                                            </div>
+                                            <div className="engage-actions">
+                                                <button type="submit" disabled={!engageStance}>Engage</button>
+                                            </div>
+                                        </form>
+                                    )}
+                                </div>
+                            </div>
+                        </section>
+                    ) : (
                         <>
-                            <p style={{ fontSize: "0.9rem", color: "#666", margin: "0.5rem 0" }}>
-                                {profile.home_lat.toFixed(4)}, {profile.home_lng.toFixed(4)}
-                            </p>
-                            <button
-                                onClick={resetHomebase}
-                                style={{
-                                    marginTop: "1rem",
-                                    padding: "0.5rem 1.5rem",
-                                    background: "#FE6100",
-                                    color: "white",
-                                    border: "none",
-                                    borderRadius: "6px",
-                                    cursor: "pointer",
-                                    fontSize: "0.9rem",
-                                    fontWeight: "bold",
-                                    transition: "background 0.2s ease"
-                                }}
-                                onMouseEnter={(e) => e.target.style.background = "#E55500"}
-                                onMouseLeave={(e) => e.target.style.background = "#FE6100"}
-                            >
-                                Reset Homebase
-                            </button>
+                            {!user ? (
+                                <section className="auth-section">
+                                    <div className="auth-box card">
+                                        <h3>Sign Up</h3>
+                                        <form onSubmit={handleSignUp} className="compact-form">
+                                            <input
+                                                type="email"
+                                                placeholder="Email"
+                                                value={signUpEmail}
+                                                onChange={e => setSignUpEmail(e.target.value)}
+                                                required
+                                            />
+                                            <input
+                                                type="password"
+                                                placeholder="Password"
+                                                value={signUpPassword}
+                                                onChange={e => setSignUpPassword(e.target.value)}
+                                                required
+                                            />
+                                            <button type="submit">Sign Up</button>
+                                        </form>
+
+                                        {/* OAuth Buttons for Sign Up */}
+                                        <div style={{
+                                            marginTop: "1rem",
+                                            paddingTop: "1rem",
+                                            borderTop: "1px solid #ddd",
+                                            display: "flex",
+                                            alignItems: "center",
+                                            justifyContent: "center",
+                                            gap: "0.75rem"
+                                        }}>
+                                            <p style={{
+                                                fontSize: "0.85rem",
+                                                color: "#666",
+                                                margin: "0"
+                                            }}>
+                                                Or sign up with:
+                                            </p>
+
+                                            {/* Google Button */}
+                                            <button
+                                                type="button"
+                                                onClick={() => handleOAuthSignIn('google')}
+                                                title="Continue with Google"
+                                                style={{
+                                                    width: "30px",
+                                                    height: "30px",
+                                                    padding: "0",
+                                                    background: "#fff",
+                                                    border: "1px solid #ddd",
+                                                    borderRadius: "50%",
+                                                    cursor: "pointer",
+                                                    display: "flex",
+                                                    alignItems: "center",
+                                                    justifyContent: "center",
+                                                    transition: "all 0.2s ease",
+                                                    flexShrink: 0
+                                                }}
+                                                onMouseEnter={(e) => {
+                                                    e.currentTarget.style.transform = "translateY(-3px)";
+                                                    e.currentTarget.style.boxShadow = "0 6px 12px rgba(0,0,0,0.15)";
+                                                }}
+                                                onMouseLeave={(e) => {
+                                                    e.currentTarget.style.transform = "translateY(0)";
+                                                    e.currentTarget.style.boxShadow = "none";
+                                                }}
+                                            >
+                                                <svg width="20" height="20" viewBox="0 0 24 24">
+                                                    <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
+                                                    <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
+                                                    <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" />
+                                                    <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" />
+                                                </svg>
+                                            </button>
+
+                                            {/* Discord Button */}
+                                            <button
+                                                type="button"
+                                                onClick={() => handleOAuthSignIn('discord')}
+                                                title="Continue with Discord"
+                                                style={{
+                                                    width: "30px",
+                                                    height: "30px",
+                                                    padding: "0",
+                                                    background: "#5865F2",
+                                                    border: "none",
+                                                    borderRadius: "50%",
+                                                    cursor: "pointer",
+                                                    display: "flex",
+                                                    alignItems: "center",
+                                                    justifyContent: "center",
+                                                    transition: "all 0.2s ease",
+                                                    flexShrink: 0
+                                                }}
+                                                onMouseEnter={(e) => {
+                                                    e.currentTarget.style.background = "#4752C4";
+                                                    e.currentTarget.style.transform = "translateY(-3px)";
+                                                    e.currentTarget.style.boxShadow = "0 6px 12px rgba(88,101,242,0.4)";
+                                                }}
+                                                onMouseLeave={(e) => {
+                                                    e.currentTarget.style.background = "#5865F2";
+                                                    e.currentTarget.style.transform = "translateY(0)";
+                                                    e.currentTarget.style.boxShadow = "none";
+                                                }}
+                                            >
+                                                <svg width="20" height="20" viewBox="0 0 24 24" fill="white">
+                                                    <path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515a.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0a12.64 12.64 0 0 0-.617-1.25a.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057a19.9 19.9 0 0 0 5.993 3.03a.078.078 0 0 0 .084-.028a14.09 14.09 0 0 0 1.226-1.994a.076.076 0 0 0-.041-.106a13.107 13.107 0 0 1-1.872-.892a.077.077 0 0 1-.008-.128a10.2 10.2 0 0 0 .372-.292a.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127a12.299 12.299 0 0 1-1.873.892a.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028a19.839 19.839 0 0 0 6.002-3.03a.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419c0-1.333.956-2.419 2.157-2.419c1.21 0 2.176 1.096 2.157 2.42c0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419c0-1.333.955-2.419 2.157-2.419c1.21 0 2.176 1.096 2.157 2.42c0 1.333-.946 2.418-2.157 2.418z" />
+                                                </svg>
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    <div className="auth-box card">
+                                        <h3>Login</h3>
+                                        <form onSubmit={handleLogin} className="compact-form">
+                                            <input
+                                                type="email"
+                                                placeholder="Email"
+                                                value={loginEmail}
+                                                onChange={e => setLoginEmail(e.target.value)}
+                                                required
+                                            />
+                                            <input
+                                                type="password"
+                                                placeholder="Password"
+                                                value={loginPassword}
+                                                onChange={e => setLoginPassword(e.target.value)}
+                                                required
+                                            />
+                                            <button type="submit">Login</button>
+                                        </form>
+
+                                        {/* OAuth Buttons for Login */}
+                                        <div style={{
+                                            marginTop: "1rem",
+                                            paddingTop: "1rem",
+                                            borderTop: "1px solid #ddd",
+                                            display: "flex",
+                                            alignItems: "center",
+                                            justifyContent: "center",
+                                            gap: "0.75rem"
+                                        }}>
+                                            <p style={{
+                                                fontSize: "0.85rem",
+                                                color: "#666",
+                                                margin: "0"
+                                            }}>
+                                                Or login with:
+                                            </p>
+
+                                            {/* Google Button */}
+                                            <button
+                                                type="button"
+                                                onClick={() => handleOAuthSignIn('google')}
+                                                title="Continue with Google"
+                                                style={{
+                                                    width: "30px",
+                                                    height: "30px",
+                                                    padding: "0",
+                                                    background: "#fff",
+                                                    border: "1px solid #ddd",
+                                                    borderRadius: "50%",
+                                                    cursor: "pointer",
+                                                    display: "flex",
+                                                    alignItems: "center",
+                                                    justifyContent: "center",
+                                                    transition: "all 0.2s ease",
+                                                    flexShrink: 0
+                                                }}
+                                                onMouseEnter={(e) => {
+                                                    e.currentTarget.style.transform = "translateY(-3px)";
+                                                    e.currentTarget.style.boxShadow = "0 6px 12px rgba(0,0,0,0.15)";
+                                                }}
+                                                onMouseLeave={(e) => {
+                                                    e.currentTarget.style.transform = "translateY(0)";
+                                                    e.currentTarget.style.boxShadow = "none";
+                                                }}
+                                            >
+                                                <svg width="20" height="20" viewBox="0 0 24 24">
+                                                    <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
+                                                    <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
+                                                    <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" />
+                                                    <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" />
+                                                </svg>
+                                            </button>
+
+                                            {/* Discord Button */}
+                                            <button
+                                                type="button"
+                                                onClick={() => handleOAuthSignIn('discord')}
+                                                title="Continue with Discord"
+                                                style={{
+                                                    width: "30px",
+                                                    height: "30px",
+                                                    padding: "0",
+                                                    background: "#5865F2",
+                                                    border: "none",
+                                                    borderRadius: "50%",
+                                                    cursor: "pointer",
+                                                    display: "flex",
+                                                    alignItems: "center",
+                                                    justifyContent: "center",
+                                                    transition: "all 0.2s ease",
+                                                    flexShrink: 0
+                                                }}
+                                                onMouseEnter={(e) => {
+                                                    e.currentTarget.style.background = "#4752C4";
+                                                    e.currentTarget.style.transform = "translateY(-3px)";
+                                                    e.currentTarget.style.boxShadow = "0 6px 12px rgba(88,101,242,0.4)";
+                                                }}
+                                                onMouseLeave={(e) => {
+                                                    e.currentTarget.style.background = "#5865F2";
+                                                    e.currentTarget.style.transform = "translateY(0)";
+                                                    e.currentTarget.style.boxShadow = "none";
+                                                }}
+                                            >
+                                                <svg width="20" height="20" viewBox="0 0 24 24" fill="white">
+                                                    <path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515a.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0a12.64 12.64 0 0 0-.617-1.25a.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057a19.9 19.9 0 0 0 5.993 3.03a.078.078 0 0 0 .084-.028a14.09 14.09 0 0 0 1.226-1.994a.076.076 0 0 0-.041-.106a13.107 13.107 0 0 1-1.872-.892a.077.077 0 0 1-.008-.128a10.2 10.2 0 0 0 .372-.292a.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127a12.299 12.299 0 0 1-1.873.892a.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028a19.839 19.839 0 0 0 6.002-3.03a.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419c0-1.333.956-2.419 2.157-2.419c1.21 0 2.176 1.096 2.157 2.42c0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419c0-1.333.955-2.419 2.157-2.419c1.21 0 2.176 1.096 2.157 2.42c0 1.333-.946 2.418-2.157 2.418z" />
+                                                </svg>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </section>
+                            ) : (
+                                <>
+                                    <section className="create-section card">
+                                        <div className="accordion-header">
+                                            <h3>Create a New Topic</h3>
+                                            <button
+                                                className={`accordion-toggle ${createOpen ? "open" : ""}`}
+                                                onClick={() => setCreateOpen(o => !o)}
+                                                aria-expanded={createOpen}
+                                            >
+                                                {createOpen ? "−" : "+"}
+                                            </button>
+                                        </div>
+
+                                        <div className={`accordion-body ${createOpen ? "expanded" : ""}`}>
+                                            <form onSubmit={handleCreateTopic} className="compact-form create-topic-form">
+                                                <label>Topic</label>
+                                                <select
+                                                    value={selectedPresetTitle}
+                                                    onChange={e => setSelectedPresetTitle(e.target.value)}
+                                                    required
+                                                >
+                                                    {[
+                                                        { label: "<< Select >>", value: "<< Select >>" },
+                                                        { label: "🌾 Agriculture and Agri-Food", value: "Agriculture and Agri-Food" },
+                                                        { label: "🗳️ Elections", value: "Elections" },
+                                                        { label: "💼 Employment and Social Development", value: "Employment and Social Development" },
+                                                        { label: "🌱 Environment and Climate Change", value: "Environment and Climate Change" },
+                                                        { label: "🎭 Entertainment", value: "Entertainment" },
+                                                        { label: "💰 Finance", value: "Finance" },
+                                                        { label: "🐟 Fisheries and Oceans", value: "Fisheries and Oceans" },
+                                                        { label: "🌍 Global Affairs", value: "Global Affairs" },
+                                                        { label: "🏥 Health", value: "Health" },
+                                                        { label: "🏛️ Heritage", value: "Heritage" },
+                                                        { label: "🛂 Immigration, Refugees and Citizenship", value: "Immigration, Refugees and Citizenship" },
+                                                        { label: "🧑‍🤝‍🧑 Indigenous Services", value: "Indigenous Services" },
+                                                        { label: "🏗️ Infrastructure", value: "Infrastructure" },
+                                                        { label: "🔬 Innovation, Science and Economic Development", value: "Innovation, Science and Economic Development" },
+                                                        { label: "⚖️ Justice", value: "Justice" },
+                                                        { label: "🏘️ Local Affairs", value: "Local Affairs" },
+                                                        { label: "🛡️ National Defence", value: "National Defence" },
+                                                        { label: "⛏️ Natural Resources", value: "Natural Resources" },
+                                                        { label: "🚨 Public Safety", value: "Public Safety" },
+                                                        { label: "📦 Public Services and Procurement", value: "Public Services and Procurement" },
+                                                        { label: "💡 PulseVote - Site Suggestions", value: "PulseVote - Site Suggestions" },
+                                                        { label: "🚗 Transport", value: "Transport" },
+                                                        { label: "🎖️ Veterans Affairs", value: "Veterans Affairs" }
+                                                    ].map(opt => (
+                                                        <option key={opt.value} value={opt.value}>{opt.label}</option>
+                                                    ))}
+                                                </select>
+
+                                                <textarea
+                                                    placeholder={`Topic (required)\n\nDescription`}
+                                                    value={newDescription}
+                                                    onChange={(e) => {
+                                                        setNewDescription(e.target.value);
+                                                        setHasFilteredWords(containsFilteredWords(e.target.value));
+                                                    }}
+                                                    rows={5}
+                                                    required
+                                                />
+
+                                                <div className="radios">
+                                                    {["-No", "No", "Neutral", "Yes", "Yes+"].map(s => (
+                                                        <label key={s}>
+                                                            <input
+                                                                type="radio"
+                                                                name="create-stance"
+                                                                value={s}
+                                                                checked={stance === s}
+                                                                onChange={e => setStance(e.target.value)}
+                                                                style={{ accentColor: STANCE_COLOR[s] }}
+                                                            />
+                                                            {" "}{s}
+                                                        </label>
+                                                    ))}
+                                                </div>
+
+                                                <div className="stance-bar">
+                                                    {["-No", "No", "Neutral", "Yes", "Yes+"].map(s => (
+                                                        <div
+                                                            key={s}
+                                                            className="stance-segment"
+                                                            style={{ backgroundColor: STANCE_COLOR[s] }}
+                                                        />
+                                                    ))}
+                                                </div>
+
+                                                <button
+                                                    type="submit"
+                                                    disabled={selectedPresetTitle === "<< Select >>" || hasFilteredWords}
+                                                >
+                                                    Create Topic
+                                                </button>
+                                            </form>
+                                        </div>
+                                    </section>
+
+                                    <section className="accordion-section card">
+                                        <div className="accordion-header" style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                                            <div style={{ flex: 1, textAlign: "center" }}>
+                                                <h3 style={{ margin: 0, fontWeight: "normal" }}>Filters</h3>
+                                            </div>
+                                            <button
+                                                className={`accordion-toggle ${filterOpen ? "open" : ""}`}
+                                                onClick={() => setFilterOpen(o => !o)}
+                                                aria-expanded={filterOpen}
+                                            >
+                                                {filterOpen ? "−" : "+"}
+                                            </button>
+                                        </div>
+
+                                        <div className={`accordion-body ${filterOpen ? "expanded" : ""}`}>
+                                            <form className="compact-form">
+                                                <input
+                                                    type="text"
+                                                    placeholder="Search description..."
+                                                    value={searchText}
+                                                    onChange={e => setSearchText(e.target.value)}
+                                                    style={{ marginBottom: "0rem", width: "100%", height: "2.5rem", padding: "0rem" }}
+                                                />
+
+                                                <select
+                                                    value={filterTitle}
+                                                    onChange={e => setFilterTitle(e.target.value)}
+                                                    style={{ marginBottom: "0rem", width: "100%", height: "2.5rem", padding: "0rem" }}
+                                                >
+                                                    <option value="">All Titles</option>
+                                                    {Array.from(new Set(topics.map(t => t.title))).map(title => (
+                                                        <option key={title} value={title}>{title}</option>
+                                                    ))}
+                                                </select>
+
+                                                <div style={{ display: "flex", gap: "0.5rem", marginBottom: "0.5rem" }}>
+                                                    <input
+                                                        type="date"
+                                                        value={startDate}
+                                                        onChange={e => setStartDate(e.target.value)}
+                                                        style={{ flex: 1, height: "2.5rem", padding: "0.5rem" }}
+                                                    />
+                                                    <input
+                                                        type="date"
+                                                        value={endDate}
+                                                        onChange={e => setEndDate(e.target.value)}
+                                                        style={{ flex: 1, height: "2.5rem", padding: "0.5rem" }}
+                                                    />
+                                                </div>
+
+                                                <select
+                                                    value={sortOption}
+                                                    onChange={e => setSortOption(e.target.value)}
+                                                    style={{ marginBottom: "0.5rem", width: "100%", height: "2.5rem", padding: "0.5rem" }}
+                                                >
+                                                    <option value="newest">Newest to Oldest</option>
+                                                    <option value="oldest">Oldest to Newest</option>
+                                                    <option value="mostVotes">Most Votes</option>
+                                                    <option value="leastVotes">Least Votes</option>
+                                                </select>
+                                            </form>
+                                        </div>
+                                    </section>
+                                </>
+                            )}
+
+                            <section className="feed-section card" style={{ flex: 1, padding: 0 }}>
+                                <div className="feed-list" ref={feedRef} style={{ flex: 1, overflowY: "auto", padding: "0rem" }}>
+                                    <ul>
+                                        {topicsWithAds.map((item, index) =>
+                                            item.isAd ? (
+                                                <AdCard key={`ad-${item.adIndex}`} adIndex={item.adIndex} />
+                                            ) : (
+                                                <li
+                                                    key={item.id}
+                                                    className="feed-item feed-item--clickable"
+                                                    onClick={() => handleSelectTopic(item)}
+                                                    role="button"
+                                                    tabIndex={0}
+                                                >
+                                                    <div className="feed-left">
+                                                        <div className="feed-title">
+                                                            <span className="topic-icon">{topicIcons[item.title] || ''}</span>
+                                                            <span>{item.title}</span>
+                                                        </div>
+                                                        {item.description && <div className="feed-desc">{item.description}</div>}
+                                                        {item.created_at && <div className="feed-date">{new Date(item.created_at).toLocaleString()}</div>}
+                                                    </div>
+                                                    <div className="feed-right">
+                                                        <div className="feed-votes">{item.vote_count || 0} votes</div>
+                                                    </div>
+                                                </li>
+                                            )
+                                        )}
+                                    </ul>
+                                    <div id="topic-list-sentinel" style={{ height: 1 }} />
+                                    {!hasMore && <p style={{ textAlign: "center", color: "#666" }}>No more topics</p>}
+                                </div>
+                            </section>
                         </>
                     )}
-                </section>
-            )
-        ) : selectedTopic ? (
-            <section id="spotlight-section" className={`spotlight-section card ${mapExpanded ? 'spotlight-minimized' : ''}`}>
-                <button className="spotlight-close" onClick={closeSpotlight}>✕</button>
-                <div className="spotlight-content">
-                    <h3 className="spotlight-title">
-                        {topicIcons[selectedTopic.title] || ''} {selectedTopic.title}
-                    </h3>
-                    <p className="spotlight-count">
-                        {filteredPoints.length} of {heatPoints.length} votes visible
-                    </p>
-                    <button onClick={() => handleShare(selectedTopic.id)} className="share-button">Share</button>
-                    <div className="stance-summary">
-                        {["-No", "No", "Neutral", "Yes", "Yes+"].map(s => (
-                            <div key={s} className="stance-box">
-                                <div className="stance-label">{s}</div>
-                                <div className="stance-value">{stancePercentages[s]}%</div>
-                            </div>
-                        ))}
-                        <div className={`stance-box ${getAvgBoxColor(avgStanceScore)}`}>
-                            <div className="stance-label">AVG</div>
-                            <div className="stance-value">{avgStanceScore}</div>
-                        </div>
-                    </div>
-                    <p className="spotlight-meta">
-                        By: <strong>{selectedTopic.created_by}</strong><br />
-                        On: {new Date(selectedTopic.created_at).toLocaleString()}
-                    </p>
-                    {selectedTopic.description ? (
-                        <p className="spotlight-desc" style={{ margin: "2rem 0" }}>
-                            {selectedTopic.description.split('\n').map((line, index) => (
-                                <React.Fragment key={index}>
-                                    {line}
-                                    <br />
-                                </React.Fragment>
-                            ))}
-                        </p>
-                    ) : (
-                        <p className="spotlight-desc muted" style={{ margin: "2rem 0" }}>No description provided.</p>
-                    )}
-                    <div className="spotlight-engage">
-                        <h4 style={{ margin: "0 0 0.5rem" }}>Engage with this Topic</h4>
-                        {!user ? (
-                            <div style={{ color: "#666", fontSize: "0.95rem" }}>Sign in and set a homebase to engage.</div>
-                        ) : (
-                            <form onSubmit={handleEngage} className="compact-form">
-                                <div className="radios" role="radiogroup">
-                                    {["-No", "No", "Neutral", "Yes", "Yes+"].map(s => (
-                                        <label key={s}>
-                                            <input
-                                                type="radio"
-                                                name="engage-stance"
-                                                value={s}
-                                                checked={engageStance === s}
-                                                onChange={e => setEngageStance(e.target.value)}
-                                                style={{ accentColor: STANCE_COLOR[s] }}
-                                            />
-                                            {" "}{s}
-                                        </label>
-                                    ))}
-                                </div>
-                                <div className="stance-bar">
-                                    {["-No", "No", "Neutral", "Yes", "Yes+"].map(s => (
-                                        <div
-                                            key={s}
-                                            className="stance-segment"
-                                            style={{ backgroundColor: STANCE_COLOR[s] }}
-                                        />
-                                    ))}
-                                </div>
-                                <div className="engage-actions">
-                                    <button type="submit" disabled={!engageStance}>Engage</button>
-                                </div>
-                            </form>
-                        )}
-                    </div>
-                </div>
-            </section>
-        ) : (
-            <>
-                {!user ? (
-                                        <section className="auth-section">
-                                            <div className="auth-box card">
-                                                <h3>Sign Up</h3>
-                                                <form onSubmit={handleSignUp} className="compact-form">
-                                                    <input
-                                                        type="email"
-                                                        placeholder="Email"
-                                                        value={signUpEmail}
-                                                        onChange={e => setSignUpEmail(e.target.value)}
-                                                        required
-                                                    />
-                                                    <input
-                                                        type="password"
-                                                        placeholder="Password"
-                                                        value={signUpPassword}
-                                                        onChange={e => setSignUpPassword(e.target.value)}
-                                                        required
-                                                    />
-                                                    <button type="submit">Sign Up</button>
-                                                </form>
-
-                                                {/* NEW: Inline OAuth Buttons for Sign Up */}
-                                                <div style={{
-                                                    marginTop: "1rem",
-                                                    paddingTop: "1rem",
-                                                    borderTop: "1px solid #ddd",
-                                                    display: "flex",
-                                                    alignItems: "center",
-                                                    justifyContent: "center",
-                                                    gap: "0.75rem"
-                                                }}>
-                                                    <p style={{
-                                                        fontSize: "0.85rem",
-                                                        color: "#666",
-                                                        margin: "0"
-                                                    }}>
-                                                        Or sign up with:
-                                                    </p>
-
-                                                    {/* Google Button */}
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => handleOAuthSignIn('google')}
-                                                        title="Continue with Google"
-                                                        style={{
-                                                            width: "30px",
-                                                            height: "30px",
-                                                            padding: "0",
-                                                            background: "#fff",
-                                                            border: "1px solid #ddd",
-                                                            borderRadius: "50%",
-                                                            cursor: "pointer",
-                                                            display: "flex",
-                                                            alignItems: "center",
-                                                            justifyContent: "center",
-                                                            transition: "all 0.2s ease",
-                                                            flexShrink: 0
-                                                        }}
-                                                        onMouseEnter={(e) => {
-                                                            e.currentTarget.style.transform = "translateY(-3px)";
-                                                            e.currentTarget.style.boxShadow = "0 6px 12px rgba(0,0,0,0.15)";
-                                                        }}
-                                                        onMouseLeave={(e) => {
-                                                            e.currentTarget.style.transform = "translateY(0)";
-                                                            e.currentTarget.style.boxShadow = "none";
-                                                        }}
-                                                    >
-                                                        <svg width="20" height="20" viewBox="0 0 24 24">
-                                                            <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
-                                                            <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
-                                                            <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" />
-                                                            <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" />
-                                                        </svg>
-                                                    </button>
-
-                                                    {/* Facebook Button */}
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => handleOAuthSignIn('facebook')}
-                                                        title="Continue with Facebook"
-                                                        style={{
-                                                            width: "30px",
-                                                            height: "30px",
-                                                            padding: "0",
-                                                            background: "#1877F2",
-                                                            border: "none",
-                                                            borderRadius: "50%",
-                                                            cursor: "pointer",
-                                                            display: "flex",
-                                                            alignItems: "center",
-                                                            justifyContent: "center",
-                                                            transition: "all 0.2s ease",
-                                                            flexShrink: 0
-                                                        }}
-                                                        onMouseEnter={(e) => {
-                                                            e.currentTarget.style.background = "#0c63d4";
-                                                            e.currentTarget.style.transform = "translateY(-3px)";
-                                                            e.currentTarget.style.boxShadow = "0 6px 12px rgba(24,119,242,0.4)";
-                                                        }}
-                                                        onMouseLeave={(e) => {
-                                                            e.currentTarget.style.background = "#1877F2";
-                                                            e.currentTarget.style.transform = "translateY(0)";
-                                                            e.currentTarget.style.boxShadow = "none";
-                                                        }}
-                                                    >
-                                                        <svg width="20" height="20" viewBox="0 0 24 24" fill="white">
-                                                            <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
-                                                        </svg>
-                                                    </button>
-
-                                                    {/* Apple Button */}
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => handleOAuthSignIn('apple')}
-                                                        title="Continue with Apple"
-                                                        style={{
-                                                            width: "30px",
-                                                            height: "30px",
-                                                            padding: "0",
-                                                            background: "#000",
-                                                            border: "none",
-                                                            borderRadius: "50%",
-                                                            cursor: "pointer",
-                                                            display: "flex",
-                                                            alignItems: "center",
-                                                            justifyContent: "center",
-                                                            transition: "all 0.2s ease",
-                                                            flexShrink: 0
-                                                        }}
-                                                        onMouseEnter={(e) => {
-                                                            e.currentTarget.style.background = "#333";
-                                                            e.currentTarget.style.transform = "translateY(-3px)";
-                                                            e.currentTarget.style.boxShadow = "0 6px 12px rgba(0,0,0,0.4)";
-                                                        }}
-                                                        onMouseLeave={(e) => {
-                                                            e.currentTarget.style.background = "#000";
-                                                            e.currentTarget.style.transform = "translateY(0)";
-                                                            e.currentTarget.style.boxShadow = "none";
-                                                        }}
-                                                    >
-                                                        <svg width="20" height="20" viewBox="0 0 24 24" fill="white">
-                                                            <path d="M17.05 20.28c-.98.95-2.05.8-3.08.35-1.09-.46-2.09-.48-3.24 0-1.44.62-2.2.44-3.06-.35C2.79 15.25 3.51 7.59 9.05 7.31c1.35.07 2.29.74 3.08.8 1.18-.24 2.31-.93 3.57-.84 1.51.12 2.65.72 3.4 1.8-3.12 1.87-2.38 5.98.48 7.13-.57 1.5-1.31 2.99-2.54 4.09l.01-.01zM12.03 7.25c-.15-2.23 1.66-4.07 3.74-4.25.29 2.58-2.34 4.5-3.74 4.25z" />
-                                                        </svg>
-                                                    </button>
-                                                </div>
-                                            </div>
-
-                                            <div className="auth-box card">
-                                                <h3>Login</h3>
-                                                <form onSubmit={handleLogin} className="compact-form">
-                                                    <input
-                                                        type="email"
-                                                        placeholder="Email"
-                                                        value={loginEmail}
-                                                        onChange={e => setLoginEmail(e.target.value)}
-                                                        required
-                                                    />
-                                                    <input
-                                                        type="password"
-                                                        placeholder="Password"
-                                                        value={loginPassword}
-                                                        onChange={e => setLoginPassword(e.target.value)}
-                                                        required
-                                                    />
-                                                    <button type="submit">Login</button>
-                                                </form>
-
-                                                {/* NEW: Inline OAuth Buttons for Login */}
-                                                <div style={{
-                                                    marginTop: "1rem",
-                                                    paddingTop: "1rem",
-                                                    borderTop: "1px solid #ddd",
-                                                    display: "flex",
-                                                    alignItems: "center",
-                                                    justifyContent: "center",
-                                                    gap: "0.75rem"
-                                                }}>
-                                                    <p style={{
-                                                        fontSize: "0.85rem",
-                                                        color: "#666",
-                                                        margin: "0"
-                                                    }}>
-                                                        Or login with:
-                                                    </p>
-
-                                                    {/* Google Button */}
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => handleOAuthSignIn('google')}
-                                                        title="Continue with Google"
-                                                        style={{
-                                                            width: "30px",
-                                                            height: "30px",
-                                                            padding: "0",
-                                                            background: "#fff",
-                                                            border: "1px solid #ddd",
-                                                            borderRadius: "50%",
-                                                            cursor: "pointer",
-                                                            display: "flex",
-                                                            alignItems: "center",
-                                                            justifyContent: "center",
-                                                            transition: "all 0.2s ease",
-                                                            flexShrink: 0
-                                                        }}
-                                                        onMouseEnter={(e) => {
-                                                            e.currentTarget.style.transform = "translateY(-3px)";
-                                                            e.currentTarget.style.boxShadow = "0 6px 12px rgba(0,0,0,0.15)";
-                                                        }}
-                                                        onMouseLeave={(e) => {
-                                                            e.currentTarget.style.transform = "translateY(0)";
-                                                            e.currentTarget.style.boxShadow = "none";
-                                                        }}
-                                                    >
-                                                        <svg width="20" height="20" viewBox="0 0 24 24">
-                                                            <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
-                                                            <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
-                                                            <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" />
-                                                            <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" />
-                                                        </svg>
-                                                    </button>
-
-                                                    {/* Facebook Button */}
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => handleOAuthSignIn('facebook')}
-                                                        title="Continue with Facebook"
-                                                        style={{
-                                                            width: "30px",
-                                                            height: "30px",
-                                                            padding: "0",
-                                                            background: "#1877F2",
-                                                            border: "none",
-                                                            borderRadius: "50%",
-                                                            cursor: "pointer",
-                                                            display: "flex",
-                                                            alignItems: "center",
-                                                            justifyContent: "center",
-                                                            transition: "all 0.2s ease",
-                                                            flexShrink: 0
-                                                        }}
-                                                        onMouseEnter={(e) => {
-                                                            e.currentTarget.style.background = "#0c63d4";
-                                                            e.currentTarget.style.transform = "translateY(-3px)";
-                                                            e.currentTarget.style.boxShadow = "0 6px 12px rgba(24,119,242,0.4)";
-                                                        }}
-                                                        onMouseLeave={(e) => {
-                                                            e.currentTarget.style.background = "#1877F2";
-                                                            e.currentTarget.style.transform = "translateY(0)";
-                                                            e.currentTarget.style.boxShadow = "none";
-                                                        }}
-                                                    >
-                                                        <svg width="20" height="20" viewBox="0 0 24 24" fill="white">
-                                                            <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
-                                                        </svg>
-                                                    </button>
-
-                                                    {/* Apple Button */}
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => handleOAuthSignIn('apple')}
-                                                        title="Continue with Apple"
-                                                        style={{
-                                                            width: "30px",
-                                                            height: "30px",
-                                                            padding: "0",
-                                                            background: "#000",
-                                                            border: "none",
-                                                            borderRadius: "50%",
-                                                            cursor: "pointer",
-                                                            display: "flex",
-                                                            alignItems: "center",
-                                                            justifyContent: "center",
-                                                            transition: "all 0.2s ease",
-                                                            flexShrink: 0
-                                                        }}
-                                                        onMouseEnter={(e) => {
-                                                            e.currentTarget.style.background = "#333";
-                                                            e.currentTarget.style.transform = "translateY(-3px)";
-                                                            e.currentTarget.style.boxShadow = "0 6px 12px rgba(0,0,0,0.4)";
-                                                        }}
-                                                        onMouseLeave={(e) => {
-                                                            e.currentTarget.style.background = "#000";
-                                                            e.currentTarget.style.transform = "translateY(0)";
-                                                            e.currentTarget.style.boxShadow = "none";
-                                                        }}
-                                                    >
-                                                        <svg width="20" height="20" viewBox="0 0 24 24" fill="white">
-                                                            <path d="M17.05 20.28c-.98.95-2.05.8-3.08.35-1.09-.46-2.09-.48-3.24 0-1.44.62-2.2.44-3.06-.35C2.79 15.25 3.51 7.59 9.05 7.31c1.35.07 2.29.74 3.08.8 1.18-.24 2.31-.93 3.57-.84 1.51.12 2.65.72 3.4 1.8-3.12 1.87-2.38 5.98.48 7.13-.57 1.5-1.31 2.99-2.54 4.09l.01-.01zM12.03 7.25c-.15-2.23 1.66-4.07 3.74-4.25.29 2.58-2.34 4.5-3.74 4.25z" />
-                                                        </svg>
-                                                    </button>
-                                                </div>
-                                            </div>
-                                        </section>
-                ) : (
-                    <>
-                        <section className="create-section card">
-                            <div className="accordion-header">
-                                <h3>Create a New Topic</h3>
-                                <button
-                                    className={`accordion-toggle ${createOpen ? "open" : ""}`}
-                                    onClick={() => setCreateOpen(o => !o)}
-                                    aria-expanded={createOpen}
-                                >
-                                    {createOpen ? "−" : "+"}
-                                </button>
-                            </div>
-                            <div className={`accordion-body ${createOpen ? "expanded" : ""}`}>
-                                <form onSubmit={handleCreateTopic} className="compact-form create-topic-form">
-                                    <label>Topic</label>
-                                    <select
-                                        value={selectedPresetTitle}
-                                        onChange={e => setSelectedPresetTitle(e.target.value)}
-                                        required
-                                    >
-                                        {[
-                                            { label: "<< Select >>", value: "<< Select >>" },
-                                            { label: "🌾 Agriculture and Agri-Food", value: "Agriculture and Agri-Food" },
-                                            { label: "🗳️ Elections", value: "Elections" },
-                                            { label: "💼 Employment and Social Development", value: "Employment and Social Development" },
-                                            { label: "🌱 Environment and Climate Change", value: "Environment and Climate Change" },
-                                            { label: "🎭 Entertainment", value: "Entertainment" },
-                                            { label: "💰 Finance", value: "Finance" },
-                                            { label: "🐟 Fisheries and Oceans", value: "Fisheries and Oceans" },
-                                            { label: "🌍 Global Affairs", value: "Global Affairs" },
-                                            { label: "🏥 Health", value: "Health" },
-                                            { label: "🏛️ Heritage", value: "Heritage" },
-                                            { label: "🛂 Immigration, Refugees and Citizenship", value: "Immigration, Refugees and Citizenship" },
-                                            { label: "🧑‍🤝‍🧑 Indigenous Services", value: "Indigenous Services" },
-                                            { label: "🏗️ Infrastructure", value: "Infrastructure" },
-                                            { label: "🔬 Innovation, Science and Economic Development", value: "Innovation, Science and Economic Development" },
-                                            { label: "⚖️ Justice", value: "Justice" },
-                                            { label: "🏘️ Local Affairs", value: "Local Affairs" },
-                                            { label: "🛡️ National Defence", value: "National Defence" },
-                                            { label: "⛏️ Natural Resources", value: "Natural Resources" },
-                                            { label: "🚨 Public Safety", value: "Public Safety" },
-                                            { label: "📦 Public Services and Procurement", value: "Public Services and Procurement" },
-                                            { label: "💡 PulseVote - Site Suggestions", value: "PulseVote - Site Suggestions" },
-                                            { label: "🚗 Transport", value: "Transport" },
-                                            { label: "🎖️ Veterans Affairs", value: "Veterans Affairs" }
-                                        ].map(opt => (
-                                            <option key={opt.value} value={opt.value}>{opt.label}</option>
-                                        ))}
-                                    </select>
-                                    <textarea
-                                        placeholder={`Topic (required)\n\nDescription`}
-                                        value={newDescription}
-                                        onChange={(e) => {
-                                            setNewDescription(e.target.value);
-                                            setHasFilteredWords(containsFilteredWords(e.target.value));
-                                        }}
-                                        rows={5}
-                                        required
-                                    />
-                                    <div className="radios">
-                                        {["-No", "No", "Neutral", "Yes", "Yes+"].map(s => (
-                                            <label key={s}>
-                                                <input
-                                                    type="radio"
-                                                    name="create-stance"
-                                                    value={s}
-                                                    checked={stance === s}
-                                                    onChange={e => setStance(e.target.value)}
-                                                    style={{ accentColor: STANCE_COLOR[s] }}
-                                                />
-                                                {" "}{s}
-                                            </label>
-                                        ))}
-                                    </div>
-                                    <div className="stance-bar">
-                                        {["-No", "No", "Neutral", "Yes", "Yes+"].map(s => (
-                                            <div
-                                                key={s}
-                                                className="stance-segment"
-                                                style={{ backgroundColor: STANCE_COLOR[s] }}
-                                            />
-                                        ))}
-                                    </div>
-                                    <button
-                                        type="submit"
-                                        disabled={selectedPresetTitle === "<< Select >>" || hasFilteredWords}
-                                    >
-                                        Create Topic
-                                    </button>
-                                </form>
-                            </div>
-                        </section>
-
-                        <section className="accordion-section card">
-                            <div className="accordion-header" style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                                <div style={{ flex: 1, textAlign: "center" }}>
-                                    <h3 style={{ margin: 0, fontWeight: "normal" }}>Filters</h3>
-                                </div>
-                                <button
-                                    className={`accordion-toggle ${filterOpen ? "open" : ""}`}
-                                    onClick={() => setFilterOpen(o => !o)}
-                                    aria-expanded={filterOpen}
-                                >
-                                    {filterOpen ? "−" : "+"}
-                                </button>
-                            </div>
-                            <div className={`accordion-body ${filterOpen ? "expanded" : ""}`}>
-                                <form className="compact-form">
-                                    <input
-                                        type="text"
-                                        placeholder="Search description..."
-                                        value={searchText}
-                                        onChange={e => setSearchText(e.target.value)}
-                                        style={{ marginBottom: "0rem", width: "100%", height: "2.5rem", padding: "0rem" }}
-                                    />
-                                    <select
-                                        value={filterTitle}
-                                        onChange={e => setFilterTitle(e.target.value)}
-                                        style={{ marginBottom: "0rem", width: "100%", height: "2.5rem", padding: "0rem" }}
-                                    >
-                                        <option value="">All Titles</option>
-                                        {Array.from(new Set(topics.map(t => t.title))).map(title => (
-                                            <option key={title} value={title}>{title}</option>
-                                        ))}
-                                    </select>
-                                    <div style={{ display: "flex", gap: "0.5rem", marginBottom: "0.5rem" }}>
-                                        <input
-                                            type="date"
-                                            value={startDate}
-                                            onChange={e => setStartDate(e.target.value)}
-                                            style={{ flex: 1, height: "2.5rem", padding: "0.5rem" }}
-                                        />
-                                        <input
-                                            type="date"
-                                            value={endDate}
-                                            onChange={e => setEndDate(e.target.value)}
-                                            style={{ flex: 1, height: "2.5rem", padding: "0.5rem" }}
-                                        />
-                                    </div>
-                                    <select
-                                        value={sortOption}
-                                        onChange={e => setSortOption(e.target.value)}
-                                        style={{ marginBottom: "0.5rem", width: "100%", height: "2.5rem", padding: "0.5rem" }}
-                                    >
-                                        <option value="newest">Newest to Oldest</option>
-                                        <option value="oldest">Oldest to Newest</option>
-                                        <option value="mostVotes">Most Votes</option>
-                                        <option value="leastVotes">Least Votes</option>
-                                    </select>
-                                </form>
-                            </div>
-                        </section>
-                    </>
-                )}
-
-                <section className="feed-section card" style={{ flex: 1, padding: 0 }}>
-                    <div className="feed-list" ref={feedRef} style={{ flex: 1, overflowY: "auto", padding: "0rem" }}>
-                        <ul>
-                            {topicsWithAds.map((item, index) =>
-                                item.isAd ? (
-                                    <AdCard key={`ad-${item.adIndex}`} adIndex={item.adIndex} />
-                                ) : (
-                                    <li
-                                        key={item.id}
-                                        className="feed-item feed-item--clickable"
-                                        onClick={() => handleSelectTopic(item)}
-                                        role="button"
-                                        tabIndex={0}
-                                    >
-                                        <div className="feed-left">
-                                            <div className="feed-title">
-                                                <span className="topic-icon">{topicIcons[item.title] || ''}</span>
-                                                <span>{item.title}</span>
-                                            </div>
-                                            {item.description && <div className="feed-desc">{item.description}</div>}
-                                            {item.created_at && <div className="feed-date">{new Date(item.created_at).toLocaleString()}</div>}
-                                        </div>
-                                        <div className="feed-right">
-                                            <div className="feed-votes">{item.vote_count || 0} votes</div>
-                                        </div>
-                                    </li>
-                                )
-                            )}
-                        </ul>
-                        <div id="topic-list-sentinel" style={{ height: 1 }} />
-                        {!hasMore && <p style={{ textAlign: "center", color: "#666" }}>No more topics</p>}
-                    </div>
-                </section>
-            </>
-        )}
-    </aside>
-</div>
-    </div >
-  );
+                </aside>
+            </div>
+        </div >
+    );
 }
