@@ -8,6 +8,12 @@ const multer = require("multer");
 const path = require("path");
 const pool = require("./db"); // your pg Pool instance from db.js
 const { createClient } = require('@supabase/supabase-js');
+const {
+    sendAdminNotification,
+    sendSubmissionConfirmation,
+    sendApprovalNotification,
+    sendRejectionNotification,
+} = require('./email-service');
 
 const app = express();
 
@@ -49,9 +55,9 @@ const io = new Server(server, {
     cors: { origin: FRONTEND_URL, credentials: true },
 });
 
-// --------------------------- 
+// ---------------------------
 // Socket.IO connections & rooms
-// --------------------------- 
+// ---------------------------
 io.on("connection", (socket) => {
     console.log("🔌 Client connected:", socket.id);
 
@@ -74,9 +80,10 @@ io.on("connection", (socket) => {
     );
 });
 
-// --------------------------- 
+// ---------------------------
 // Topics routes
-// --------------------------- 
+// ---------------------------
+
 // Get all topics with vote counts
 app.get("/topics", async (req, res) => {
     try {
@@ -135,11 +142,11 @@ app.post("/topics", async (req, res) => {
         const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
         const recentTopicCheck = await pool.query(
             `SELECT id, created_at
-      FROM topics
-      WHERE created_by = $1
-        AND created_at > $2
-      ORDER BY created_at DESC
-      LIMIT 1`,
+       FROM topics
+       WHERE created_by = $1
+         AND created_at > $2
+       ORDER BY created_at DESC
+       LIMIT 1`,
             [created_by, oneDayAgo]
         );
 
@@ -159,15 +166,14 @@ app.post("/topics", async (req, res) => {
         const result = await pool.query(
             `INSERT INTO topics
         (title, description, created_by, stance, created_at)
-      VALUES
+       VALUES
         ($1, $2, $3, $4, NOW())
-      RETURNING *`,
+       RETURNING *`,
             [title, description || null, created_by, stance || null]
         );
 
         const newTopic = result.rows[0];
         io.emit("new_topic", newTopic);
-
         res.status(201).json(newTopic);
     } catch (err) {
         console.error("Error creating topic:", err);
@@ -175,14 +181,14 @@ app.post("/topics", async (req, res) => {
     }
 });
 
-// --------------------------- 
+// ---------------------------
 // Points routes
-// --------------------------- 
+// ---------------------------
+
 // Get latest point per user for a given topic
 // Query string: ?topic_id=<topicId>
 app.get("/points", async (req, res) => {
     const topicId = req.query.topic_id;
-
     if (!topicId) {
         return res
             .status(400)
@@ -193,14 +199,13 @@ app.get("/points", async (req, res) => {
         const result = await pool.query(
             `SELECT DISTINCT ON (user_id)
         id, user_id, topic_id, lat, lng, intensity, stance, created_at
-      FROM points
-      WHERE topic_id = $1
-        AND stance IS NOT NULL
-        AND stance <> ''
-      ORDER BY user_id, created_at DESC`,
+       FROM points
+       WHERE topic_id = $1
+         AND stance IS NOT NULL
+         AND stance <> ''
+       ORDER BY user_id, created_at DESC`,
             [topicId]
         );
-
         res.json(result.rows);
     } catch (err) {
         console.error("Error fetching points by topic:", err);
@@ -222,7 +227,6 @@ app.get("/points/nearby", async (req, res) => {
                 .status(400)
                 .json({ error: "lat and lng query params must be numbers" });
         }
-
         if (!topicId) {
             return res.status(400).json({ error: "topic_id is required" });
         }
@@ -265,7 +269,6 @@ app.get("/points/nearby", async (req, res) => {
 
         const params = [lng, lat, radius, topicId];
         const result = await pool.query(sql, params);
-
         res.json(result.rows);
     } catch (err) {
         console.error("Error fetching nearby points:", err);
@@ -313,8 +316,8 @@ app.post("/points", async (req, res) => {
 
         const values = [lat, lng, intensityNum, topic_id, user_id, stanceValue];
         const result = await pool.query(insertSql, values);
-
         const newPoint = result.rows[0];
+
         io.to(`topic:${newPoint.topic_id}`).emit("new_point", newPoint);
 
         res.status(201).json(newPoint);
@@ -361,9 +364,9 @@ app.get("/topics/:id", async (req, res) => {
     }
 });
 
-// --------------------------- 
+// ---------------------------
 // Twinkle points route
-// --------------------------- 
+// ---------------------------
 app.get("/twinkle_points", async (_req, res) => {
     try {
         const sql = `
@@ -376,7 +379,6 @@ app.get("/twinkle_points", async (_req, res) => {
       FROM twinkle_points
       ORDER BY created_at DESC
     `;
-
         const { rows } = await pool.query(sql);
         res.json(rows);
     } catch (err) {
@@ -406,7 +408,6 @@ app.put("/profiles/:userId/reset-homebase", async (req, res) => {
         }
 
         const lastReset = profileCheck.rows[0].homebase_last_reset;
-
         if (lastReset) {
             const daysSinceReset = (Date.now() - new Date(lastReset).getTime()) / (1000 * 60 * 60 * 24);
             const daysLeft = Math.ceil(180 - daysSinceReset);
@@ -423,12 +424,12 @@ app.put("/profiles/:userId/reset-homebase", async (req, res) => {
         // Update homebase
         const result = await pool.query(
             `UPDATE profiles
-      SET home_lat = $1,
-          home_lng = $2,
-          homebase_set = true,
-          homebase_last_reset = NOW()
-      WHERE id = $3
-      RETURNING *`,
+       SET home_lat = $1,
+           home_lng = $2,
+           homebase_set = true,
+           homebase_last_reset = NOW()
+       WHERE id = $3
+       RETURNING *`,
             [lat, lng, userId]
         );
 
@@ -477,19 +478,6 @@ async function uploadImageToStorage(fileBuffer, fileName, mimeType) {
         console.error('Error uploading image:', error);
         throw new Error('Failed to upload image');
     }
-}
-
-/**
- * Helper function to send admin notification email
- */
-async function sendAdminNotification(adSubmission) {
-    // TODO: Implement email notification
-    // For now, just log to console
-    console.log('📧 Admin notification would be sent for ad submission:', {
-        id: adSubmission.id,
-        company: adSubmission.company_name,
-        amount: `$${(adSubmission.amount_cents / 100).toFixed(2)}`
-    });
 }
 
 /**
@@ -583,9 +571,12 @@ app.post("/api/ad-submissions", upload.single('image'), async (req, res) => {
         const newAdSubmission = result.rows[0];
         console.log('✅ Ad submission saved to database:', newAdSubmission.id);
 
-        // Send admin notification (async, don't wait)
-        sendAdminNotification(newAdSubmission).catch(err => {
-            console.error('Failed to send admin notification:', err);
+        // Send email notifications (async, don't wait)
+        Promise.all([
+            sendAdminNotification(newAdSubmission),
+            sendSubmissionConfirmation(newAdSubmission)
+        ]).catch(err => {
+            console.error('Failed to send notification emails:', err);
         });
 
         res.status(201).json({
@@ -593,7 +584,6 @@ app.post("/api/ad-submissions", upload.single('image'), async (req, res) => {
             message: "Ad submission received successfully",
             status: newAdSubmission.status
         });
-
     } catch (err) {
         console.error("❌ Error creating ad submission:", err);
         res.status(500).json({ error: "Server error", details: err.message });
@@ -609,7 +599,7 @@ app.get("/api/ad-submissions", async (req, res) => {
         const status = req.query.status;
 
         let query = `
-      SELECT 
+      SELECT
         id,
         company_name,
         ad_text,
@@ -639,7 +629,6 @@ app.get("/api/ad-submissions", async (req, res) => {
         query += ` ORDER BY submitted_at DESC`;
 
         const result = await pool.query(query, params);
-
         res.json(result.rows);
     } catch (err) {
         console.error("Error fetching ad submissions:", err);
@@ -656,7 +645,7 @@ app.get("/api/ad-submissions/:id", async (req, res) => {
         const { id } = req.params;
 
         const result = await pool.query(
-            `SELECT 
+            `SELECT
         id,
         company_name,
         ad_text,
@@ -727,26 +716,30 @@ app.put("/api/ad-submissions/:id/approve", async (req, res) => {
         // Update ad submission to approved/live status
         const result = await pool.query(
             `UPDATE ad_submissions
-      SET 
-        status = 'live',
-        reviewed_at = NOW(),
-        reviewed_by = $1,
-        notes = $2,
-        start_date = $3,
-        end_date = $4
-      WHERE id = $5
-      RETURNING *`,
+       SET
+         status = 'live',
+         reviewed_at = NOW(),
+         reviewed_by = $1,
+         notes = $2,
+         start_date = $3,
+         end_date = $4
+       WHERE id = $5
+       RETURNING *`,
             [reviewedBy || 'admin', notes || null, startDate, endDate, id]
         );
 
         const updatedAd = result.rows[0];
         console.log('✅ Ad approved and is now live:', updatedAd.id);
 
+        // Send approval email to buyer
+        sendApprovalNotification(updatedAd).catch(err => {
+            console.error('Failed to send approval email:', err);
+        });
+
         res.json({
             message: "Ad approved and is now live",
             ad: updatedAd
         });
-
     } catch (err) {
         console.error("Error approving ad submission:", err);
         res.status(500).json({ error: "Server error" });
@@ -786,24 +779,28 @@ app.put("/api/ad-submissions/:id/reject", async (req, res) => {
         // Update ad submission to rejected status
         const result = await pool.query(
             `UPDATE ad_submissions
-      SET 
-        status = 'rejected',
-        reviewed_at = NOW(),
-        reviewed_by = $1,
-        notes = $2
-      WHERE id = $3
-      RETURNING *`,
+       SET
+         status = 'rejected',
+         reviewed_at = NOW(),
+         reviewed_by = $1,
+         notes = $2
+       WHERE id = $3
+       RETURNING *`,
             [reviewedBy || 'admin', notes || 'Ad did not meet quality standards', id]
         );
 
         const updatedAd = result.rows[0];
         console.log('❌ Ad rejected:', updatedAd.id);
 
+        // Send rejection email to buyer
+        sendRejectionNotification(updatedAd, notes).catch(err => {
+            console.error('Failed to send rejection email:', err);
+        });
+
         res.json({
             message: "Ad rejected",
             ad: updatedAd
         });
-
     } catch (err) {
         console.error("Error rejecting ad submission:", err);
         res.status(500).json({ error: "Server error" });
@@ -817,7 +814,7 @@ app.put("/api/ad-submissions/:id/reject", async (req, res) => {
 app.get("/api/ads/active", async (req, res) => {
     try {
         const result = await pool.query(
-            `SELECT 
+            `SELECT
         id,
         company_name,
         ad_text,
@@ -838,9 +835,9 @@ app.get("/api/ads/active", async (req, res) => {
     }
 });
 
-// --------------------------- 
+// ---------------------------
 // Health check endpoint
-// --------------------------- 
+// ---------------------------
 app.get("/health", (_req, res) => {
     res.json({ status: "ok" });
 });
@@ -874,12 +871,12 @@ app.use((err, req, res, next) => {
     next();
 });
 
-// --------------------------- 
+// ---------------------------
 // Start server
-// --------------------------- 
+// ---------------------------
 const PORT = parseInt(process.env.PORT, 10) || 5000;
 server.listen(PORT, () => {
     console.log(`🚀 Server listening on port ${PORT}`);
     console.log(`📊 Database: ${process.env.DATABASE_URL ? 'Connected' : 'Not configured'}`);
-    console.log(`🗄️  Supabase Storage: ${process.env.SUPABASE_URL ? 'Configured' : 'Not configured'}`);
+    console.log(`🗄️ Supabase Storage: ${process.env.SUPABASE_URL ? 'Configured' : 'Not configured'}`);
 });
