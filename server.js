@@ -553,7 +553,7 @@ app.post("/api/ad-submissions", upload.single('image'), async (req, res) => {
         }
 
         // Convert amount to cents if needed
-        const amountCents = Math.round(parseFloat(amount) * 100);
+        const amount_cents = Math.round(parseFloat(amount) * 100);
 
         // Insert ad submission into database
         const result = await pool.query(
@@ -576,7 +576,7 @@ app.post("/api/ad-submissions", upload.single('image'), async (req, res) => {
                 email,
                 imageUrl,
                 parseInt(duration),
-                amountCents
+                amount_cents
             ]
         );
 
