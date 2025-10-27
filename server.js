@@ -529,7 +529,7 @@ app.post("/api/ad-submissions", upload.single('image'), async (req, res) => {
             return res.status(400).json({ error: "Start date is required" });
         }
 
-        const requestedStartDate = new Date(startDate);
+        const requestedStartDate = new Date(startDate + 'T12:00:00.000Z'); // "2025-11-01" → Nov 1 noon UTC
         const today = new Date();
         today.setHours(0, 0, 0, 0);
 
