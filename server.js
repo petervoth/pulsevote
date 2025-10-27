@@ -490,7 +490,7 @@ app.post("/api/ad-submissions", upload.single('image'), async (req, res) => {
         console.log('Body:', req.body);
         console.log('File:', req.file ? `${req.file.originalname} (${req.file.size} bytes)` : 'No file');
 
-        const { companyName, adText, linkUrl, email, duration, amount } = req.body;
+        const { companyName, adText, linkUrl, email, duration, amount, startDate } = req.body;
         const imageFile = req.file;
 
         // Validate required fields
@@ -524,6 +524,23 @@ app.post("/api/ad-submissions", upload.single('image'), async (req, res) => {
             return res.status(400).json({ error: "Invalid duration. Must be 7, 14, or 30 days" });
         }
 
+        // Validate start date
+        if (!startDate) {
+            return res.status(400).json({ error: "Start date is required" });
+        }
+
+        const requestedStartDate = new Date(startDate);
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
+        if (isNaN(requestedStartDate.getTime())) {
+            return res.status(400).json({ error: "Invalid start date format" });
+        }
+
+        if (requestedStartDate < today) {
+            return res.status(400).json({ error: "Start date cannot be in the past" });
+        }
+
         // Upload image to Supabase Storage
         const fileName = `${Date.now()}-${imageFile.originalname}`;
         let imageUrl;
@@ -554,8 +571,9 @@ app.post("/api/ad-submissions", upload.single('image'), async (req, res) => {
         duration_days,
         amount_cents,
         status,
+        start_date,
         submitted_at
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, 'pending_review', NOW())
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, 'pending_review', $8, NOW())
       RETURNING *`,
             [
                 companyName,
@@ -564,7 +582,8 @@ app.post("/api/ad-submissions", upload.single('image'), async (req, res) => {
                 email,
                 imageUrl,
                 parseInt(duration),
-                amount_cents
+                amount_cents,
+                requestedStartDate
             ]
         );
 
@@ -708,9 +727,9 @@ app.put("/api/ad-submissions/:id/approve", async (req, res) => {
         // TODO: Capture payment via Stripe
         console.log('💰 Payment would be captured here for:', ad.payment_intent_id);
 
-        // Calculate start and end dates
-        const startDate = new Date();
-        const endDate = new Date();
+        // Use the requested start date from the submission, or default to now
+        const startDate = ad.start_date ? new Date(ad.start_date) : new Date();
+        const endDate = new Date(startDate);
         endDate.setDate(endDate.getDate() + ad.duration_days);
 
         // Update ad submission to approved/live status

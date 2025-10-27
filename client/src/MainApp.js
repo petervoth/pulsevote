@@ -789,6 +789,7 @@ export default function MainApp() {
         linkUrl: '',
         email: '',
         duration: 7, // default 7 days
+        startDate: '',
         imageFile: null,
         imagePreview: null
     });
@@ -939,6 +940,18 @@ export default function MainApp() {
             errors.image = 'Ad image is required';
         }
 
+        if (!adFormData.startDate) {
+            errors.startDate = 'Start date is required';
+        } else {
+            const selectedDate = new Date(adFormData.startDate);
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+
+            if (selectedDate < today) {
+                errors.startDate = 'Start date cannot be in the past';
+            }
+        }
+
         setAdFormErrors(errors);
         return Object.keys(errors).length === 0;
     };
@@ -962,6 +975,7 @@ export default function MainApp() {
             formData.append('duration', adFormData.duration);
             formData.append('amount', AD_PRICING[adFormData.duration]);
             formData.append('image', adFormData.imageFile);
+            formData.append('startDate', adFormData.startDate);
 
             // TODO: This endpoint needs to be created in your backend
             const response = await fetch(`${API_BASE}/api/ad-submissions`, {
@@ -1006,6 +1020,7 @@ export default function MainApp() {
             linkUrl: '',
             email: '',
             duration: 7,
+            startDate: '',
             imageFile: null,
             imagePreview: null
         });
@@ -2068,6 +2083,51 @@ Set your homebase, engage with topics that matter to you, and be part of a geo-s
                                             {adFormErrors.image}
                                         </span>
                                     )}
+                                </div>
+
+                                {/* Start Date */}
+                                <div>
+                                    <label style={{
+                                        display: 'block',
+                                        marginBottom: '0.5rem',
+                                        fontWeight: '600',
+                                        color: darkMode ? '#e0e0e0' : '#333'
+                                    }}>
+                                        Start Date *
+                                    </label>
+                                    <input
+                                        type="date"
+                                        value={adFormData.startDate}
+                                        onChange={(e) => handleAdFormChange('startDate', e.target.value)}
+                                        min={new Date().toISOString().split('T')[0]}
+                                        style={{
+                                            width: '100%',
+                                            padding: '0.75rem',
+                                            borderRadius: '6px',
+                                            border: `1px solid ${adFormErrors.startDate ? '#dc3545' : '#ddd'}`,
+                                            fontSize: '1rem',
+                                            backgroundColor: darkMode ? '#2d2d2d' : '#fff',
+                                            color: darkMode ? '#e0e0e0' : '#333',
+                                            cursor: 'pointer'
+                                        }}
+                                    />
+                                    {adFormErrors.startDate && (
+                                        <span style={{
+                                            color: '#dc3545',
+                                            fontSize: '0.85rem',
+                                            marginTop: '0.25rem',
+                                            display: 'block'
+                                        }}>
+                                            {adFormErrors.startDate}
+                                        </span>
+                                    )}
+                                    <p style={{
+                                        fontSize: '0.8rem',
+                                        color: darkMode ? '#999' : '#666',
+                                        marginTop: '0.25rem'
+                                    }}>
+                                        Your ad will begin running on this date after approval
+                                    </p>
                                 </div>
 
                                 {/* Duration Selection */}

@@ -228,6 +228,10 @@ export default function AdminAds() {
                                     <p><strong>💰 Amount:</strong> ${(sub.amount_cents / 100).toFixed(2)}</p>
                                     <p><strong>📅 Submitted:</strong> {new Date(sub.submitted_at).toLocaleString()}</p>
 
+                                    {sub.start_date && sub.status === 'pending_review' && (
+                                        <p><strong>🗓️ Requested Start:</strong> {new Date(sub.start_date).toLocaleDateString()}</p>
+                                    )}
+
                                     {sub.status === 'live' && sub.start_date && sub.end_date && (
                                         <>
                                             <p><strong>🟢 Started:</strong> {new Date(sub.start_date).toLocaleString()}</p>
