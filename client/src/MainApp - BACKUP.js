@@ -56,6 +56,28 @@ const topicIcons = {
     "Veterans Affairs": "🎖️"
 };
 
+// Sample ad data - customize these later
+const AD_DATA = [
+    {
+        title: "Advertise with us",
+        description: "Connect with your community",
+        image: "https://picsum.photos/id/1043/280/160",
+        url: "www.pulsevote.org",
+    },
+    {
+        title: "Advertise with us",
+        description: "Join thousands making a difference",
+        image: "https://picsum.photos/id/1036/280/160",
+        url: "www.pulsevote.org",
+    },
+    {
+        title: "Advertise with us",
+        description: "Get the latest civic updates",
+        image: "https://picsum.photos/id/1029/280/160",
+        url: "www.pulsevote.org",
+    },
+];
+
 // Ad Pricing Constants
 const AD_PRICING = {
     7: 35,   // 7 days = $35
@@ -100,33 +122,12 @@ function MapSetter({ onMapReady }) {
     return null;
 }
 
-function AdCard({ adIndex, liveAds }) {
-    // If no live ads, show placeholder
-    if (liveAds.length === 0) {
-        return (
-            <li className="feed-item ad-card" style={{
-                cursor: 'pointer',
-                border: '2px solid rgba(255, 255, 255, 0.3)',
-                position: 'relative',
-                overflow: 'hidden',
-                transition: 'transform 0.2s ease, box-shadow 0.2s ease',
-                padding: 0,
-                height: '120px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center'
-            }}>
-                <div style={{ color: '#666', fontSize: '0.9rem' }}>No ads available</div>
-            </li>
-        );
-    }
-
-    const ad = liveAds[adIndex % liveAds.length];
-
+function AdCard({ adIndex }) {
+    const ad = AD_DATA[adIndex % AD_DATA.length];
     return (
         <li
             className="feed-item ad-card"
-            onClick={() => window.open(ad.link_url, '_blank')}
+            onClick={() => window.open(ad.url, '_blank')}
             style={{
                 cursor: 'pointer',
                 border: '2px solid rgba(255, 255, 255, 0.3)',
@@ -146,8 +147,8 @@ function AdCard({ adIndex, liveAds }) {
             }}
         >
             <img
-                src={ad.image_url}
-                alt={ad.company_name}
+                src={ad.image}
+                alt={ad.title}
                 style={{
                     width: '100%',
                     height: '100%',
@@ -192,7 +193,7 @@ function AdCard({ adIndex, liveAds }) {
                     color: '#fff',
                     textShadow: '0 2px 8px rgba(0,0,0,0.8)'
                 }}>
-                    {ad.company_name}
+                    {ad.title}
                 </div>
                 <div style={{
                     fontSize: '0.85rem',
@@ -200,7 +201,7 @@ function AdCard({ adIndex, liveAds }) {
                     textShadow: '0 2px 6px rgba(0,0,0,0.8)',
                     marginBottom: '0.5rem'
                 }}>
-                    {ad.ad_text}
+                    {ad.description}
                 </div>
                 <div style={{
                     padding: '6px 16px',
@@ -795,9 +796,6 @@ export default function MainApp() {
     const [adFormErrors, setAdFormErrors] = useState({});
     const [adFormSubmitting, setAdFormSubmitting] = useState(false);
 
-    // Live Ads State - replaces hardcoded AD_DATA from back-up copy
-    const [liveAds, setLiveAds] = useState([]);
-
     // Location name for homebase
     const [homebaseName, setHomebaseName] = useState("Loading...");
 
@@ -1083,7 +1081,7 @@ export default function MainApp() {
         };
     }, [map]);
 
-    // ===== Handle spotlight toggle specifically =====
+    // ===== NEW: Handle spotlight toggle specifically =====
     useEffect(() => {
         if (!map) return;
 
@@ -1167,26 +1165,6 @@ export default function MainApp() {
             localStorage.setItem('darkMode', 'false');
         }
     }, [darkMode]);
-
-    // ===== FETCH LIVE ADS FROM DATABASE =====
-    useEffect(() => {
-        async function fetchLiveAds() {
-            try {
-                const res = await fetch(`${API_BASE}/api/ads/active`);
-                if (res.ok) {
-                    const ads = await res.json();
-                    setLiveAds(ads);
-                }
-            } catch (err) {
-                console.error("Error fetching live ads:", err);
-            }
-        }
-
-        fetchLiveAds();
-        // Refresh ads every 5 minutes
-        const interval = setInterval(fetchLiveAds, 5 * 60 * 1000);
-        return () => clearInterval(interval);
-    }, []);
 
     async function fetchProfile(userId) {
         const { data, error } = await supabase
@@ -3011,7 +2989,7 @@ Set your homebase, engage with topics that matter to you, and be part of a geo-s
                                     <ul>
                                         {topicsWithAds.map((item, index) =>
                                             item.isAd ? (
-                                                <AdCard key={`ad-${index}`} adIndex={item.adIndex} liveAds={liveAds} />
+                                                <AdCard key={`ad-${item.adIndex}`} adIndex={item.adIndex} />
                                             ) : (
                                                 <li
                                                     key={item.id}
