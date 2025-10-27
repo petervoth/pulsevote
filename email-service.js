@@ -19,12 +19,12 @@ const FROM_EMAIL = process.env.FROM_EMAIL || 'ads@pulsevote.org';
  * Send notification to admin when a new ad is submitted
  */
 async function sendAdminNotification(adSubmission) {
-  try {
-    const { data, error } = await resend.emails.send({
-      from: FROM_EMAIL,
-      to: ADMIN_EMAIL,
-      subject: '🎯 New Ad Submission - PulseVote',
-      html: `
+    try {
+        const { data, error } = await resend.emails.send({
+            from: FROM_EMAIL,
+            to: ADMIN_EMAIL,
+            subject: '🎯 New Ad Submission - PulseVote',
+            html: `
         <h2>New Ad Submission Received</h2>
         <p>A new advertisement has been submitted and is awaiting your review.</p>
         
@@ -38,6 +38,12 @@ async function sendAdminNotification(adSubmission) {
           <li><strong>Buyer Email:</strong> ${adSubmission.buyer_email}</li>
           <li><strong>Duration:</strong> ${adSubmission.duration_days} days</li>
           <li><strong>Amount:</strong> $${(adSubmission.amount_cents / 100).toFixed(2)} USD</li>
+          <li><strong>Requested Start Date:</strong> ${new Date(adSubmission.start_date).toLocaleDateString('en-US', {
+                weekday: 'long',
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+            })}</li>
           <li><strong>Submission ID:</strong> ${adSubmission.id}</li>
           <li><strong>Submitted:</strong> ${new Date(adSubmission.submitted_at).toLocaleString()}</li>
         </ul>
@@ -53,31 +59,31 @@ async function sendAdminNotification(adSubmission) {
           Log in to your admin panel to approve or reject this submission.
         </p>
       `,
-    });
+        });
 
-    if (error) {
-      console.error('❌ Resend error sending admin notification:', error);
-      throw error;
+        if (error) {
+            console.error('❌ Resend error sending admin notification:', error);
+            throw error;
+        }
+
+        console.log('✅ Admin notification email sent:', data.id);
+        return data;
+    } catch (error) {
+        console.error('❌ Failed to send admin notification:', error);
+        throw error;
     }
-
-    console.log('✅ Admin notification email sent:', data.id);
-    return data;
-  } catch (error) {
-    console.error('❌ Failed to send admin notification:', error);
-    throw error;
-  }
 }
 
 /**
  * Send confirmation to buyer when their ad is submitted
  */
 async function sendSubmissionConfirmation(adSubmission) {
-  try {
-    const { data, error } = await resend.emails.send({
-      from: FROM_EMAIL,
-      to: adSubmission.buyer_email,
-      subject: '✅ Ad Submission Received - PulseVote',
-      html: `
+    try {
+        const { data, error } = await resend.emails.send({
+            from: FROM_EMAIL,
+            to: adSubmission.buyer_email,
+            subject: '✅ Ad Submission Received - PulseVote',
+            html: `
         <h2>Thank You for Your Submission!</h2>
         <p>Hi there,</p>
         
@@ -90,6 +96,12 @@ async function sendSubmissionConfirmation(adSubmission) {
           <li><strong>Company:</strong> ${adSubmission.company_name}</li>
           <li><strong>Ad Text:</strong> ${adSubmission.ad_text}</li>
           <li><strong>Duration:</strong> ${adSubmission.duration_days} days</li>
+          <li><strong>Requested Start Date:</strong> ${new Date(adSubmission.start_date).toLocaleDateString('en-US', {
+                weekday: 'long',
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+            })}</li>
           <li><strong>Amount:</strong> $${(adSubmission.amount_cents / 100).toFixed(2)} USD</li>
           <li><strong>Submission ID:</strong> ${adSubmission.id}</li>
         </ul>
@@ -101,7 +113,11 @@ async function sendSubmissionConfirmation(adSubmission) {
           <li>Our team will review your ad within 24 hours</li>
           <li>We'll check that it meets our quality standards and guidelines</li>
           <li>You'll receive an email with the decision (approved or needs revision)</li>
-          <li>If approved, payment will be processed and your ad will go live</li>
+          <li>If approved, payment will be processed and your ad will go live on <strong>${new Date(adSubmission.start_date).toLocaleDateString('en-US', {
+                month: 'long',
+                day: 'numeric',
+                year: 'numeric'
+            })}</strong></li>
         </ol>
         
         <p style="color: #666; font-size: 0.9rem; margin-top: 20px;">
@@ -113,35 +129,35 @@ async function sendSubmissionConfirmation(adSubmission) {
           This is an automated message. Please do not reply directly to this email.
         </p>
       `,
-    });
+        });
 
-    if (error) {
-      console.error('❌ Resend error sending submission confirmation:', error);
-      throw error;
+        if (error) {
+            console.error('❌ Resend error sending submission confirmation:', error);
+            throw error;
+        }
+
+        console.log('✅ Submission confirmation email sent:', data.id);
+        return data;
+    } catch (error) {
+        console.error('❌ Failed to send submission confirmation:', error);
+        throw error;
     }
-
-    console.log('✅ Submission confirmation email sent:', data.id);
-    return data;
-  } catch (error) {
-    console.error('❌ Failed to send submission confirmation:', error);
-    throw error;
-  }
 }
 
 /**
  * Send notification to buyer when their ad is approved
  */
 async function sendApprovalNotification(adSubmission) {
-  try {
-    const { data, error } = await resend.emails.send({
-      from: FROM_EMAIL,
-      to: adSubmission.buyer_email,
-      subject: '🎉 Your Ad Has Been Approved - PulseVote',
-      html: `
-        <h2>Great News! Your Ad is Live! 🎉</h2>
+    try {
+        const { data, error } = await resend.emails.send({
+            from: FROM_EMAIL,
+            to: adSubmission.buyer_email,
+            subject: '🎉 Your Ad Has Been Approved - PulseVote',
+            html: `
+        <h2>Great News! Your Ad is Approved! 🎉</h2>
         <p>Hi there,</p>
         
-        <p>Your advertisement for <strong>${adSubmission.company_name}</strong> has been approved and is now live on PulseVote!</p>
+        <p>Your advertisement for <strong>${adSubmission.company_name}</strong> has been approved and will go live as scheduled!</p>
         
         <hr />
         
@@ -151,8 +167,18 @@ async function sendApprovalNotification(adSubmission) {
           <li><strong>Ad Text:</strong> ${adSubmission.ad_text}</li>
           <li><strong>Duration:</strong> ${adSubmission.duration_days} days</li>
           <li><strong>Amount Charged:</strong> $${(adSubmission.amount_cents / 100).toFixed(2)} USD</li>
-          <li><strong>Start Date:</strong> ${new Date(adSubmission.start_date).toLocaleDateString()}</li>
-          <li><strong>End Date:</strong> ${new Date(adSubmission.end_date).toLocaleDateString()}</li>
+          <li><strong>Start Date:</strong> ${new Date(adSubmission.start_date).toLocaleDateString('en-US', {
+                weekday: 'long',
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+            })}</li>
+          <li><strong>End Date:</strong> ${new Date(adSubmission.end_date).toLocaleDateString('en-US', {
+                weekday: 'long',
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+            })}</li>
         </ul>
         
         <p><strong>Your ad preview:</strong></p>
@@ -162,8 +188,12 @@ async function sendApprovalNotification(adSubmission) {
         
         <h3>What's Next?</h3>
         <p>✅ Payment has been processed successfully</p>
-        <p>✅ Your ad is now appearing in the PulseVote topic feed</p>
-        <p>✅ Users will see your ad and can click through to: <a href="${adSubmission.link_url}">${adSubmission.link_url}</a></p>
+        <p>✅ Your ad will automatically go live on ${new Date(adSubmission.start_date).toLocaleDateString('en-US', {
+                month: 'long',
+                day: 'numeric',
+                year: 'numeric'
+            })}</p>
+        <p>✅ Users will see your ad in the PulseVote topic feed and can click through to: <a href="${adSubmission.link_url}">${adSubmission.link_url}</a></p>
         
         <p style="background: #e3f2fd; padding: 15px; border-left: 4px solid #0b63a4; margin: 20px 0;">
           💡 <strong>Pro Tip:</strong> Your ad will run for ${adSubmission.duration_days} days. If you'd like to extend or create a new campaign, just submit another ad through our platform!
@@ -186,31 +216,31 @@ async function sendApprovalNotification(adSubmission) {
           This is an automated message. Please do not reply directly to this email.
         </p>
       `,
-    });
+        });
 
-    if (error) {
-      console.error('❌ Resend error sending approval notification:', error);
-      throw error;
+        if (error) {
+            console.error('❌ Resend error sending approval notification:', error);
+            throw error;
+        }
+
+        console.log('✅ Approval notification email sent:', data.id);
+        return data;
+    } catch (error) {
+        console.error('❌ Failed to send approval notification:', error);
+        throw error;
     }
-
-    console.log('✅ Approval notification email sent:', data.id);
-    return data;
-  } catch (error) {
-    console.error('❌ Failed to send approval notification:', error);
-    throw error;
-  }
 }
 
 /**
  * Send notification to buyer when their ad is rejected
  */
 async function sendRejectionNotification(adSubmission, rejectionReason) {
-  try {
-    const { data, error } = await resend.emails.send({
-      from: FROM_EMAIL,
-      to: adSubmission.buyer_email,
-      subject: '⚠️ Ad Submission Update - PulseVote',
-      html: `
+    try {
+        const { data, error } = await resend.emails.send({
+            from: FROM_EMAIL,
+            to: adSubmission.buyer_email,
+            subject: '⚠️ Ad Submission Update - PulseVote',
+            html: `
         <h2>Update on Your Ad Submission</h2>
         <p>Hi there,</p>
         
@@ -252,24 +282,24 @@ async function sendRejectionNotification(adSubmission, rejectionReason) {
           This is an automated message. Please do not reply directly to this email.
         </p>
       `,
-    });
+        });
 
-    if (error) {
-      console.error('❌ Resend error sending rejection notification:', error);
-      throw error;
+        if (error) {
+            console.error('❌ Resend error sending rejection notification:', error);
+            throw error;
+        }
+
+        console.log('✅ Rejection notification email sent:', data.id);
+        return data;
+    } catch (error) {
+        console.error('❌ Failed to send rejection notification:', error);
+        throw error;
     }
-
-    console.log('✅ Rejection notification email sent:', data.id);
-    return data;
-  } catch (error) {
-    console.error('❌ Failed to send rejection notification:', error);
-    throw error;
-  }
 }
 
 module.exports = {
-  sendAdminNotification,
-  sendSubmissionConfirmation,
-  sendApprovalNotification,
-  sendRejectionNotification,
+    sendAdminNotification,
+    sendSubmissionConfirmation,
+    sendApprovalNotification,
+    sendRejectionNotification,
 };
