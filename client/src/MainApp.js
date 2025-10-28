@@ -358,15 +358,15 @@ function ChoroplethLayer({ points }) {
 
     // Calculate grid size based on zoom level
     const getGridSizeForZoom = (zoom) => {
-        if (zoom <= 2) return 12;
-        if (zoom <= 3) return 8;
-        if (zoom <= 4) return 5;
-        if (zoom <= 5) return 3;
-        if (zoom <= 6) return 2;
-        if (zoom <= 7) return 1;
-        if (zoom <= 8) return 0.5;
-        if (zoom <= 9) return 0.3;
-        if (zoom <= 10) return 0.15;
+        if (zoom <= 2) return 6;
+        if (zoom <= 3) return 4;
+        if (zoom <= 4) return 3;
+        if (zoom <= 5) return 2;
+        if (zoom <= 6) return 1;
+        if (zoom <= 7) return 0.5;
+        if (zoom <= 8) return 0.3;
+        if (zoom <= 9) return 0.16;
+        if (zoom <= 10) return 0.08;
         if (zoom <= 11) return 0.02;
         return 0.01;
     };
