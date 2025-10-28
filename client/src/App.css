@@ -596,7 +596,7 @@ button {
 }
 
 .header-home {
-    font-size: 0.86rem;
+    font-size: 0.9rem;
     opacity: 0.9;
 }
 
@@ -1465,6 +1465,7 @@ body.dark-mode .leaflet-control-zoom-out {
     }
 
     .header-home {
+        font-size: 0.7rem;
         font-weight: 500;
         border: 1px solid rgba(255,255,255,0.2);
         box-shadow: 0 1px 3px rgba(0,0,0,0.1);
@@ -1809,6 +1810,28 @@ body.dark-mode .stance-box.avg-neutral {
     background: rgba(255, 255, 255, 0.1);
 }
 
+/* Styling for info button */
+.info-toggle {
+    font-size: 1.2rem;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0.4rem 0.6rem;
+    margin-right: 0.5rem;
+    border-radius: 6px;
+    transition: background 0.3s ease, transform 0.2s ease;
+    color: inherit;
+}
+
+    .info-toggle:hover {
+        background: rgba(0, 0, 0, 0.1);
+        transform: scale(1.1);
+    }
+
+.dark-mode .info-toggle:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+
 /* Styling for icons in Map view toggle modal*/
 .map-style-options {
     display: flex;
@@ -2075,10 +2098,10 @@ body.dark-mode .stance-box.avg-neutral {
     .header-home {
         font-size: 0.65rem;
         white-space: nowrap;
-        padding: 3px 8px;
     }
 
     /* Toggle buttons on the right side of row 2 - with reversed order */
+    .info-toggle, 
     .map-options-toggle,
     .map-expand-toggle,
     .dark-mode-toggle {
@@ -2099,5 +2122,9 @@ body.dark-mode .stance-box.avg-neutral {
 
     .dark-mode-toggle {
         order: 12;
+    }
+
+    .info-toggle {
+        order: 13;
     }
 }

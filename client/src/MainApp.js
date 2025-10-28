@@ -1783,9 +1783,9 @@ export default function MainApp() {
             <header className="app-header header--with-user">
                 <h1
                     className="site-title"
-                    onClick={() => setAboutModalOpen(true)}
+                    onClick={() => window.location.reload()}
                     style={{
-                        fontSize: '1.2rem',
+                        fontSize: '1.6rem',
                         fontWeight: 'bold',
                         fontFamily: 'inherit',
                         padding: '0.5rem 1rem',
@@ -1797,8 +1797,17 @@ export default function MainApp() {
                 >
                     PulseVote
                 </h1>
+                
+                <div className="header-right">     
+                    <button
+                        onClick={() => setAboutModalOpen(true)}
+                        className="info-toggle"
+                        aria-label="Info and About"
+                        title="About PulseVote"
+                    >
+                        ℹ️
+                    </button>
 
-                <div className="header-right">
                     <button
                         onClick={() => setMapOptionsOpen(o => !o)}
                         className="map-options-toggle"
@@ -1848,7 +1857,7 @@ export default function MainApp() {
                                     Set Homebase
                                 </button>
                             )}
-
+                            
                             <button className="header-logout" onClick={handleLogout} aria-label="Logout">
                                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                                     <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
@@ -1857,7 +1866,7 @@ export default function MainApp() {
                                 </svg>
                             </button>
                         </div>
-                    )}
+                    )}                    
                 </div>
             </header>
 
@@ -1992,7 +2001,8 @@ Set your homebase, engage with topics that matter to you, and be part of a geo-s
                                             fontSize: '1rem',
                                             resize: 'vertical',
                                             backgroundColor: darkMode ? '#2d2d2d' : '#fff',
-                                            color: darkMode ? '#e0e0e0' : '#333'
+                                            color: darkMode ? '#e0e0e0' : '#333',
+                                            boxSizing: 'border-box'
                                         }}
                                     />
                                     {adFormErrors.adText && (
@@ -2940,11 +2950,9 @@ Set your homebase, engage with topics that matter to you, and be part of a geo-s
                                         </div>
                                     </section>
 
-                                    <section className="accordion-section card">
-                                        <div className="accordion-header" style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                                            <div style={{ flex: 1, textAlign: "center" }}>
-                                                <h3 style={{ margin: 0, fontWeight: "normal" }}>Filters</h3>
-                                            </div>
+                                    <section className="create-section card">
+                                        <div className="accordion-header">
+                                            <h3>Filters</h3>
                                             <button
                                                 className={`accordion-toggle ${filterOpen ? "open" : ""}`}
                                                 onClick={() => setFilterOpen(o => !o)}
