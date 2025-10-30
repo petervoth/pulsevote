@@ -795,7 +795,7 @@ function CheckoutForm({ adFormData, validateForm, onSuccess, onError, darkMode }
         try {
             // Step 1: Create payment intent on server
             console.log('Creating payment intent...');
-            const intentResponse = await fetch(`${API_BASE}/api/create-payment-intent`, {
+            const intentResponse = await fetch(`${API_BASE}/api/stripe/create-payment-intent`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
