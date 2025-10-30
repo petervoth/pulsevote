@@ -763,7 +763,16 @@ function CheckoutForm({ adFormData, onSuccess, onError, darkMode }) {
 
     const handleSubmit = async (event) => {
         event.preventDefault();
+        event.stopPropagation(); // Prevent modal from closing
+
         if (!stripe || !elements) {
+            return;
+        }
+
+        // Validate form before processing payment
+        if (!adFormData.companyName || !adFormData.adText || !adFormData.linkUrl ||
+            !adFormData.email || !adFormData.imageFile || !adFormData.startDate) {
+            onError('Please fill in all required fields before submitting.');
             return;
         }
 
@@ -806,9 +815,11 @@ function CheckoutForm({ adFormData, onSuccess, onError, darkMode }) {
 
             if (paymentIntent.status === 'requires_capture') {
                 // Payment authorized successfully!
+                console.log('Payment authorized, submitting ad...');
                 onSuccess(paymentIntentId);
             }
         } catch (err) {
+            console.error('Payment error:', err);
             onError(err.message);
             setProcessing(false);
         }
@@ -862,7 +873,7 @@ function CheckoutForm({ adFormData, onSuccess, onError, darkMode }) {
                 </p>
             </div>
 
-            {/* Authorize Button */}
+            {/* Submit Button */}
             <button
                 type="submit"
                 disabled={!stripe || processing}
@@ -890,7 +901,7 @@ function CheckoutForm({ adFormData, onSuccess, onError, darkMode }) {
                     }
                 }}
             >
-                {processing ? 'Processing...' : `Authorize $${AD_PRICING[adFormData.duration]} Payment`}
+                {processing ? 'Processing Payment...' : `Submit Ad & Authorize $${AD_PRICING[adFormData.duration]} Payment`}
             </button>
         </form>
     );
@@ -2519,19 +2530,6 @@ Set your homebase, engage with topics that matter to you, and be part of a geo-s
                                         darkMode={darkMode}
                                     />
                                 </Elements>
-
-                                {/* Cancel Button */}
-                                <div style={{ display: 'flex', gap: '1rem', marginTop: '0.5rem' }}>
-                                    <button
-                                        type="button"
-                                        onClick={() => resetAdForm()}
-                                        style={{
-                                            width: '100%'
-                                        }}
-                                    >
-                                        {adFormSubmitting ? 'Submitting...' : 'Submit for Review'}
-                                    </button>
-                                </div>
 
                                 <p style={{
                                     fontSize: '0.75rem',
