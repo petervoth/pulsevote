@@ -226,6 +226,9 @@ export default function AdminAds() {
                                     <p><strong>📧 Contact:</strong> {sub.buyer_email}</p>
                                     <p><strong>⏱️ Duration:</strong> {sub.duration_days} days</p>
                                     <p><strong>💰 Amount:</strong> ${(sub.amount_cents / 100).toFixed(2)}</p>
+                                    {sub.payment_intent_id && (
+                                        <p><strong>💳 Payment ID:</strong> {sub.payment_intent_id.substring(0, 20)}...</p>
+                                    )}
                                     <p><strong>📅 Submitted:</strong> {new Date(sub.submitted_at).toLocaleString()}</p>
 
                                     {sub.start_date && sub.status === 'pending_review' && (

@@ -15,6 +15,9 @@ const {
     sendRejectionNotification,
 } = require('./email-service');
 
+// ===== STRIPE INITIALIZATION =====
+const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+
 const app = express();
 
 // Initialize Supabase client for Storage
@@ -83,7 +86,6 @@ io.on("connection", (socket) => {
 // ---------------------------
 // Topics routes
 // ---------------------------
-
 // Get all topics with vote counts
 app.get("/topics", async (req, res) => {
     try {
@@ -142,11 +144,11 @@ app.post("/topics", async (req, res) => {
         const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
         const recentTopicCheck = await pool.query(
             `SELECT id, created_at
-       FROM topics
-       WHERE created_by = $1
-         AND created_at > $2
-       ORDER BY created_at DESC
-       LIMIT 1`,
+      FROM topics
+      WHERE created_by = $1
+      AND created_at > $2
+      ORDER BY created_at DESC
+      LIMIT 1`,
             [created_by, oneDayAgo]
         );
 
@@ -165,10 +167,10 @@ app.post("/topics", async (req, res) => {
         // If no recent topic, proceed with creation
         const result = await pool.query(
             `INSERT INTO topics
-        (title, description, created_by, stance, created_at)
-       VALUES
-        ($1, $2, $3, $4, NOW())
-       RETURNING *`,
+      (title, description, created_by, stance, created_at)
+      VALUES
+      ($1, $2, $3, $4, NOW())
+      RETURNING *`,
             [title, description || null, created_by, stance || null]
         );
 
@@ -184,11 +186,11 @@ app.post("/topics", async (req, res) => {
 // ---------------------------
 // Points routes
 // ---------------------------
-
 // Get latest point per user for a given topic
 // Query string: ?topic_id=<topicId>
 app.get("/points", async (req, res) => {
     const topicId = req.query.topic_id;
+
     if (!topicId) {
         return res
             .status(400)
@@ -199,13 +201,14 @@ app.get("/points", async (req, res) => {
         const result = await pool.query(
             `SELECT DISTINCT ON (user_id)
         id, user_id, topic_id, lat, lng, intensity, stance, created_at
-       FROM points
-       WHERE topic_id = $1
-         AND stance IS NOT NULL
-         AND stance <> ''
-       ORDER BY user_id, created_at DESC`,
+      FROM points
+      WHERE topic_id = $1
+      AND stance IS NOT NULL
+      AND stance <> ''
+      ORDER BY user_id, created_at DESC`,
             [topicId]
         );
+
         res.json(result.rows);
     } catch (err) {
         console.error("Error fetching points by topic:", err);
@@ -227,6 +230,7 @@ app.get("/points/nearby", async (req, res) => {
                 .status(400)
                 .json({ error: "lat and lng query params must be numbers" });
         }
+
         if (!topicId) {
             return res.status(400).json({ error: "topic_id is required" });
         }
@@ -269,6 +273,7 @@ app.get("/points/nearby", async (req, res) => {
 
         const params = [lng, lat, radius, topicId];
         const result = await pool.query(sql, params);
+
         res.json(result.rows);
     } catch (err) {
         console.error("Error fetching nearby points:", err);
@@ -303,14 +308,14 @@ app.post("/points", async (req, res) => {
 
         const insertSql = `
       INSERT INTO points
-        (lat, lng, intensity, topic_id, user_id, stance, created_at, location)
+      (lat, lng, intensity, topic_id, user_id, stance, created_at, location)
       VALUES
-        ($1, $2, $3, $4, $5, $6, NOW(),
-         ST_SetSRID(
-           ST_MakePoint($2::double precision, $1::double precision),
-           4326
-         )::geography
-        )
+      ($1, $2, $3, $4, $5, $6, NOW(),
+        ST_SetSRID(
+          ST_MakePoint($2::double precision, $1::double precision),
+          4326
+        )::geography
+      )
       RETURNING *;
     `;
 
@@ -319,7 +324,6 @@ app.post("/points", async (req, res) => {
         const newPoint = result.rows[0];
 
         io.to(`topic:${newPoint.topic_id}`).emit("new_point", newPoint);
-
         res.status(201).json(newPoint);
     } catch (err) {
         console.error("Error inserting point:", err);
@@ -379,6 +383,7 @@ app.get("/twinkle_points", async (_req, res) => {
       FROM twinkle_points
       ORDER BY created_at DESC
     `;
+
         const { rows } = await pool.query(sql);
         res.json(rows);
     } catch (err) {
@@ -408,6 +413,7 @@ app.put("/profiles/:userId/reset-homebase", async (req, res) => {
         }
 
         const lastReset = profileCheck.rows[0].homebase_last_reset;
+
         if (lastReset) {
             const daysSinceReset = (Date.now() - new Date(lastReset).getTime()) / (1000 * 60 * 60 * 24);
             const daysLeft = Math.ceil(180 - daysSinceReset);
@@ -424,12 +430,12 @@ app.put("/profiles/:userId/reset-homebase", async (req, res) => {
         // Update homebase
         const result = await pool.query(
             `UPDATE profiles
-       SET home_lat = $1,
-           home_lng = $2,
-           homebase_set = true,
-           homebase_last_reset = NOW()
-       WHERE id = $3
-       RETURNING *`,
+      SET home_lat = $1,
+          home_lng = $2,
+          homebase_set = true,
+          homebase_last_reset = NOW()
+      WHERE id = $3
+      RETURNING *`,
             [lat, lng, userId]
         );
 
@@ -437,6 +443,99 @@ app.put("/profiles/:userId/reset-homebase", async (req, res) => {
     } catch (err) {
         console.error("Error resetting homebase:", err);
         res.status(500).json({ error: "Server error" });
+    }
+});
+
+// ===========================
+// STRIPE PAYMENT ENDPOINTS
+// ===========================
+
+/**
+ * POST /api/stripe/create-payment-intent
+ * Create a PaymentIntent for ad submission (authorization hold)
+ */
+app.post("/api/stripe/create-payment-intent", async (req, res) => {
+    try {
+        const { amount, email, companyName } = req.body;
+
+        if (!amount || !email) {
+            return res.status(400).json({ error: "Amount and email are required" });
+        }
+
+        // Create PaymentIntent with capture_method: manual (authorization hold)
+        const paymentIntent = await stripe.paymentIntents.create({
+            amount: Math.round(amount * 100), // Convert to cents
+            currency: 'usd',
+            capture_method: 'manual', // Hold the payment, don't capture yet
+            receipt_email: email,
+            description: `PulseVote Ad - ${companyName || 'Advertiser'}`,
+            metadata: {
+                company_name: companyName || '',
+                buyer_email: email
+            }
+        });
+
+        console.log('💳 Payment Intent created:', paymentIntent.id);
+
+        res.json({
+            clientSecret: paymentIntent.client_secret,
+            paymentIntentId: paymentIntent.id
+        });
+    } catch (error) {
+        console.error('Error creating payment intent:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+/**
+ * POST /api/stripe/capture-payment
+ * Capture a held payment (when ad is approved)
+ */
+app.post("/api/stripe/capture-payment", async (req, res) => {
+    try {
+        const { paymentIntentId } = req.body;
+
+        if (!paymentIntentId) {
+            return res.status(400).json({ error: "Payment Intent ID is required" });
+        }
+
+        const paymentIntent = await stripe.paymentIntents.capture(paymentIntentId);
+
+        console.log('✅ Payment captured:', paymentIntentId);
+
+        res.json({
+            success: true,
+            paymentIntent: paymentIntent
+        });
+    } catch (error) {
+        console.error('Error capturing payment:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+/**
+ * POST /api/stripe/cancel-payment
+ * Cancel a held payment (when ad is rejected)
+ */
+app.post("/api/stripe/cancel-payment", async (req, res) => {
+    try {
+        const { paymentIntentId } = req.body;
+
+        if (!paymentIntentId) {
+            return res.status(400).json({ error: "Payment Intent ID is required" });
+        }
+
+        const paymentIntent = await stripe.paymentIntents.cancel(paymentIntentId);
+
+        console.log('❌ Payment cancelled:', paymentIntentId);
+
+        res.json({
+            success: true,
+            paymentIntent: paymentIntent
+        });
+    } catch (error) {
+        console.error('Error cancelling payment:', error);
+        res.status(500).json({ error: error.message });
     }
 });
 
@@ -482,7 +581,7 @@ async function uploadImageToStorage(fileBuffer, fileName, mimeType) {
 
 /**
  * POST /api/ad-submissions
- * Submit a new ad for review
+ * Submit a new ad for review (with payment authorization)
  */
 app.post("/api/ad-submissions", upload.single('image'), async (req, res) => {
     try {
@@ -490,14 +589,14 @@ app.post("/api/ad-submissions", upload.single('image'), async (req, res) => {
         console.log('Body:', req.body);
         console.log('File:', req.file ? `${req.file.originalname} (${req.file.size} bytes)` : 'No file');
 
-        const { companyName, adText, linkUrl, email, duration, amount, startDate } = req.body;
+        const { companyName, adText, linkUrl, email, duration, amount, startDate, paymentIntentId } = req.body;
         const imageFile = req.file;
 
         // Validate required fields
-        if (!companyName || !adText || !linkUrl || !email || !duration || !amount) {
+        if (!companyName || !adText || !linkUrl || !email || !duration || !amount || !paymentIntentId) {
             return res.status(400).json({
                 error: "Missing required fields",
-                required: ["companyName", "adText", "linkUrl", "email", "duration", "amount", "image"]
+                required: ["companyName", "adText", "linkUrl", "email", "duration", "amount", "paymentIntentId", "image"]
             });
         }
 
@@ -529,7 +628,7 @@ app.post("/api/ad-submissions", upload.single('image'), async (req, res) => {
             return res.status(400).json({ error: "Start date is required" });
         }
 
-        const requestedStartDate = new Date(startDate + 'T12:00:00.000Z'); // "2025-11-01" → Nov 1 noon UTC
+        const requestedStartDate = new Date(startDate + 'T12:00:00.000Z');
         const today = new Date();
         today.setHours(0, 0, 0, 0);
 
@@ -539,6 +638,23 @@ app.post("/api/ad-submissions", upload.single('image'), async (req, res) => {
 
         if (requestedStartDate < today) {
             return res.status(400).json({ error: "Start date cannot be in the past" });
+        }
+
+        // Verify payment intent exists and is valid
+        try {
+            const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
+
+            if (paymentIntent.status !== 'requires_capture') {
+                return res.status(400).json({
+                    error: "Payment not authorized. Please complete payment first.",
+                    status: paymentIntent.status
+                });
+            }
+
+            console.log('✅ Payment verified:', paymentIntentId);
+        } catch (stripeError) {
+            console.error('❌ Stripe verification error:', stripeError);
+            return res.status(400).json({ error: "Invalid payment. Please try again." });
         }
 
         // Upload image to Supabase Storage
@@ -572,8 +688,9 @@ app.post("/api/ad-submissions", upload.single('image'), async (req, res) => {
         amount_cents,
         status,
         start_date,
+        payment_intent_id,
         submitted_at
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, 'pending_review', $8, NOW())
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, 'pending_review', $8, $9, NOW())
       RETURNING *`,
             [
                 companyName,
@@ -583,7 +700,8 @@ app.post("/api/ad-submissions", upload.single('image'), async (req, res) => {
                 imageUrl,
                 parseInt(duration),
                 amount_cents,
-                requestedStartDate
+                requestedStartDate,
+                paymentIntentId
             ]
         );
 
@@ -699,7 +817,7 @@ app.get("/api/ad-submissions/:id", async (req, res) => {
 
 /**
  * PUT /api/ad-submissions/:id/approve
- * Approve an ad submission and make it live
+ * Approve an ad submission and CAPTURE the payment
  */
 app.put("/api/ad-submissions/:id/approve", async (req, res) => {
     try {
@@ -724,8 +842,21 @@ app.put("/api/ad-submissions/:id/approve", async (req, res) => {
             });
         }
 
-        // TODO: Capture payment via Stripe
-        console.log('💰 Payment would be captured here for:', ad.payment_intent_id);
+        // ===== CAPTURE PAYMENT VIA STRIPE =====
+        if (ad.payment_intent_id) {
+            try {
+                const paymentIntent = await stripe.paymentIntents.capture(ad.payment_intent_id);
+                console.log('💰 Payment captured:', paymentIntent.id, '- Status:', paymentIntent.status);
+            } catch (stripeError) {
+                console.error('❌ Failed to capture payment:', stripeError);
+                return res.status(500).json({
+                    error: "Failed to capture payment. Ad not approved.",
+                    details: stripeError.message
+                });
+            }
+        } else {
+            console.warn('⚠️ No payment_intent_id found for ad:', id);
+        }
 
         // Use the requested start date from the submission, or default to now
         const startDate = ad.start_date ? new Date(ad.start_date) : new Date();
@@ -735,15 +866,15 @@ app.put("/api/ad-submissions/:id/approve", async (req, res) => {
         // Update ad submission to approved/live status
         const result = await pool.query(
             `UPDATE ad_submissions
-       SET
-         status = 'live',
-         reviewed_at = NOW(),
-         reviewed_by = $1,
-         notes = $2,
-         start_date = $3,
-         end_date = $4
-       WHERE id = $5
-       RETURNING *`,
+      SET
+        status = 'live',
+        reviewed_at = NOW(),
+        reviewed_by = $1,
+        notes = $2,
+        start_date = $3,
+        end_date = $4
+      WHERE id = $5
+      RETURNING *`,
             [reviewedBy || 'admin', notes || null, startDate, endDate, id]
         );
 
@@ -756,7 +887,7 @@ app.put("/api/ad-submissions/:id/approve", async (req, res) => {
         });
 
         res.json({
-            message: "Ad approved and is now live",
+            message: "Ad approved and payment captured",
             ad: updatedAd
         });
     } catch (err) {
@@ -767,7 +898,7 @@ app.put("/api/ad-submissions/:id/approve", async (req, res) => {
 
 /**
  * PUT /api/ad-submissions/:id/reject
- * Reject an ad submission and cancel payment
+ * Reject an ad submission and CANCEL the payment
  */
 app.put("/api/ad-submissions/:id/reject", async (req, res) => {
     try {
@@ -792,19 +923,30 @@ app.put("/api/ad-submissions/:id/reject", async (req, res) => {
             });
         }
 
-        // TODO: Cancel payment intent via Stripe
-        console.log('❌ Payment would be cancelled here for:', ad.payment_intent_id);
+        // ===== CANCEL PAYMENT VIA STRIPE =====
+        if (ad.payment_intent_id) {
+            try {
+                const paymentIntent = await stripe.paymentIntents.cancel(ad.payment_intent_id);
+                console.log('❌ Payment cancelled:', paymentIntent.id, '- Status:', paymentIntent.status);
+            } catch (stripeError) {
+                console.error('❌ Failed to cancel payment:', stripeError);
+                // Continue with rejection even if cancel fails
+                console.warn('⚠️ Continuing with rejection despite payment cancellation failure');
+            }
+        } else {
+            console.warn('⚠️ No payment_intent_id found for ad:', id);
+        }
 
         // Update ad submission to rejected status
         const result = await pool.query(
             `UPDATE ad_submissions
-       SET
-         status = 'rejected',
-         reviewed_at = NOW(),
-         reviewed_by = $1,
-         notes = $2
-       WHERE id = $3
-       RETURNING *`,
+      SET
+        status = 'rejected',
+        reviewed_at = NOW(),
+        reviewed_by = $1,
+        notes = $2
+      WHERE id = $3
+      RETURNING *`,
             [reviewedBy || 'admin', notes || 'Ad did not meet quality standards', id]
         );
 
@@ -817,7 +959,7 @@ app.put("/api/ad-submissions/:id/reject", async (req, res) => {
         });
 
         res.json({
-            message: "Ad rejected",
+            message: "Ad rejected and payment cancelled",
             ad: updatedAd
         });
     } catch (err) {
@@ -841,8 +983,8 @@ app.get("/api/ads/active", async (req, res) => {
         image_url
       FROM ad_submissions
       WHERE status = 'live'
-        AND start_date <= NOW()
-        AND end_date >= NOW()
+      AND start_date <= NOW()
+      AND end_date >= NOW()
       ORDER BY RANDOM()
       LIMIT 10`
         );
@@ -898,4 +1040,5 @@ server.listen(PORT, () => {
     console.log(`🚀 Server listening on port ${PORT}`);
     console.log(`📊 Database: ${process.env.DATABASE_URL ? 'Connected' : 'Not configured'}`);
     console.log(`🗄️ Supabase Storage: ${process.env.SUPABASE_URL ? 'Configured' : 'Not configured'}`);
+    console.log(`💳 Stripe: ${process.env.STRIPE_SECRET_KEY ? 'Configured' : 'Not configured'}`);
 });

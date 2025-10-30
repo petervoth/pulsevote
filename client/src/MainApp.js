@@ -8,7 +8,10 @@ import { io } from "socket.io-client";
 import { supabase } from "./supabaseClient";
 import "leaflet/dist/leaflet.css";
 import "./App.css";
+import { loadStripe } from '@stripe/stripe-js';
+import { Elements, CardElement, useStripe, useElements } from '@stripe/react-stripe-js';
 
+const stripePromise = loadStripe(process.env.REACT_APP_STRIPE_PUBLISHABLE_KEY);
 const API_BASE = process.env.REACT_APP_API_BASE || "http://localhost:5000";
 const socket = io(API_BASE);
 
@@ -752,6 +755,132 @@ const validateImage = (file) => {
     });
 };
 
+// Stripe Checkout Form Component
+function CheckoutForm({ adFormData, onSuccess, onError, darkMode }) {
+    const stripe = useStripe();
+    const elements = useElements();
+    const [processing, setProcessing] = useState(false);
+
+    const handleSubmit = async (event) => {
+        event.preventDefault();
+
+        if (!stripe || !elements) {
+            return;
+        }
+
+        setProcessing(true);
+
+        try {
+            // Step 1: Create payment intent on server
+            const intentResponse = await fetch(`${API_BASE}/api/create-payment-intent`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    amount: AD_PRICING[adFormData.duration],
+                    email: adFormData.email,
+                    companyName: adFormData.companyName
+                })
+            });
+
+            if (!intentResponse.ok) {
+                throw new Error('Failed to create payment intent');
+            }
+
+            const { clientSecret, paymentIntentId } = await intentResponse.json();
+
+            // Step 2: Confirm payment with Stripe
+            const { error, paymentIntent } = await stripe.confirmCardPayment(clientSecret, {
+                payment_method: {
+                    card: elements.getElement(CardElement),
+                    billing_details: {
+                        email: adFormData.email,
+                        name: adFormData.companyName
+                    }
+                }
+            });
+
+            if (error) {
+                onError(error.message);
+                setProcessing(false);
+                return;
+            }
+
+            if (paymentIntent.status === 'requires_capture') {
+                // Payment authorized successfully!
+                onSuccess(paymentIntentId);
+            }
+        } catch (err) {
+            onError(err.message);
+            setProcessing(false);
+        }
+    };
+
+    return (
+        <form onSubmit={handleSubmit} style={{ marginTop: '1rem' }}>
+            <div style={{
+                padding: '1rem',
+                border: `1px solid ${darkMode ? '#444' : '#ddd'}`,
+                borderRadius: '8px',
+                backgroundColor: darkMode ? '#1a1a1a' : '#f9f9f9',
+                marginBottom: '1rem'
+            }}>
+                <label style={{
+                    display: 'block',
+                    marginBottom: '0.5rem',
+                    fontWeight: '600',
+                    color: darkMode ? '#e0e0e0' : '#333'
+                }}>
+                    Card Details *
+                </label>
+                <CardElement
+                    options={{
+                        style: {
+                            base: {
+                                fontSize: '16px',
+                                color: darkMode ? '#e0e0e0' : '#333',
+                                '::placeholder': {
+                                    color: darkMode ? '#999' : '#aaa'
+                                }
+                            },
+                            invalid: {
+                                color: '#dc3545'
+                            }
+                        }
+                    }}
+                />
+            </div>
+
+            <button
+                type="submit"
+                disabled={!stripe || processing}
+                style={{
+                    width: '100%',
+                    padding: '0.75rem',
+                    fontSize: '1rem',
+                    fontWeight: '600',
+                    borderRadius: '6px',
+                    border: 'none',
+                    backgroundColor: processing ? '#999' : '#0b63a4',
+                    color: '#fff',
+                    cursor: processing ? 'not-allowed' : 'pointer',
+                    opacity: processing ? 0.6 : 1
+                }}
+            >
+                {processing ? 'Processing...' : `Authorize $${AD_PRICING[adFormData.duration]} Payment`}
+            </button>
+
+            <p style={{
+                fontSize: '0.75rem',
+                color: darkMode ? '#999' : '#666',
+                textAlign: 'center',
+                marginTop: '0.5rem'
+            }}>
+                💳 Your card will be authorized but not charged until your ad is approved.
+            </p>
+        </form>
+    );
+}
+
 export default function MainApp() {
     // Map & user
     const mapRef = useRef(null);
@@ -958,13 +1087,7 @@ export default function MainApp() {
         return Object.keys(errors).length === 0;
     };
 
-    const handleAdSubmit = async (e) => {
-        e.preventDefault();
-
-        if (!validateAdForm()) {
-            return;
-        }
-
+    const handleAdSubmit = async (paymentIntentId) => {
         setAdFormSubmitting(true);
 
         try {
@@ -978,6 +1101,7 @@ export default function MainApp() {
             formData.append('amount', AD_PRICING[adFormData.duration]);
             formData.append('image', adFormData.imageFile);
             formData.append('startDate', adFormData.startDate);
+            formData.append('paymentIntentId', paymentIntentId);
 
             // TODO: This endpoint needs to be created in your backend
             const response = await fetch(`${API_BASE}/api/ad-submissions`, {
@@ -1797,8 +1921,8 @@ export default function MainApp() {
                 >
                     PulseVote
                 </h1>
-                
-                <div className="header-right">     
+
+                <div className="header-right">
                     <button
                         onClick={() => setAboutModalOpen(true)}
                         className="info-toggle"
@@ -1857,7 +1981,7 @@ export default function MainApp() {
                                     Set Homebase
                                 </button>
                             )}
-                            
+
                             <button className="header-logout" onClick={handleLogout} aria-label="Logout">
                                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                                     <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
@@ -1866,7 +1990,7 @@ export default function MainApp() {
                                 </svg>
                             </button>
                         </div>
-                    )}                    
+                    )}
                 </div>
             </header>
 
@@ -2368,39 +2492,26 @@ Set your homebase, engage with topics that matter to you, and be part of a geo-s
                                     </p>
                                 </div>
 
-                                {/* Submit Button */}
+                                {/* Stripe Payment Section */}
+                                <Elements stripe={stripePromise}>
+                                    <CheckoutForm
+                                        adFormData={adFormData}
+                                        onSuccess={handleAdSubmit}
+                                        onError={(error) => {
+                                            alert(`Payment error: ${error}`);
+                                            setAdFormSubmitting(false);
+                                        }}
+                                        darkMode={darkMode}
+                                    />
+                                </Elements>
+
+                                {/* Cancel Button */}
                                 <div style={{ display: 'flex', gap: '1rem', marginTop: '0.5rem' }}>
                                     <button
                                         type="button"
                                         onClick={() => resetAdForm()}
                                         style={{
-                                            flex: 1,
-                                            padding: '0.75rem',
-                                            fontSize: '1rem',
-                                            fontWeight: '600',
-                                            borderRadius: '6px',
-                                            border: '1px solid #ddd',
-                                            backgroundColor: darkMode ? '#2d2d2d' : '#fff',
-                                            color: darkMode ? '#e0e0e0' : '#333',
-                                            cursor: 'pointer'
-                                        }}
-                                    >
-                                        Cancel
-                                    </button>
-                                    <button
-                                        type="submit"
-                                        disabled={adFormSubmitting}
-                                        style={{
-                                            flex: 2,
-                                            padding: '0.75rem',
-                                            fontSize: '1rem',
-                                            fontWeight: '600',
-                                            borderRadius: '6px',
-                                            border: 'none',
-                                            backgroundColor: adFormSubmitting ? '#999' : '#0b63a4',
-                                            color: '#fff',
-                                            cursor: adFormSubmitting ? 'not-allowed' : 'pointer',
-                                            opacity: adFormSubmitting ? 0.6 : 1
+                                            width: '100%'
                                         }}
                                     >
                                         {adFormSubmitting ? 'Submitting...' : 'Submit for Review'}
