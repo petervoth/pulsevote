@@ -756,7 +756,7 @@ const validateImage = (file) => {
 };
 
 // Stripe Checkout Form Component
-function CheckoutForm({ adFormData, onSuccess, onError, darkMode, validateForm }) {
+function CheckoutForm({ adFormData, validateForm, onSuccess, onError, darkMode }) {
     const stripe = useStripe();
     const elements = useElements();
     const [processing, setProcessing] = useState(false);
@@ -765,28 +765,36 @@ function CheckoutForm({ adFormData, onSuccess, onError, darkMode, validateForm }
         event.preventDefault();
         event.stopPropagation();
 
-        console.log('CheckoutForm: Submit button clicked');
+        console.log('Submit clicked - validating form first...');
 
-        if (!stripe || !elements) {
-            console.error('Stripe not loaded yet');
+        // CRITICAL: Validate FIRST before anything else
+        if (!validateForm || typeof validateForm !== 'function') {
+            console.error('validateForm function not provided!');
+            alert('Form validation error. Please refresh and try again.');
             return;
         }
 
-        // Validate the form first
-        console.log('Validating form...');
         const isValid = validateForm();
+        console.log('Form validation result:', isValid);
+
         if (!isValid) {
-            console.error('Form validation failed');
-            onError('Please fix the errors in the form before submitting.');
+            console.log('Form validation failed - stopping here');
+            // Don't process payment, validation errors should now be visible
+            return;
+        }
+
+        if (!stripe || !elements) {
+            console.error('Stripe not loaded');
+            alert('Payment system not ready. Please refresh and try again.');
             return;
         }
 
         setProcessing(true);
+        console.log('Starting payment process...');
 
         try {
-            console.log('Creating payment intent...');
-
             // Step 1: Create payment intent on server
+            console.log('Creating payment intent...');
             const intentResponse = await fetch(`${API_BASE}/api/create-payment-intent`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -799,7 +807,7 @@ function CheckoutForm({ adFormData, onSuccess, onError, darkMode, validateForm }
 
             if (!intentResponse.ok) {
                 const errorText = await intentResponse.text();
-                console.error('Payment intent creation failed:', errorText);
+                console.error('Payment intent failed:', errorText);
                 throw new Error(`Failed to create payment intent: ${errorText}`);
             }
 
@@ -807,7 +815,7 @@ function CheckoutForm({ adFormData, onSuccess, onError, darkMode, validateForm }
             console.log('Payment intent created:', paymentIntentId);
 
             // Step 2: Confirm payment with Stripe
-            console.log('Confirming payment with Stripe...');
+            console.log('Confirming card payment...');
             const { error, paymentIntent } = await stripe.confirmCardPayment(clientSecret, {
                 payment_method: {
                     card: elements.getElement(CardElement),
@@ -819,7 +827,7 @@ function CheckoutForm({ adFormData, onSuccess, onError, darkMode, validateForm }
             });
 
             if (error) {
-                console.error('Stripe payment error:', error);
+                console.error('Stripe error:', error);
                 onError(error.message);
                 setProcessing(false);
                 return;
@@ -828,16 +836,15 @@ function CheckoutForm({ adFormData, onSuccess, onError, darkMode, validateForm }
             console.log('Payment status:', paymentIntent.status);
 
             if (paymentIntent.status === 'requires_capture') {
-                // Payment authorized successfully!
-                console.log('Payment authorized! Calling onSuccess...');
+                console.log('Payment authorized! Submitting ad...');
                 await onSuccess(paymentIntentId);
-                console.log('onSuccess completed');
+                console.log('Ad submission complete!');
             } else {
                 throw new Error(`Unexpected payment status: ${paymentIntent.status}`);
             }
         } catch (err) {
-            console.error('Payment error:', err);
-            onError(err.message || 'An error occurred during payment processing');
+            console.error('Error in payment process:', err);
+            onError(err.message || 'Payment processing failed');
             setProcessing(false);
         }
     };
@@ -2123,7 +2130,7 @@ Set your homebase, engage with topics that matter to you, and be part of a geo-s
                                 Reach our engaged community with your message. Ads appear in the topic feed and are clearly marked as sponsored content.
                             </p>
 
-                            <form onSubmit={handleAdSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                                 {/* Company Name */}
                                 <div>
                                     <label style={{
@@ -2572,7 +2579,7 @@ Set your homebase, engage with topics that matter to you, and be part of a geo-s
                                     By submitting, you agree to our advertising terms and conditions.
                                     We'll review your ad within 24 hours and contact you at the email provided.
                                 </p>
-                            </form>
+                            </div>
                         </div>
                     </div>
                 </div>
