@@ -763,7 +763,6 @@ function CheckoutForm({ adFormData, onSuccess, onError, darkMode }) {
 
     const handleSubmit = async (event) => {
         event.preventDefault();
-
         if (!stripe || !elements) {
             return;
         }
@@ -816,40 +815,54 @@ function CheckoutForm({ adFormData, onSuccess, onError, darkMode }) {
     };
 
     return (
-        <form onSubmit={handleSubmit} style={{ marginTop: '1rem' }}>
-            <div style={{
-                padding: '1rem',
-                border: `1px solid ${darkMode ? '#444' : '#ddd'}`,
-                borderRadius: '8px',
-                backgroundColor: darkMode ? '#1a1a1a' : '#f9f9f9',
-                marginBottom: '1rem'
-            }}>
+        <form onSubmit={handleSubmit} style={{ marginTop: '1rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+            {/* Card Details Section */}
+            <div>
                 <label style={{
                     display: 'block',
                     marginBottom: '0.5rem',
                     fontWeight: '600',
+                    fontSize: '0.95rem',
                     color: darkMode ? '#e0e0e0' : '#333'
                 }}>
                     Card Details *
                 </label>
-                <CardElement
-                    options={{
-                        style: {
-                            base: {
-                                fontSize: '16px',
-                                color: darkMode ? '#e0e0e0' : '#333',
-                                '::placeholder': {
-                                    color: darkMode ? '#999' : '#aaa'
+                <div style={{
+                    padding: '0.75rem 1rem',
+                    border: `1px solid ${darkMode ? '#444' : '#ddd'}`,
+                    borderRadius: '6px',
+                    backgroundColor: darkMode ? '#1a1a1a' : '#fff'
+                }}>
+                    <CardElement
+                        options={{
+                            style: {
+                                base: {
+                                    fontSize: '16px',
+                                    color: darkMode ? '#e0e0e0' : '#333',
+                                    '::placeholder': {
+                                        color: darkMode ? '#999' : '#aaa'
+                                    },
+                                    fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
+                                },
+                                invalid: {
+                                    color: '#dc3545',
+                                    iconColor: '#dc3545'
                                 }
-                            },
-                            invalid: {
-                                color: '#dc3545'
                             }
-                        }
-                    }}
-                />
+                        }}
+                    />
+                </div>
+                <p style={{
+                    fontSize: '0.75rem',
+                    color: darkMode ? '#999' : '#666',
+                    marginTop: '0.5rem',
+                    lineHeight: '1.3'
+                }}>
+                    💳 Your card will be authorized but not charged until your ad is approved.
+                </p>
             </div>
 
+            {/* Authorize Button */}
             <button
                 type="submit"
                 disabled={!stripe || processing}
@@ -863,20 +876,22 @@ function CheckoutForm({ adFormData, onSuccess, onError, darkMode }) {
                     backgroundColor: processing ? '#999' : '#0b63a4',
                     color: '#fff',
                     cursor: processing ? 'not-allowed' : 'pointer',
-                    opacity: processing ? 0.6 : 1
+                    opacity: processing ? 0.6 : 1,
+                    transition: 'background-color 0.2s ease'
+                }}
+                onMouseEnter={(e) => {
+                    if (!processing && stripe) {
+                        e.target.style.backgroundColor = '#094d7f';
+                    }
+                }}
+                onMouseLeave={(e) => {
+                    if (!processing) {
+                        e.target.style.backgroundColor = '#0b63a4';
+                    }
                 }}
             >
                 {processing ? 'Processing...' : `Authorize $${AD_PRICING[adFormData.duration]} Payment`}
             </button>
-
-            <p style={{
-                fontSize: '0.75rem',
-                color: darkMode ? '#999' : '#666',
-                textAlign: 'center',
-                marginTop: '0.5rem'
-            }}>
-                💳 Your card will be authorized but not charged until your ad is approved.
-            </p>
         </form>
     );
 }
