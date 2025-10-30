@@ -756,29 +756,36 @@ const validateImage = (file) => {
 };
 
 // Stripe Checkout Form Component
-function CheckoutForm({ adFormData, onSuccess, onError, darkMode }) {
+function CheckoutForm({ adFormData, onSuccess, onError, darkMode, validateForm }) {
     const stripe = useStripe();
     const elements = useElements();
     const [processing, setProcessing] = useState(false);
 
     const handleSubmit = async (event) => {
         event.preventDefault();
-        event.stopPropagation(); // Prevent modal from closing
+        event.stopPropagation();
+
+        console.log('CheckoutForm: Submit button clicked');
 
         if (!stripe || !elements) {
+            console.error('Stripe not loaded yet');
             return;
         }
 
-        // Validate form before processing payment
-        if (!adFormData.companyName || !adFormData.adText || !adFormData.linkUrl ||
-            !adFormData.email || !adFormData.imageFile || !adFormData.startDate) {
-            onError('Please fill in all required fields before submitting.');
+        // Validate the form first
+        console.log('Validating form...');
+        const isValid = validateForm();
+        if (!isValid) {
+            console.error('Form validation failed');
+            onError('Please fix the errors in the form before submitting.');
             return;
         }
 
         setProcessing(true);
 
         try {
+            console.log('Creating payment intent...');
+
             // Step 1: Create payment intent on server
             const intentResponse = await fetch(`${API_BASE}/api/create-payment-intent`, {
                 method: 'POST',
@@ -791,12 +798,16 @@ function CheckoutForm({ adFormData, onSuccess, onError, darkMode }) {
             });
 
             if (!intentResponse.ok) {
-                throw new Error('Failed to create payment intent');
+                const errorText = await intentResponse.text();
+                console.error('Payment intent creation failed:', errorText);
+                throw new Error(`Failed to create payment intent: ${errorText}`);
             }
 
             const { clientSecret, paymentIntentId } = await intentResponse.json();
+            console.log('Payment intent created:', paymentIntentId);
 
             // Step 2: Confirm payment with Stripe
+            console.log('Confirming payment with Stripe...');
             const { error, paymentIntent } = await stripe.confirmCardPayment(clientSecret, {
                 payment_method: {
                     card: elements.getElement(CardElement),
@@ -808,19 +819,25 @@ function CheckoutForm({ adFormData, onSuccess, onError, darkMode }) {
             });
 
             if (error) {
+                console.error('Stripe payment error:', error);
                 onError(error.message);
                 setProcessing(false);
                 return;
             }
 
+            console.log('Payment status:', paymentIntent.status);
+
             if (paymentIntent.status === 'requires_capture') {
                 // Payment authorized successfully!
-                console.log('Payment authorized, submitting ad...');
-                onSuccess(paymentIntentId);
+                console.log('Payment authorized! Calling onSuccess...');
+                await onSuccess(paymentIntentId);
+                console.log('onSuccess completed');
+            } else {
+                throw new Error(`Unexpected payment status: ${paymentIntent.status}`);
             }
         } catch (err) {
             console.error('Payment error:', err);
-            onError(err.message);
+            onError(err.message || 'An error occurred during payment processing');
             setProcessing(false);
         }
     };
@@ -1114,6 +1131,7 @@ export default function MainApp() {
     };
 
     const handleAdSubmit = async (paymentIntentId) => {
+        console.log('handleAdSubmit called with paymentIntentId:', paymentIntentId);
         setAdFormSubmitting(true);
 
         try {
@@ -1129,17 +1147,29 @@ export default function MainApp() {
             formData.append('startDate', adFormData.startDate);
             formData.append('paymentIntentId', paymentIntentId);
 
-            // TODO: This endpoint needs to be created in your backend
+            console.log('Submitting ad with data:', {
+                companyName: adFormData.companyName,
+                email: adFormData.email,
+                duration: adFormData.duration,
+                amount: AD_PRICING[adFormData.duration],
+                paymentIntentId: paymentIntentId
+            });
+
             const response = await fetch(`${API_BASE}/api/ad-submissions`, {
                 method: 'POST',
                 body: formData
             });
 
+            console.log('Response status:', response.status);
+
             if (!response.ok) {
-                throw new Error('Failed to submit ad');
+                const errorText = await response.text();
+                console.error('Server error:', errorText);
+                throw new Error(`Failed to submit ad: ${errorText}`);
             }
 
             const result = await response.json();
+            console.log('Ad submitted successfully:', result);
 
             // Success! Show confirmation
             alert(`Thank you! Your ad submission has been received. We'll review it and contact you at ${adFormData.email} within 24 hours.\n\nSubmission ID: ${result.id}`);
@@ -1151,15 +1181,16 @@ export default function MainApp() {
                 linkUrl: '',
                 email: '',
                 duration: 7,
+                startDate: '',
                 imageFile: null,
                 imagePreview: null
             });
+            setAdFormErrors({});
             setAdSubmissionOpen(false);
             setAboutModalOpen(false);
-
         } catch (error) {
             console.error('Error submitting ad:', error);
-            alert('Failed to submit ad. Please try again or contact us at ads@pulsevote.org');
+            alert(`Failed to submit ad: ${error.message}\n\nPlease try again or contact us at ads@pulsevote.org`);
         } finally {
             setAdFormSubmitting(false);
         }
@@ -2522,6 +2553,7 @@ Set your homebase, engage with topics that matter to you, and be part of a geo-s
                                 <Elements stripe={stripePromise}>
                                     <CheckoutForm
                                         adFormData={adFormData}
+                                        validateForm={validateAdForm}
                                         onSuccess={handleAdSubmit}
                                         onError={(error) => {
                                             alert(`Payment error: ${error}`);
