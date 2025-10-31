@@ -3067,7 +3067,8 @@ Set your homebase, engage with topics that matter to you, and be part of a geo-s
                                                 </select>
 
                                                 <textarea
-                                                    placeholder={`Topic (required)\n\nDescription`}
+                                                    placeholder={`Topic (required)\n\nDescription\n\n2000 character limit`}
+                                                    maxLength={2000}
                                                     value={newDescription}
                                                     onChange={(e) => {
                                                         setNewDescription(e.target.value);
