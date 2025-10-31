@@ -727,11 +727,11 @@ const validateImage = (file) => {
             const height = img.height;
 
             // Require exact or larger dimensions (we can crop/resize later)
-            // Target: 280x160 (maintains aspect ratio of 1.75:1)
+            // Target: 280x60 (maintains aspect ratio of 4.67:1)
             const minWidth = 280;
-            const minHeight = 160;
+            const minHeight = 60;
             const aspectRatio = width / height;
-            const targetAspectRatio = 1.75;
+            const targetAspectRatio = 4.67;
 
             if (width < minWidth || height < minHeight) {
                 reject(`Image must be at least ${minWidth}x${minHeight} pixels`);
@@ -740,7 +740,7 @@ const validateImage = (file) => {
 
             // Allow some flexibility in aspect ratio (±0.1)
             if (Math.abs(aspectRatio - targetAspectRatio) > 0.15) {
-                reject('Image aspect ratio should be close to 16:9 (recommended: 280x160)');
+                reject('Image aspect ratio should be close to 14:3 (recommended: 280x60)');
                 return;
             }
 
@@ -2280,7 +2280,7 @@ Set your homebase, engage with topics that matter to you, and be part of a geo-s
                                         color: darkMode ? '#e0e0e0' : '#333'
                                     }}>
                                         Ad Image * <span style={{ fontSize: '0.85rem', fontWeight: 'normal', color: '#666' }}>
-                                            (Recommended: 280x160px, max 5MB)
+                                            (Recommended: 280x60px, max 5MB)
                                         </span>
                                     </label>
                                     <input
