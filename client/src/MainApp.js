@@ -945,7 +945,7 @@ export default function MainApp() {
     const [mapOptionsOpen, setMapOptionsOpen] = useState(false);
     const [showHeatmap, setShowHeatmap] = useState(true);
     const [showTwinkles, setShowTwinkles] = useState(true);
-    const [selectedMapStyle, setSelectedMapStyle] = useState("heatmap");
+    const [selectedMapStyle, setSelectedMapStyle] = useState("choropleth");
 
     // Pop-up Extra Text - About Us, etc.
     const [aboutText, setAboutText] = useState('');
