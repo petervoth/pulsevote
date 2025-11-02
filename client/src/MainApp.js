@@ -1527,12 +1527,13 @@ export default function MainApp() {
         return result;
     }, [uniqueTopics, searchText, filterTitle, startDate, endDate, sortOption]);
 
+    // AD FREQUENCY Control - currently 9999
     const topicsWithAds = useMemo(() => {
         const result = [];
         filteredTopics.forEach((topic, index) => {
             result.push(topic);
-            if ((index + 1) % 8 === 0) {
-                result.push({ isAd: true, adIndex: Math.floor(index / 8) });
+            if ((index + 1) % 9999 === 0) {
+                result.push({ isAd: true, adIndex: Math.floor(index / 9999) });
             }
         });
         return result;
