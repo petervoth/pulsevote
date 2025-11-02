@@ -1605,6 +1605,21 @@ export default function MainApp() {
         if (profile?.homebase_set) return alert("Homebase already set.");
         if (!navigator.geolocation) return alert("Geolocation not available.");
 
+        // SHOW SAFETY WARNING FIRST - before requesting location
+        const confirmed = window.confirm(
+            "⚠️ PRIVACY & SAFETY REMINDER\n\n" +
+            "Think carefully about where you set your homebase.\n\n" +
+            "For your safety, it's recommended to set your homebase at a public space NEAR your home (like a park, library, coffee shop, or gas station) instead of your actual home address.\n\n" +
+            "This helps protect your privacy while still representing your local area.\n\n" +
+            "Click OK to proceed and allow location access, or Cancel to abort."
+        );
+
+        // If user clicked Cancel, stop here
+        if (!confirmed) {
+            return;
+        }
+
+        // Only NOW request location after they confirmed
         navigator.geolocation.getCurrentPosition(
             async pos => {
                 const { latitude, longitude } = pos.coords;
@@ -1626,11 +1641,12 @@ export default function MainApp() {
                     alert("Failed to set homebase: " + error.message);
                 } else {
                     fetchProfile(user.id);
+                    alert("✅ Homebase set successfully!");
                 }
             },
             (error) => {
                 console.error("Geolocation error:", error);
-                alert("Allow location and try again.");
+                alert("Failed to get location. Please allow location access and try again.");
             },
             { enableHighAccuracy: true }
         );
