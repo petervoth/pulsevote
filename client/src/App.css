@@ -2101,7 +2101,7 @@ body.dark-mode .stance-box.avg-neutral {
     }
 
     /* Toggle buttons on the right side of row 2 - with reversed order */
-    .info-toggle, 
+    .info-toggle,
     .map-options-toggle,
     .map-expand-toggle,
     .dark-mode-toggle {
@@ -2130,4 +2130,3 @@ body.dark-mode .stance-box.avg-neutral {
 }
 
 /* NEWEST MATERIAL TO FIX AFTER STRIPE INTEGRATION*/
-
