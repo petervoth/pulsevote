@@ -3117,7 +3117,7 @@ body:not(.dark-mode) .topic-list::-webkit-scrollbar-thumb {
 .create-section .accordion-body form {
     display: flex;
     flex-direction: column;
-    gap: 0.75rem;
+    gap: 0rem;
 }
 
 /* Light mode */
@@ -3143,3 +3143,50 @@ body:not(.dark-mode) .create-section .accordion-header .section-title {
     font-size: 1.25rem;
     font-weight: 600;
 }
+
+/* Fix stance selector layout in Create Topic form */
+.create-section .stance-selector {
+    display: flex;
+    flex-direction: column;
+    gap: 0rem;
+}
+
+.create-section .stance-selector-label {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #e0e0e0;
+    margin: 0;
+}
+
+.create-section .stance-options {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 0.5rem;
+}
+
+.create-section .stance-option {
+    padding: 0.75rem 0.5rem;
+    border: 2px solid #444;
+    border-radius: 6px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    background: #2d2d2d;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #e0e0e0;
+    min-height: 50px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+    .create-section .stance-option:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+    }
+
+    .create-section .stance-option.selected {
+        transform: translateY(-2px);
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+    }
