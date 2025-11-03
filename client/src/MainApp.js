@@ -1426,36 +1426,13 @@ export default function MainApp() {
 
     // Twinkle points (ambient visualization)
     useEffect(() => {
-        if (!mapRef.current || selectedTopic) return;
+        if (!mapRef.current || selectedTopic || twinklePoints.length === 0) return;
 
         const map = mapRef.current;
+        let animationId = null;
 
-        if (!map.isStyleLoaded()) {
-            map.once('styledata', () => {
-                renderTwinklePoints(map);
-            });
-            return;
-        }
-
-        renderTwinklePoints(map);
-
-        function renderTwinklePoints(map) {
-            const features = twinklePoints.map(p => ({
-                type: 'Feature',
-                geometry: {
-                    type: 'Point',
-                    coordinates: [Number(p.lng), Number(p.lat)]
-                },
-                properties: {
-                    color: STANCE_COLOR[p.stance] || '#888'
-                }
-            }));
-
-            const geojson = {
-                type: 'FeatureCollection',
-                features
-            };
-
+        const renderTwinklePoints = () => {
+            // Clean up existing layer/source
             const sourceId = 'twinkle-points';
             const layerId = 'twinkle-layer';
 
@@ -1465,6 +1442,23 @@ export default function MainApp() {
             if (map.getSource(sourceId)) {
                 map.removeSource(sourceId);
             }
+
+            const features = twinklePoints.map((p) => ({
+                type: 'Feature',
+                geometry: {
+                    type: 'Point',
+                    coordinates: [Number(p.lng), Number(p.lat)]
+                },
+                properties: {
+                    color: STANCE_COLOR[p.stance] || '#888',
+                    randomOffset: Math.random() * Math.PI * 2
+                }
+            }));
+
+            const geojson = {
+                type: 'FeatureCollection',
+                features
+            };
 
             if (features.length > 0) {
                 map.addSource(sourceId, {
@@ -1477,16 +1471,66 @@ export default function MainApp() {
                     type: 'circle',
                     source: sourceId,
                     paint: {
-                        'circle-radius': 6,
+                        'circle-radius': [
+                            'interpolate',
+                            ['linear'],
+                            ['zoom'],
+                            2, 3,
+                            12, 8
+                        ],
                         'circle-color': ['get', 'color'],
                         'circle-opacity': 0.6,
                         'circle-blur': 0.5
                     }
                 });
+
+                // Start animation
+                let time = 0;
+                const animate = () => {
+                    time += 0.04;
+
+                    const opacity = [
+                        'interpolate',
+                        ['linear'],
+                        [
+                            '+',
+                            [
+                                'sin',
+                                [
+                                    '+',
+                                    time,
+                                    ['get', 'randomOffset']
+                                ]
+                            ],
+                            1
+                        ],
+                        0, 0.2,
+                        1, 0.5,
+                        2, 0.8
+                    ];
+
+                    if (map.getLayer(layerId)) {
+                        map.setPaintProperty(layerId, 'circle-opacity', opacity);
+                        animationId = requestAnimationFrame(animate);
+                    }
+                };
+
+                animate();
             }
+        };
+
+        // Wait for map to be ready
+        if (map.isStyleLoaded()) {
+            renderTwinklePoints();
+        } else {
+            map.once('styledata', renderTwinklePoints);
         }
 
+        // Cleanup
         return () => {
+            if (animationId) {
+                cancelAnimationFrame(animationId);
+            }
             const layerId = 'twinkle-layer';
             const sourceId = 'twinkle-points';
             if (map.getLayer(layerId)) {
@@ -1496,7 +1540,27 @@ export default function MainApp() {
                 map.removeSource(sourceId);
             }
         };
-    }, [twinklePoints, selectedTopic]);
+    }, [twinklePoints, selectedTopic, mapRef.current]);
+
+    // Fetch twinkle points on initial load
+    useEffect(() => {
+        console.log('📡 Fetching twinkle points...');
+        (async () => {
+            try {
+                const res = await fetch(`${API_BASE}/twinkle_points`);
+                if (res.ok) {
+                    const rows = await res.json();
+                    console.log('✅ Fetched twinkle points:', rows.length);
+                    setTwinklePoints(rows);
+                } else {
+                    console.error('❌ Failed to fetch twinkle points');
+                }
+            } catch (err) {
+                console.error("Error fetching twinkle points:", err);
+            }
+        })();
+    }, []);
+
 
     useEffect(() => {
         async function loadSharedTopic() {
@@ -1623,16 +1687,6 @@ export default function MainApp() {
             socket.off("new_point", onNewPoint);
         };
     }, []);
-
-    useEffect(() => {
-        if (!selectedTopic) {
-            (async () => {
-                const res = await fetch(`${API_BASE}/twinkle_points`);
-                const rows = await res.json();
-                setTwinklePoints(rows);
-            })();
-        }
-    }, [selectedTopic]);
 
     const uniqueTopics = useMemo(() => {
         const m = new Map();
