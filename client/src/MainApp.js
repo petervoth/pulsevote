@@ -2548,7 +2548,7 @@ A lone Canadian data scientist has built this site and runs everything independe
 
                                 <div className="spotlight-description-wrapper">
                                     <div className="spotlight-description card">
-                                        <p>{selectedTopic.description}<br /></p>
+                                        <p>{selectedTopic.description}<br /><br /><br /></p>
                                         <p className="topic-meta">
                                             Created {new Date(selectedTopic.created_at).toLocaleDateString()}
                                             <br />
