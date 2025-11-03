@@ -173,28 +173,27 @@
     letter-spacing: 0.5px;
 }
 
+    .stance-badge.stance-\-no {
+        color: #648FFF;
+    }
+
     .stance-badge.stance--no {
-        background: rgba(100, 143, 255, 0.15);
         color: #648FFF;
     }
 
     .stance-badge.stance-no {
-        background: rgba(120, 94, 240, 0.15);
         color: #785EF0;
     }
 
     .stance-badge.stance-neutral {
-        background: rgba(220, 38, 127, 0.15);
         color: #DC267F;
     }
 
     .stance-badge.stance-yes {
-        background: rgba(254, 97, 0, 0.15);
         color: #FE6100;
     }
 
     .stance-badge.stance-yes\+ {
-        background: rgba(255, 176, 0, 0.15);
         color: #FFB000;
     }
 
@@ -362,11 +361,68 @@
     color: #666;
 }
 
+/* Stance label colors - specific colors for each stance */
+.stance-label.stance-\-no {
+    color: #648FFF;
+}
+
+.stance-label.stance-no {
+    color: #785EF0;
+}
+
+.stance-label.stance-neutral {
+    color: #DC267F;
+}
+
+.stance-label.stance-yes {
+    color: #FE6100;
+}
+
+.stance-label.stance-yes\+ {
+    color: #FFB000;
+}
+
+/* Dark mode - keep the same colors */
+body.dark-mode .stance-label.stance-\-no {
+    color: #648FFF;
+}
+
+body.dark-mode .stance-label.stance-no {
+    color: #785EF0;
+}
+
+body.dark-mode .stance-label.stance-neutral {
+    color: #DC267F;
+}
+
+body.dark-mode .stance-label.stance-yes {
+    color: #FE6100;
+}
+
+body.dark-mode .stance-label.stance-yes\+ {
+    color: #FFB000;
+}
+
+/* Remove background boxes from stance labels */
+.stance-label {
+    background: none !important;
+    background-color: transparent !important;
+}
+
+body.dark-mode .stance-label {
+    background: none !important;
+    background-color: transparent !important;
+}
+
 /* Engage form in spotlight */
 .engage-form {
     background: #f8f9fa;
     border-radius: 6px;
     padding: 0.75rem;
+    flex: 0 0 auto;
+    margin-top: 0.75rem;
+    display: flex;
+    flex-direction: column;
 }
 
     .engage-form h3 {
@@ -375,6 +431,12 @@
         font-weight: 600;
         text-align: center;
         color: #333;
+    }
+
+    /* Remove any conflicting stance-selector styles in engage-form */
+    .engage-form .stance-selector {
+        display: block !important;
+        grid-template-columns: none !important;
     }
 
 /* Stance selector */
@@ -895,6 +957,9 @@ button {
     min-height: 0;
     overflow-y: auto;
     padding-right: 0.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
 }
 
 .spotlight-engage {
@@ -1229,17 +1294,19 @@ button {
     animation-delay: var(--twinkle-delay);
 }
 
-.share-button {
-    margin-top: 0.5rem;
+.share-btn {
     padding: 0.4rem 0.8rem;
-    font-size: 0.9rem;
-    background-color: #0B63A4;
-    color: white;
-    border: none;
-    border-radius: 4px;
+    background: rgba(11, 99, 164, 0.1);
+    color: #0b63a4;
+    border: 1px solid rgba(11, 99, 164, 0.3);
+    border-radius: 6px;
+    font-size: 0.85rem;
     cursor: pointer;
-    width: 100%;
-    box-sizing: border-box;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    margin-right: 1rem; /* ADD THIS to push it left */
 }
 
     .share-button:hover {
@@ -1476,10 +1543,6 @@ body.dark-mode .accordion-toggle {
     body.dark-mode .accordion-toggle.open {
         background: #555;
     }
-
-body.dark-mode .stance-label {
-    color: #9ca3af;
-}
 
 body.dark-mode .stance-value {
     color: #e0e0e0;
@@ -3191,3 +3254,68 @@ body:not(.dark-mode) .create-section .accordion-header .section-title {
         transform: translateY(-2px);
         box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
     }
+
+/* Match Cast Your Vote styling to Create Topic styling - FIXED */
+.engage-form h3 {
+    margin: 0 0 0.75rem 0;
+    font-size: 0.95rem;
+    font-weight: 600;
+    text-align: center;
+    color: #e0e0e0;
+}
+
+.engage-form .stance-selector {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    margin-bottom: 0.75rem;
+}
+
+    .engage-form .stance-selector > label {
+        display: block;
+        margin-bottom: 0.5rem;
+        font-weight: bold;
+        color: #e0e0e0;
+        font-size: 1rem;
+    }
+
+    /* Override the existing grid layout */
+    .engage-form .stance-selector:not(.create-section .stance-selector) {
+        display: flex;
+        flex-direction: column;
+        grid-template-columns: none;
+    }
+
+/* Style for the buttons container */
+.engage-form .stance-buttons {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 0.5rem;
+}
+
+/* Style individual stance buttons */
+.engage-form .stance-button {
+    padding: 0.5rem;
+    border: 2px solid #444;
+    border-radius: 6px;
+    text-align: center;
+    cursor: pointer;
+    background: transparent;
+    transition: all 0.2s;
+    color: #e0e0e0;
+    font-weight: bold;
+    font-size: 0.85rem;
+    min-height: 50px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+    .engage-form .stance-button:hover {
+        transform: translateY(-1px);
+    }
+
+/* Override any existing stance-option styles for engage-form */
+.engage-form .stance-option {
+    display: none !important;
+}

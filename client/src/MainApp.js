@@ -2505,80 +2505,109 @@ A lone Canadian data scientist has built this site and runs everything independe
                                 </button>
                             </div>
 
-                            <div className="spotlight-description card">
-                                <p>{selectedTopic.description}</p>
-                                <p className="topic-meta">
-                                    Created {new Date(selectedTopic.created_at).toLocaleDateString()}
-                                    {selectedTopic.vote_count ? ` • ${selectedTopic.vote_count} votes` : ''}
-                                </p>
+                            <div className="spotlight-content">
+                                    {visiblePoints.length > 0 && (
+                                        <div className="stats-panel card">
+                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
+                                                <h3 style={{ margin: 0 }}>Visible Area Stats</h3>
+                                                <div style={{
+                                                    fontSize: '0.85rem',
+                                                    color: darkMode ? '#999' : '#666',
+                                                    fontWeight: '600'
+                                                }}>
+                                                    {visiblePoints.length} / {heatPoints.length} votes
+                                                </div>
+                                            </div>
+                                            <div className="avg-score-box">
+                                                <span className="label">Average Score:</span>
+                                                <span className={`avg-score ${getAvgBoxColor(avgStanceScore)}`}>
+                                                    {avgStanceScore}
+                                                </span>
+                                            </div>
+
+                                            <div className="stance-breakdown">
+                                                {Object.entries(stancePercentages).map(([stance, pct]) => (
+                                                    <div key={stance} className="stance-row">
+                                                        <span className={`stance-label stance-${stance.toLowerCase()}`}>
+                                                            {stance}
+                                                        </span>
+                                                        <div className="stance-bar-container">
+                                                            <div
+                                                                className="stance-bar"
+                                                                style={{
+                                                                    width: `${pct}%`,
+                                                                    backgroundColor: STANCE_COLOR[stance]
+                                                                }}
+                                                            />
+                                                        </div>
+                                                        <span className="stance-pct">{pct}%</span>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
+
+                                <div className="spotlight-description card">
+                                    <p>{selectedTopic.description}</p>
+                                    <p className="topic-meta">
+                                        Created {new Date(selectedTopic.created_at).toLocaleDateString()}                                        
+                                    </p>
+                                </div>
                             </div>
 
-                            {visiblePoints.length > 0 && (
-                                <div className="stats-panel card">
-                                    <h3>Visible Area Stats</h3>
-                                    <div className="avg-score-box">
-                                        <span className="label">Average Score:</span>
-                                        <span className={`avg-score ${getAvgBoxColor(avgStanceScore)}`}>
-                                            {avgStanceScore}
-                                        </span>
-                                    </div>
-
-                                    <div className="stance-breakdown">
-                                        {Object.entries(stancePercentages).map(([stance, pct]) => (
-                                            <div key={stance} className="stance-row">
-                                                <span className={`stance-label stance-${stance.toLowerCase()}`}>
-                                                    {stance}
-                                                </span>
-                                                <div className="stance-bar-container">
-                                                    <div
-                                                        className="stance-bar"
-                                                        style={{
-                                                            width: `${pct}%`,
-                                                            backgroundColor: STANCE_COLOR[stance]
-                                                        }}
+                            {/* Move the engage form outside spotlight-content to fix it to bottom */}
+                                {user && profile?.homebase_set ? (
+                                    <form onSubmit={handleEngage} className="engage-form card">
+                                        <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold', fontSize: '1rem' }}>
+                                            Cast Your Vote:
+                                        </label>
+                                        <div style={{
+                                            display: 'grid',
+                                            gridTemplateColumns: 'repeat(5, 1fr)',
+                                            gap: '0.5rem',
+                                            marginBottom: '0.75rem',
+                                            width: '100%'
+                                        }}>
+                                            {['-No', 'No', 'Neutral', 'Yes', 'Yes+'].map(s => (
+                                                <label
+                                                    key={s}
+                                                    style={{
+                                                        padding: '0.75rem 0.5rem',
+                                                        border: `2px solid ${engageStance === s ? STANCE_COLOR[s] : (darkMode ? '#444' : '#ddd')}`,
+                                                        borderRadius: '6px',
+                                                        textAlign: 'center',
+                                                        cursor: 'pointer',
+                                                        backgroundColor: engageStance === s ? `${STANCE_COLOR[s]}22` : (darkMode ? '#2d2d2d' : 'transparent'),
+                                                        transition: 'all 0.2s',
+                                                        minHeight: '10px',
+                                                        display: 'flex',
+                                                        alignItems: 'center',
+                                                        justifyContent: 'center'
+                                                    }}
+                                                >
+                                                    <input
+                                                        type="radio"
+                                                        name="engage-stance"
+                                                        value={s}
+                                                        checked={engageStance === s}
+                                                        onChange={(e) => setEngageStance(e.target.value)}
+                                                        style={{ display: 'none' }}
                                                     />
-                                                </div>
-                                                <span className="stance-pct">{pct}%</span>
-                                            </div>
-                                        ))}
-                                    </div>
-                                </div>
-                            )}
-
-                            {user && profile?.homebase_set ? (
-                                <form onSubmit={handleEngage} className="engage-form card">
-                                    <h3>Cast Your Vote</h3>
-                                    <div className="stance-selector">
-                                        {['-No', 'No', 'Neutral', 'Yes', 'Yes+'].map(s => (
-                                            <label
-                                                key={s}
-                                                className={`stance-option ${engageStance === s ? 'selected' : ''}`}
-                                                style={{
-                                                    borderColor: engageStance === s ? STANCE_COLOR[s] : undefined,
-                                                    backgroundColor: engageStance === s ? `${STANCE_COLOR[s]}22` : undefined
-                                                }}
-                                            >
-                                                <input
-                                                    type="radio"
-                                                    name="engage-stance"
-                                                    value={s}
-                                                    checked={engageStance === s}
-                                                    onChange={(e) => setEngageStance(e.target.value)}
-                                                    style={{ display: 'none' }}
-                                                />
-                                                <span style={{ color: STANCE_COLOR[s] }}>{s}</span>
-                                            </label>
-                                        ))}
-                                    </div>
-                                    <button
-                                        type="submit"
-                                        className="btn-primary"
-                                        disabled={!engageStance}
-                                    >
-                                        Submit Vote
-                                    </button>
-                                </form>
-                            ) : (
+                                                    <span style={{ color: STANCE_COLOR[s], fontWeight: 'bold', fontSize: '0.85rem' }}>
+                                                        {s}
+                                                    </span>
+                                                </label>
+                                            ))}
+                                        </div>
+                                        <button
+                                            type="submit"
+                                            className="btn-primary"
+                                            disabled={!engageStance}
+                                        >
+                                            Submit Vote
+                                        </button>
+                                    </form>
+                                ) : (
                                 <div className="auth-prompt card">
                                     <p>Sign in and set your homebase to vote on this topic!</p>
                                     {!user && (
@@ -2843,19 +2872,23 @@ A lone Canadian data scientist has built this site and runs everything independe
                                                     Your Stance:
                                                 </label>
                                                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '0.5rem' }}>
-                                                    {['-No', 'No', 'Neutral', 'Yes', 'Yes+'].map(s => (
-                                                        <label
-                                                            key={s}
-                                                            style={{
-                                                                padding: '0.5rem',
-                                                                border: `2px solid ${stance === s ? STANCE_COLOR[s] : (darkMode ? '#444' : '#ddd')}`,
-                                                                borderRadius: '6px',
-                                                                textAlign: 'center',
-                                                                cursor: 'pointer',
-                                                                backgroundColor: stance === s ? `${STANCE_COLOR[s]}22` : 'transparent',
-                                                                transition: 'all 0.2s'
-                                                            }}
-                                                        >
+                                                                {['-No', 'No', 'Neutral', 'Yes', 'Yes+'].map(s => (
+                                                                    <label
+                                                                        key={s}
+                                                                        style={{
+                                                                            padding: '0.75rem 0.5rem',
+                                                                            border: `2px solid ${engageStance === s ? STANCE_COLOR[s] : (darkMode ? '#444' : '#ddd')}`,
+                                                                            borderRadius: '6px',
+                                                                            textAlign: 'center',
+                                                                            cursor: 'pointer',
+                                                                            backgroundColor: engageStance === s ? `${STANCE_COLOR[s]}22` : (darkMode ? '#2d2d2d' : 'transparent'),
+                                                                            transition: 'all 0.2s',
+                                                                            minHeight: '10px',
+                                                                            display: 'flex',
+                                                                            alignItems: 'center',
+                                                                            justifyContent: 'center'
+                                                                        }}
+                                                                    >
                                                             <input
                                                                 type="radio"
                                                                 name="create-stance"
