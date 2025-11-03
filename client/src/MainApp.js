@@ -2489,75 +2489,74 @@ A lone Canadian data scientist has built this site and runs everything independe
                             </section>
                         )
                     ) : selectedTopic ? (
-                        <section className="spotlight-section">
-                            <button className="spotlight-close" onClick={closeSpotlight}>✕</button>
+                            <section className="spotlight-section">
+                                <button className="spotlight-close" onClick={closeSpotlight}>✕</button>
 
-                            <div className="spotlight-header">
-                                <h2 className="spotlight-title">
-                                    {topicIcons[selectedTopic.title] || ''} {selectedTopic.title}
-                                </h2>
-                                <button
-                                    className="share-btn"
-                                    onClick={() => handleShare(selectedTopic.id)}
-                                    title="Share this topic"
-                                >
-                                    🔗 Share
-                                </button>
-                            </div>
+                                <div className="spotlight-header">
+                                    <h2 className="spotlight-title">
+                                        {topicIcons[selectedTopic.title] || ''} {selectedTopic.title}
+                                    </h2>
+                                    <button
+                                        className="share-btn"
+                                        onClick={() => handleShare(selectedTopic.id)}
+                                        title="Share this topic"
+                                    >
+                                        🔗 Share
+                                    </button>
+                                </div>
 
-                            <div className="spotlight-content">
-                                    {visiblePoints.length > 0 && (
-                                        <div className="stats-panel card">
-                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
-                                                <h3 style={{ margin: 0 }}>Visible Area Stats</h3>
-                                                <div style={{
-                                                    fontSize: '0.85rem',
-                                                    color: darkMode ? '#999' : '#666',
-                                                    fontWeight: '600'
-                                                }}>
-                                                    {visiblePoints.length} / {heatPoints.length} votes
-                                                </div>
-                                            </div>
-                                            <div className="avg-score-box">
-                                                <span className="label">Average Score:</span>
-                                                <span className={`avg-score ${getAvgBoxColor(avgStanceScore)}`}>
-                                                    {avgStanceScore}
-                                                </span>
-                                            </div>
-
-                                            <div className="stance-breakdown">
-                                                {Object.entries(stancePercentages).map(([stance, pct]) => (
-                                                    <div key={stance} className="stance-row">
-                                                        <span className={`stance-label stance-${stance.toLowerCase()}`}>
-                                                            {stance}
-                                                        </span>
-                                                        <div className="stance-bar-container">
-                                                            <div
-                                                                className="stance-bar"
-                                                                style={{
-                                                                    width: `${pct}%`,
-                                                                    backgroundColor: STANCE_COLOR[stance]
-                                                                }}
-                                                            />
-                                                        </div>
-                                                        <span className="stance-pct">{pct}%</span>
-                                                    </div>
-                                                ))}
+                                {visiblePoints.length > 0 && (
+                                    <div className="stats-panel card">
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
+                                            <h3 style={{ margin: 0 }}>Visible Area Stats</h3>
+                                            <div style={{
+                                                fontSize: '0.85rem',
+                                                color: darkMode ? '#999' : '#666',
+                                                fontWeight: '600'
+                                            }}>
+                                                {visiblePoints.length} / {heatPoints.length} votes
                                             </div>
                                         </div>
-                                    )}
+                                        <div className="avg-score-box">
+                                            <span className="label">Average Score:</span>
+                                            <span className={`avg-score ${getAvgBoxColor(avgStanceScore)}`}>
+                                                {avgStanceScore}
+                                            </span>
+                                        </div>
 
+                                        <div className="stance-breakdown">
+                                            {Object.entries(stancePercentages).map(([stance, pct]) => (
+                                                <div key={stance} className="stance-row">
+                                                    <span className={`stance-label stance-${stance.toLowerCase()}`}>
+                                                        {stance}
+                                                    </span>
+                                                    <div className="stance-bar-container">
+                                                        <div
+                                                            className="stance-bar"
+                                                            style={{
+                                                                width: `${pct}%`,
+                                                                backgroundColor: STANCE_COLOR[stance]
+                                                            }}
+                                                        />
+                                                    </div>
+                                                    <span className="stance-pct">{pct}%</span>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+
+                                <div className="spotlight-description-wrapper">
                                     <div className="spotlight-description card">
-                                        <p>{selectedTopic.description}<br /><br /></p>
+                                        <p>{selectedTopic.description}<br /></p>
                                         <p className="topic-meta">
                                             Created {new Date(selectedTopic.created_at).toLocaleDateString()}
                                             <br />
                                             User ID: {selectedTopic.created_by}
                                         </p>
                                     </div>
-                            </div>
+                                </div>
 
-                            {/* Move the engage form outside spotlight-content to fix it to bottom */}
                                 {user && profile?.homebase_set ? (
                                     <form onSubmit={handleEngage} className="engage-form card">
                                         <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold', fontSize: '1rem' }}>
@@ -2610,84 +2609,84 @@ A lone Canadian data scientist has built this site and runs everything independe
                                         </button>
                                     </form>
                                 ) : (
-                                <div className="auth-prompt card">
-                                    <p>Sign in and set your homebase to vote on this topic!</p>
-                                    {!user && (
-                                        <div className="auth-forms" style={{ marginTop: '1rem' }}>
-                                            {authMode === "login" ? (
-                                                <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                                                    <input
-                                                        type="email"
-                                                        placeholder="Email"
-                                                        value={loginEmail}
-                                                        onChange={(e) => setLoginEmail(e.target.value)}
-                                                        required
-                                                        style={{ padding: '0.5rem', borderRadius: '4px', border: '1px solid #ddd' }}
-                                                    />
-                                                    <input
-                                                        type="password"
-                                                        placeholder="Password"
-                                                        value={loginPassword}
-                                                        onChange={(e) => setLoginPassword(e.target.value)}
-                                                        required
-                                                        style={{ padding: '0.5rem', borderRadius: '4px', border: '1px solid #ddd' }}
-                                                    />
-                                                    <button type="submit" className="btn-primary">Login</button>
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => setAuthMode("signup")}
-                                                        className="btn-secondary"
-                                                    >
-                                                        Need an account? Sign up
-                                                    </button>
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => setForgotPasswordOpen(true)}
-                                                        style={{
-                                                            background: 'none',
-                                                            border: 'none',
-                                                            color: '#0b63a4',
-                                                            cursor: 'pointer',
-                                                            fontSize: '0.9rem',
-                                                            textDecoration: 'underline'
-                                                        }}
-                                                    >
-                                                        Forgot password?
-                                                    </button>
-                                                </form>
-                                            ) : (
-                                                <form onSubmit={handleSignUp} style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                                                    <input
-                                                        type="email"
-                                                        placeholder="Email"
-                                                        value={signUpEmail}
-                                                        onChange={(e) => setSignUpEmail(e.target.value)}
-                                                        required
-                                                        style={{ padding: '0.5rem', borderRadius: '4px', border: '1px solid #ddd' }}
-                                                    />
-                                                    <input
-                                                        type="password"
-                                                        placeholder="Password"
-                                                        value={signUpPassword}
-                                                        onChange={(e) => setSignUpPassword(e.target.value)}
-                                                        required
-                                                        style={{ padding: '0.5rem', borderRadius: '4px', border: '1px solid #ddd' }}
-                                                    />
-                                                    <button type="submit" className="btn-primary">Sign Up</button>
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => setAuthMode("login")}
-                                                        className="btn-secondary"
-                                                    >
-                                                        Already have an account? Login
-                                                    </button>
-                                                </form>
-                                            )}
-                                        </div>
-                                    )}
-                                </div>
-                            )}
-                        </section>
+                                    <div className="auth-prompt card">
+                                        <p>Sign in and set your homebase to vote on this topic!</p>
+                                        {!user && (
+                                            <div className="auth-forms" style={{ marginTop: '1rem' }}>
+                                                {authMode === "login" ? (
+                                                    <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                                                        <input
+                                                            type="email"
+                                                            placeholder="Email"
+                                                            value={loginEmail}
+                                                            onChange={(e) => setLoginEmail(e.target.value)}
+                                                            required
+                                                            style={{ padding: '0.5rem', borderRadius: '4px', border: '1px solid #ddd' }}
+                                                        />
+                                                        <input
+                                                            type="password"
+                                                            placeholder="Password"
+                                                            value={loginPassword}
+                                                            onChange={(e) => setLoginPassword(e.target.value)}
+                                                            required
+                                                            style={{ padding: '0.5rem', borderRadius: '4px', border: '1px solid #ddd' }}
+                                                        />
+                                                        <button type="submit" className="btn-primary">Login</button>
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => setAuthMode("signup")}
+                                                            className="btn-secondary"
+                                                        >
+                                                            Need an account? Sign up
+                                                        </button>
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => setForgotPasswordOpen(true)}
+                                                            style={{
+                                                                background: 'none',
+                                                                border: 'none',
+                                                                color: '#0b63a4',
+                                                                cursor: 'pointer',
+                                                                fontSize: '0.9rem',
+                                                                textDecoration: 'underline'
+                                                            }}
+                                                        >
+                                                            Forgot password?
+                                                        </button>
+                                                    </form>
+                                                ) : (
+                                                    <form onSubmit={handleSignUp} style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                                                        <input
+                                                            type="email"
+                                                            placeholder="Email"
+                                                            value={signUpEmail}
+                                                            onChange={(e) => setSignUpEmail(e.target.value)}
+                                                            required
+                                                            style={{ padding: '0.5rem', borderRadius: '4px', border: '1px solid #ddd' }}
+                                                        />
+                                                        <input
+                                                            type="password"
+                                                            placeholder="Password"
+                                                            value={signUpPassword}
+                                                            onChange={(e) => setSignUpPassword(e.target.value)}
+                                                            required
+                                                            style={{ padding: '0.5rem', borderRadius: '4px', border: '1px solid #ddd' }}
+                                                        />
+                                                        <button type="submit" className="btn-primary">Sign Up</button>
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => setAuthMode("login")}
+                                                            className="btn-secondary"
+                                                        >
+                                                            Already have an account? Login
+                                                        </button>
+                                                    </form>
+                                                )}
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
+                            </section>
                     ) : (
                         <>
                             {!user ? (
