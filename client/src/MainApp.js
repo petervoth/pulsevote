@@ -2473,7 +2473,7 @@ A lone Canadian data scientist has built this site and runs everything independe
                         ) : (
                             <section className="user-spotlight-section">
                                 <button className="spotlight-close" onClick={closeUserSpotlight}>✕</button>
-                                <h2 className="section-title">Your Voting History</h2>
+                                <h2 className="section-title">User Profile</h2>
 
                                 {profile?.homebase_set && (
                                     <div className="homebase-info card" style={{ marginBottom: '1rem' }}>
@@ -2485,27 +2485,7 @@ A lone Canadian data scientist has built this site and runs everything independe
                                         </button>
                                     </div>
                                 )}
-
-                                {userHistory.length === 0 ? (
-                                    <p style={{ textAlign: 'center', padding: '2rem', color: '#666' }}>
-                                        No voting history yet. Start engaging with topics!
-                                    </p>
-                                ) : (
-                                    <ul className="topic-list">
-                                        {userHistory.map(point => (
-                                            <li key={point.id} className="feed-item" onClick={() => setSelectedUserPoint(point)}>
-                                                <div className="topic-header">
-                                                    <span className={`stance-badge stance-${point.stance?.toLowerCase()}`}>
-                                                        {point.stance}
-                                                    </span>
-                                                    <span className="topic-date">
-                                                        {new Date(point.created_at).toLocaleDateString()}
-                                                    </span>
-                                                </div>
-                                            </li>
-                                        ))}
-                                    </ul>
-                                )}
+                                
                             </section>
                         )
                     ) : selectedTopic ? (
