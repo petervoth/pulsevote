@@ -74,6 +74,7 @@
     flex: 1 1 auto;
     min-height: 0;
     box-sizing: border-box;
+    overflow: hidden;
 }
 
 .section-title {
@@ -109,6 +110,9 @@
     background-color: transparent; /* No container background */
     border-radius: 0; /* NO rounded corners */
     overflow: visible;
+    overflow-y: auto; /* Make it scrollable */
+    flex: 1 1 auto; /* Let it grow to fill space */
+    min-height: 0; /* Important for flex children */
 }
 
     .topic-list .feed-item {
@@ -744,10 +748,11 @@ button {
     flex: 0 0 360px;
     display: flex;
     flex-direction: column;
-    gap: 0.75rem;
+    gap: 0rem;
     align-items: stretch;
     box-sizing: border-box;
     overflow: hidden;
+    height: 100%
 }
 
 /* Card base */
@@ -1241,8 +1246,8 @@ button {
     }
 
 .right-column {
-    overflow-y: auto;
-    max-height: 100vh;
+    overflow-y: hidden;
+    max-height: none;
 }
 
 /* Dark Mode */
@@ -1657,7 +1662,7 @@ body.dark-mode .leaflet-control-zoom-out {
     .right-column {
         flex: 1 1 auto;
         width: 100%;
-        gap: 0.5rem;
+        gap: 0rem;
     }
 
     .app-header {
@@ -2736,8 +2741,10 @@ body.dark-mode ul.topic-list li.feed-item.ad-card {
 .feed-section {
     display: flex;
     flex-direction: column;
-    flex: 1 1 auto;
+    flex: 1 1 auto; /* Let it grow */
     min-height: 0;
+    overflow: hidden;
+    height: 100%;
 }
 
 .feed-header {
@@ -2802,27 +2809,27 @@ body.dark-mode ul.topic-list li.feed-item.ad-card {
         }
 
 /* TOPIC LIST STYLING */
-.topic-list {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-    display: flex;
-    flex-direction: column;
-    gap: 0; /* NO gap */
-    background-color: transparent; /* No container background */
+.topic-list > .feed-item:not(.ad-card) {
+    background: #2d2d2d;
+    border: none;
+    border-bottom: 1px solid #444;
     border-radius: 0; /* NO rounded corners */
-    overflow: visible;
+    padding: 0.75rem;
+    margin: 0; /* NO margin */
+    cursor: pointer;
+    transition: background-color 0.2s ease;
 }
 
-    /* Individual topic items (not ad cards) */
-    .topic-list > .feed-item:not(.ad-card) {
-        background: #2d2d2d;
-        border: 1px solid #444;
-        border-radius: 8px;
-        padding: 0.75rem;
-        margin-bottom: 0.5rem;
-        cursor: pointer;
-        transition: all 0.2s ease;
+    .topic-list > .feed-item:not(.ad-card):hover {
+        background: #363636;
+    }
+
+    .topic-list > .feed-item:not(.ad-card):first-child {
+        border-top: none;
+    }
+
+    .topic-list > .feed-item:not(.ad-card):last-child {
+        border-bottom: none;
     }
 
         .topic-list > .feed-item:not(.ad-card):hover {
@@ -2860,6 +2867,10 @@ body.dark-mode ul.topic-list li.feed-item.ad-card {
         color: #ccc;
         margin: 0.5rem 0;
         line-height: 1.4;
+        /* Single line truncation */
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
     }
 
     /* Vote count badge */
@@ -2873,7 +2884,7 @@ body.dark-mode ul.topic-list li.feed-item.ad-card {
 
     /* Scrollbar styling for topic list */
     .topic-list::-webkit-scrollbar {
-        width: 8px;
+        width: 4px;
     }
 
     .topic-list::-webkit-scrollbar-track {
@@ -3122,4 +3133,13 @@ body:not(.dark-mode) .create-section.card {
 body:not(.dark-mode) .create-section .accordion-header h3,
 body:not(.dark-mode) .create-section .accordion-header .section-title {
     color: #333;
+}
+
+.accordion-header {
+    cursor: pointer;
+}
+
+.filter-section .accordion-header h3 {
+    font-size: 1.25rem;
+    font-weight: 600;
 }

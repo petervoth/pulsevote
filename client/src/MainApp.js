@@ -3029,11 +3029,7 @@ A lone Canadian data scientist has built this site and runs everything independe
                                             </div>
                                         </div> 
 
-                                        <ul className="topic-list" ref={feedRef} style={{
-                                            overflowY: 'auto',
-                                            maxHeight: 'calc(100vh - 400px)',
-                                            paddingRight: '0.5rem'
-                                        }}>
+                                        <ul className="topic-list" ref={feedRef}>
                                             {topicsWithAds.map((item, idx) => {
                                                 if (item.isAd) {
                                                     return <AdCard key={`ad-${idx}`} adIndex={item.adIndex} liveAds={liveAds} />;
