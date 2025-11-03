@@ -1,12 +1,620 @@
-﻿/* App.css — full merged stylesheet
-- pure-flex layout so map and sidebar match heights
-- only sidebar scrolls internally
-- feed list fills the card
-- create accordion and topic spotlight view
-- feed descriptions truncated to a single-line preview
-- full-width Engage button in spotlight
-- topic list: no bullets and left padding matches right side
-*/
+﻿/* App.css — full merged stylesheet with MapLibre updates */
+
+/* ======================================== 
+   MISSING STYLES FROM LEAFLET VERSION
+   These were present in the Leaflet version but missing from MapLibre
+   ======================================== */
+
+/* -------------------------- 
+   FILTERS SECTION (was missing)
+-------------------------- */
+.filters-section {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    box-sizing: border-box;
+}
+
+    .filters-section.card {
+        background: #fff;
+        border-radius: 8px;
+        padding: 0.75rem;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+    }
+
+    /* Filters accordion */
+    .filters-section .accordion-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0;
+        margin-bottom: 0;
+    }
+
+        .filters-section .accordion-header h3 {
+            margin: 0;
+            flex: 1 1 auto;
+            text-align: center;
+            font-size: 1rem;
+            font-weight: 600;
+        }
+
+    /* Search input in filters */
+    .filters-section input[type="text"],
+    .filters-section input[type="date"],
+    .filters-section select {
+        width: 100%;
+        padding: 0.45rem;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        font-size: 0.95rem;
+        box-sizing: border-box;
+    }
+
+/* Sort dropdown */
+.sort-section {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    margin-top: 0.5rem;
+}
+
+    .sort-section label {
+        font-size: 0.9rem;
+        font-weight: 600;
+        color: #333;
+    }
+
+/* -------------------------- 
+   TOPIC LIST / FEED SECTION (enhanced)
+-------------------------- */
+.feed-section {
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 auto;
+    min-height: 0;
+    box-sizing: border-box;
+}
+
+.section-title {
+    margin: 0 0 0.75rem 0;
+    font-size: 1rem;
+    font-weight: 600;
+    text-align: center;
+}
+
+/* Feed list container */
+.feed-list {
+    margin-top: 0;
+    overflow-y: auto;
+    padding: 0;
+    flex: 1 1 auto;
+    min-height: 0;
+}
+
+    .feed-list ul {
+        list-style: none;
+        margin: 0;
+        padding: 0 0.25rem 0 0;
+    }
+
+/* Topic list items */
+.topic-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0; /* NO gap */
+    background-color: transparent; /* No container background */
+    border-radius: 0; /* NO rounded corners */
+    overflow: visible;
+}
+
+    .topic-list .feed-item {
+        padding: 1rem;
+        cursor: pointer;
+        transition: background-color 0.2s ease;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        background-color: rgba(0, 0, 0, 0.3); /* Dark background for each item */
+        border-radius: 0; /* NO rounded corners on individual items */
+        margin: 0; /* No margin */
+    }
+
+        .topic-list .feed-item:hover {
+            background-color: rgba(255, 255, 255, 0.05);
+        }
+
+.feed-item:first-child {
+    border-top: none;
+}
+
+.feed-item:last-child {
+    border-bottom: none;
+}
+
+/* Topic header with icon and metadata */
+.topic-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 0.5rem;
+}
+
+.topic-icon {
+    font-size: 1.2rem;
+    margin-right: 0.5rem;
+}
+
+.topic-title-text {
+    flex: 1;
+    font-weight: 600;
+    font-size: 0.95rem;
+    color: #333;
+}
+
+.topic-date {
+    font-size: 0.8rem;
+    color: #666;
+}
+
+/* Stance badge in topic list */
+.stance-badge {
+    display: inline-block;
+    padding: 0.2rem 0.5rem;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+    .stance-badge.stance--no {
+        background: rgba(100, 143, 255, 0.15);
+        color: #648FFF;
+    }
+
+    .stance-badge.stance-no {
+        background: rgba(120, 94, 240, 0.15);
+        color: #785EF0;
+    }
+
+    .stance-badge.stance-neutral {
+        background: rgba(220, 38, 127, 0.15);
+        color: #DC267F;
+    }
+
+    .stance-badge.stance-yes {
+        background: rgba(254, 97, 0, 0.15);
+        color: #FE6100;
+    }
+
+    .stance-badge.stance-yes\+ {
+        background: rgba(255, 176, 0, 0.15);
+        color: #FFB000;
+    }
+
+/* Vote count badge */
+.vote-count {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.2rem 0.4rem;
+    background: #f0f0f0;
+    border-radius: 10px;
+    font-size: 0.75rem;
+    color: #666;
+}
+
+/* -------------------------- 
+   TOPIC SPOTLIGHT (enhanced)
+-------------------------- */
+.spotlight-section {
+    position: relative;
+    padding: 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    box-sizing: border-box;
+    min-height: 0;
+    height: 100%;
+    overflow: hidden;
+}
+
+/* Spotlight header with title and share button */
+.spotlight-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    padding-right: 2rem; /* Space for close button */
+}
+
+.spotlight-title {
+    margin: 0;
+    font-size: 1.1rem;
+    font-weight: 600;
+    flex: 1;
+    color: #333;
+}
+
+/* Share button in spotlight */
+.share-btn {
+    padding: 0.4rem 0.8rem;
+    background: rgba(11, 99, 164, 0.1);
+    color: #0b63a4;
+    border: 1px solid rgba(11, 99, 164, 0.3);
+    border-radius: 6px;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+    .share-btn:hover {
+        background: rgba(11, 99, 164, 0.2);
+        border-color: rgba(11, 99, 164, 0.5);
+    }
+
+/* Spotlight description card */
+.spotlight-description {
+    background: #f8f9fa;
+    border-radius: 6px;
+    padding: 0.75rem;
+    margin: 0;
+}
+
+    .spotlight-description p {
+        margin: 0 0 0.5rem 0;
+        line-height: 1.4;
+        color: #333;
+    }
+
+.topic-meta {
+    font-size: 0.85rem;
+    color: #666;
+    margin: 0;
+}
+
+/* Stats panel in spotlight */
+.stats-panel {
+    background: #f8f9fa;
+    border-radius: 6px;
+    padding: 0.75rem;
+}
+
+    .stats-panel h3 {
+        margin: 0 0 0.75rem 0;
+        font-size: 0.95rem;
+        font-weight: 600;
+        color: #333;
+    }
+
+/* Average score box */
+.avg-score-box {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1rem;
+    padding: 0.75rem;
+    background: #fff;
+    border-radius: 6px;
+    border: 1px solid #e0e0e0;
+}
+
+    .avg-score-box .label {
+        font-weight: 600;
+        color: #333;
+        font-size: 0.9rem;
+    }
+
+.avg-score {
+    font-size: 1.5rem;
+    font-weight: bold;
+    padding: 0.4rem 0.8rem;
+    border-radius: 6px;
+    color: white;
+}
+
+/* Stance breakdown */
+.stance-breakdown {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.stance-row {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.stance-label {
+    min-width: 50px;
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+
+.stance-bar-container {
+    flex: 1;
+    height: 20px;
+    background: #e0e0e0;
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.stance-bar {
+    height: 100%;
+    transition: width 0.3s ease;
+}
+
+.stance-pct {
+    min-width: 40px;
+    text-align: right;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #666;
+}
+
+/* Engage form in spotlight */
+.engage-form {
+    background: #f8f9fa;
+    border-radius: 6px;
+    padding: 0.75rem;
+}
+
+    .engage-form h3 {
+        margin: 0 0 0.75rem 0;
+        font-size: 0.95rem;
+        font-weight: 600;
+        text-align: center;
+        color: #333;
+    }
+
+/* Stance selector */
+.stance-selector {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 0.4rem;
+    margin-bottom: 0.75rem;
+}
+
+.stance-option {
+    padding: 0.5rem 0.25rem;
+    border: 2px solid #e0e0e0;
+    border-radius: 6px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    background: white;
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+    .stance-option:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+    }
+
+    .stance-option.selected {
+        transform: translateY(-2px);
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+    }
+
+/* Button styles */
+.btn-primary {
+    width: 100%;
+    padding: 0.6rem 0.9rem;
+    background: #0b63a4;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+    .btn-primary:hover {
+        background: #094d7f;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 8px rgba(11, 99, 164, 0.2);
+    }
+
+    .btn-primary:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+        transform: none;
+    }
+
+.btn-secondary {
+    padding: 0.5rem 0.75rem;
+    background: #666;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+    .btn-secondary:hover {
+        background: #555;
+    }
+
+/* Auth prompt */
+.auth-prompt {
+    background: #f8f9fa;
+    border-radius: 6px;
+    padding: 1rem;
+    text-align: center;
+}
+
+    .auth-prompt p {
+        margin: 0 0 0.75rem 0;
+        color: #666;
+    }
+
+/* Auth forms */
+.auth-forms {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+/* User spotlight section */
+.user-spotlight-section {
+    padding: 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    height: 100%;
+    overflow-y: auto;
+}
+
+.homebase-info {
+    background: #f8f9fa;
+    border-radius: 6px;
+    padding: 0.75rem;
+}
+
+    .homebase-info h3 {
+        margin: 0 0 0.5rem 0;
+        font-size: 0.95rem;
+        font-weight: 600;
+    }
+
+    .homebase-info p {
+        margin: 0.25rem 0;
+        font-size: 0.9rem;
+    }
+
+        .homebase-info p.small {
+            font-size: 0.8rem;
+            color: #666;
+        }
+
+/* -------------------------- 
+   DARK MODE OVERRIDES FOR NEW SECTIONS
+-------------------------- */
+body.dark-mode .filters-section.card {
+    background: #2d2d2d;
+    color: #e0e0e0;
+}
+
+body.dark-mode .filters-section input[type="text"],
+body.dark-mode .filters-section input[type="date"],
+body.dark-mode .filters-section select {
+    background: #1a1a1a;
+    color: #e0e0e0;
+    border: 1px solid #444;
+}
+
+body.dark-mode .sort-section label {
+    color: #e0e0e0;
+}
+
+body.dark-mode .topic-list .feed-item {
+    background: #2d2d2d;
+    border-color: #444;
+}
+
+    body.dark-mode .topic-list .feed-item:hover {
+        background: rgba(11, 99, 164, 0.15);
+        border-color: rgba(11, 99, 164, 0.4);
+    }
+
+body.dark-mode .topic-title-text {
+    color: #e0e0e0;
+}
+
+body.dark-mode .topic-date {
+    color: #999;
+}
+
+body.dark-mode .vote-count {
+    background: #1a1a1a;
+    color: #999;
+}
+
+body.dark-mode .spotlight-title {
+    color: #e0e0e0;
+}
+
+body.dark-mode .share-btn {
+    background: rgba(11, 99, 164, 0.2);
+    color: #6ca8d8;
+    border-color: rgba(11, 99, 164, 0.4);
+}
+
+    body.dark-mode .share-btn:hover {
+        background: rgba(11, 99, 164, 0.3);
+    }
+
+body.dark-mode .spotlight-description,
+body.dark-mode .stats-panel,
+body.dark-mode .engage-form {
+    background: #1a1a1a;
+}
+
+    body.dark-mode .spotlight-description p,
+    body.dark-mode .stats-panel h3,
+    body.dark-mode .engage-form h3 {
+        color: #e0e0e0;
+    }
+
+body.dark-mode .topic-meta {
+    color: #999;
+}
+
+body.dark-mode .avg-score-box {
+    background: #2d2d2d;
+    border-color: #444;
+}
+
+    body.dark-mode .avg-score-box .label {
+        color: #e0e0e0;
+    }
+
+body.dark-mode .stance-bar-container {
+    background: #333;
+}
+
+body.dark-mode .stance-pct {
+    color: #999;
+}
+
+body.dark-mode .stance-option {
+    background: #2d2d2d;
+    border-color: #444;
+}
+
+body.dark-mode .auth-prompt {
+    background: #1a1a1a;
+}
+
+    body.dark-mode .auth-prompt p {
+        color: #999;
+    }
+
+body.dark-mode .homebase-info {
+    background: #1a1a1a;
+}
+
+    body.dark-mode .homebase-info h3 {
+        color: #e0e0e0;
+    }
+
+    body.dark-mode .homebase-info p.small {
+        color: #999;
+    }
+
+/* ======================================== 
+   ORIGINAL STYLES FROM THE CSS FILE
+   (keeping all the existing styles)
+   ======================================== */
 
 /* Basic resets */
 html, body, #root {
@@ -69,16 +677,16 @@ button {
         background: #005a9e;
     }
 
-/* Root layout: lock to viewport and prevent document-level scrolling */
+/* Root layout */
 .app-root {
     min-height: 100vh;
     height: 100vh;
     display: flex;
     flex-direction: column;
-    overflow: hidden; /* critical: stop page-level scrolling */
+    overflow: hidden;
 }
 
-/* Header (participates in flex layout) */
+/* Header */
 .app-header,
 .app-header.header--with-user {
     padding: 0.5rem 1rem;
@@ -88,33 +696,32 @@ button {
     align-items: center;
     justify-content: space-between;
     box-sizing: border-box;
-    flex: 0 0 auto; /* header doesn't grow; measured height affects remaining space */
+    flex: 0 0 auto;
 }
 
-    /* Site title */
     .app-header h1,
     .header-left .site-title {
         flex: 0 0 auto;
         text-align: left !important;
         font-size: 0.9rem;
         margin: 0;
-        margin-left: -1rem; /* Pull it left to align with email below */
+        margin-left: -1rem;
         padding: 0;
         order: 1;
     }
 
-/* Main area: occupies remaining viewport space below header */
+/* Main area */
 .app-main {
     display: flex;
     gap: 1rem;
     padding: 1rem;
     box-sizing: border-box;
-    flex: 1 1 auto; /* grow to fill available vertical space */
-    align-items: stretch; /* children match height of this container */
-    overflow: auto; /* prevent main area from scrolling */
+    flex: 1 1 auto;
+    align-items: stretch;
+    overflow: auto;
 }
 
-/* Map column: flexible, fills vertical space given by app-main */
+/* Map column */
 .map-column {
     flex: 1 1 70%;
     min-width: 300px;
@@ -125,7 +732,6 @@ button {
     box-shadow: 0 2px 6px rgba(0,0,0,0.08);
 }
 
-/* Make the Leaflet map fill its container */
 .main-map {
     width: 100%;
     flex: 1 1 auto;
@@ -133,15 +739,15 @@ button {
     height: 100%;
 }
 
-/* Right column (sidebar): fixed width, stretches to match the map height by flex */
+/* Right column */
 .right-column {
-    flex: 0 0 360px; /* adjust width as desired */
+    flex: 0 0 360px;
     display: flex;
     flex-direction: column;
     gap: 0.75rem;
     align-items: stretch;
     box-sizing: border-box;
-    overflow: hidden; /* internal regions will manage their own scrolling */
+    overflow: hidden;
 }
 
 /* Card base */
@@ -153,7 +759,7 @@ button {
     box-sizing: border-box;
 }
 
-/* Special small card backgrounds */
+/* Auth and profile boxes */
 .auth-box, .profile-box {
     background: linear-gradient(180deg,#f7fbff,#eef7ff);
     padding: 0.6rem;
@@ -161,7 +767,7 @@ button {
     box-sizing: border-box;
 }
 
-/* Compact form controls used in many cards */
+/* Compact form */
 .compact-form {
     display: flex;
     flex-direction: column;
@@ -197,7 +803,7 @@ button {
             background: #666;
         }
 
-/* Radio group layout */
+/* Radio group */
 .radios {
     display: flex;
     gap: 0.5rem;
@@ -205,58 +811,31 @@ button {
     font-size: 0.9rem;
 }
 
-/* --------------------------
-   Feed / Available Topics
-   --------------------------
-   heading removed; feed-list now fills the card completely
-   list-style removed and left-padding aligned with card padding
-*/
-
-.feed-section {
-    display: flex;
-    flex-direction: column;
-    flex: 1 1 auto; /* grow to fill the right-column height */
-    min-height: 0; /* allow internal children to scroll */
-    box-sizing: border-box;
-}
-
-/* feed-list: let the card's padding define outer spacing; internal ul has no extra padding */
-.feed-list {
-    margin-top: 0;
-    overflow-y: auto;
-    padding: 0; /* remove any extra horizontal padding so list sits flush with card left */
-    flex: 1 1 auto;
-    min-height: 0;
-}
-
-    /* remove bullets and default ul padding; keep a small right gutter so text doesn't touch card edge */
-    .feed-list ul {
-        list-style: none;
-        margin: 0;
-        padding: 0 0.25rem 0 0; /* small right padding to match existing right-side spacing */
-    }
-
-/* Feed item styling: horizontal padding removed (card provides outer padding) */
+/* Feed items */
 .feed-item {
-    padding: 0.5rem 0; /* vertical spacing only */
-    border-bottom: 1px solid #f0f0f0;
+    padding: 1rem;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    background-color: rgba(0, 0, 0, 0.3); /* Dark background for each item */
+    border-radius: 0; /* NO rounded corners on individual items */
+    margin: 0; /* No margin */
 }
 
 .feed-title {
     font-weight: 600;
 }
 
-/* Single-line preview for topic descriptions in the feed */
 .feed-desc {
-    display: -webkit-box; /* needed for line-clamp */
-    -webkit-line-clamp: 1; /* show only the first line */
+    display: -webkit-box;
+    -webkit-line-clamp: 1;
     -webkit-box-orient: vertical;
-    overflow: hidden; /* hide overflow text */
-    text-overflow: ellipsis; /* show "..." when truncated */
-    white-space: normal; /* allow wrapping for webkit-box to work */
-    line-height: 1.25; /* keep a compact single-line height */
-    max-height: 1.25em; /* enforce single-line visual height */
-    color: #444; /* keep your existing color */
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: normal;
+    line-height: 1.25;
+    max-height: 1.25em;
+    color: #444;
     margin-top: 0.25rem;
 }
 
@@ -266,7 +845,6 @@ button {
     font-size: 0.85rem;
 }
 
-/* Clickable feed items */
 .feed-item--clickable {
     cursor: pointer;
     transition: background 120ms ease;
@@ -276,30 +854,17 @@ button {
         background: rgba(11,99,164,0.04);
     }
 
-/* Monospace small text utility */
+/* Monospace utility */
 .mono {
     font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, "Roboto Mono", monospace;
     font-size: 0.9rem;
 }
 
-/* --------------------------
-   Spotlight view (selected topic)
-   -------------------------- */
-
-.spotlight-section {
-    position: relative; /* so close button can be absolute */
-    padding: 1rem;
-    display: flex;
-    flex-direction: column;
-    gap: 0.6rem;
-    box-sizing: border-box;
-}
-
-/* Close 'X' top-right */
+/* Spotlight close button */
 .spotlight-close {
     position: absolute;
     top: 1rem;
-    right: 2.5rem; /* Increase this from 1rem to give room for scrollbar */
+    right: 2.5rem;
     background: #f0f0f0;
     border: none;
     border-radius: 50%;
@@ -318,101 +883,36 @@ button {
         background: rgba(0,0,0,0.1);
     }
 
-/* Spotlight content */
-.spotlight-title {
-    margin: 0;
-    font-size: 1.05rem;
-}
-
-.spotlight-desc {
-    margin: 0.25rem 0;
-    color: #333;
-    line-height: 1.35;
-}
-
-.spotlight-meta {
-    color: #666;
-    font-size: 0.88rem;
-}
-
-/* Make the spotlight card allow internal scrolling when content is large */
-.spotlight-section {
-    display: flex;
-    flex-direction: column;
-    /* allow the card to shrink and let its inner content scroll */
-    min-height: 0;
-    height: 100%;
-    box-sizing: border-box;
-    overflow: hidden; /* keep outer card from scrolling the whole page */
-}
-
-/* The scrollable area inside the spotlight card */
+/* Spotlight content scrolling */
 .spotlight-content {
-    flex: 1 1 auto; /* take available vertical space */
-    min-height: 0; /* allow flex children to shrink correctly */
-    overflow-y: auto; /* enable vertical scrolling when needed */
-    padding-right: 0.5rem; /* small right gutter for scrollbar */
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    padding-right: 0.5rem;
 }
 
-/* Keep the engage block visible and positioned after the scrollable content */
 .spotlight-engage {
-    flex: 0 0 auto; /* doesn't grow; sits below the scrollable content */
-    margin-top: 0.75rem; /* preserve spacing */
+    flex: 0 0 auto;
+    margin-top: 0.75rem;
 }
 
-/* Optional: ensure the close button stays visually anchored in the card corner */
-.spotlight-close {
-    z-index: 2; /* keep above scrollable content */
-}
-
-/* Small tweak: ensure long description wraps nicely and has spacing */
 .spotlight-desc {
     white-space: normal;
     word-break: break-word;
     margin-bottom: 0.5rem;
 }
 
-/* More vertical space between spotlight meta (author/time) and the engage section */
 .spotlight-meta {
-    margin-bottom: 3.75rem; /* increase as needed (e.g. 1rem → 1.5rem) */
+    margin-bottom: 3.75rem;
 }
 
-.spotlight-engage {
-    margin-top: 0; /* reset if previously set; spacing now comes from spotlight-meta */
-}
-
-/* Spotlight actions */
-.spotlight-actions button {
-    padding: 0.45rem 0.6rem;
-    border-radius: 4px;
-    border: none;
-    background: #0b63a4;
-    color: white;
-    cursor: pointer;
-}
-
-    .spotlight-actions button.secondary {
-        background: #666;
-    }
-
-/* ENGAGE: full-width centered radio group and button spacing */
-.spotlight-engage {
-    margin-top: 0.75rem;
-}
-
-    .spotlight-engage .radios {
-        gap: 0.5rem;
-        align-items: center;
-    }
-
-/* Centered, full-width engage button container */
+/* Engage actions */
 .engage-actions {
     display: flex;
     justify-content: stretch;
     margin-top: 0.5rem;
 }
 
-    /* Full-width engage button styling */
     .engage-actions button {
         width: 100%;
         min-width: 0;
@@ -431,7 +931,7 @@ button {
             cursor: not-allowed;
         }
 
-/* Create Topic: align and stretch Create Topic button like Engage */
+/* Create topic form */
 .create-topic-form {
     display: flex;
     flex-direction: column;
@@ -440,7 +940,7 @@ button {
 
 .create-actions {
     display: flex;
-    justify-content: stretch; /* make the single button fill available width */
+    justify-content: stretch;
     margin-top: 0.5rem;
 }
 
@@ -462,7 +962,7 @@ button {
             cursor: not-allowed;
         }
 
-/* Center the Create a New Topic heading horizontally in the accordion header */
+/* Accordion */
 .accordion-header {
     display: flex;
     align-items: center;
@@ -472,9 +972,9 @@ button {
 }
 
     .accordion-header h3 {
-        font-size: 1rem; /* Match Create a New Topic */
+        font-size: 1rem;
         margin: 0;
-        font-weight: 600; /* Match Create a New Topic */
+        font-weight: 600;
         flex: 1 1 auto;
         text-align: center;
     }
@@ -482,41 +982,22 @@ button {
 .create-section .accordion-header {
     display: flex;
     align-items: center;
-    gap: 0rem;
+    gap: 0;
 }
 
-    /* Make the title take remaining space and center its text */
     .create-section .accordion-header h3 {
         margin: 0;
-        flex: 1 1 auto; /* take available horizontal space */
-        text-align: center; /* center the heading text */
+        flex: 1 1 auto;
+        text-align: center;
         font-size: 1.25rem;
         font-weight: 600;
     }
 
-    /* Keep the toggle button aligned to the right */
     .create-section .accordion-header .accordion-toggle {
         flex: 0 0 auto;
     }
 
-/* --------------------------
-   Create accordion styles
-   -------------------------- */
-
-.create-section.card,
-.create-section.card > .accordion-header,
-.create-section.card > .accordion-body {
-    box-sizing: border-box;
-}
-
-.create-section .accordion-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 0rem;
-    margin-bottom: 0rem;
-}
-
+/* Accordion toggle */
 .accordion-toggle {
     width: 34px;
     height: 34px;
@@ -571,10 +1052,7 @@ button {
     margin-top: 0.25rem;
 }
 
-/* --------------------------
-   Header right-justified user info + buttons
-   -------------------------- */
-
+/* Header user info */
 .header-right {
     display: flex;
     align-items: center;
@@ -616,14 +1094,13 @@ button {
         background: rgba(255,255,255,0.18);
     }
 
-/* Logout icon button sizing */
 .header-logout {
     display: inline-flex;
     align-items: center;
     justify-content: center;
     gap: 0.35rem;
     padding: 6px 8px;
-    width: 40px; /* keeps button compact for icon */
+    width: 40px;
     height: 36px;
     border-radius: 6px;
     border: none;
@@ -676,13 +1153,12 @@ button {
     color: #333;
 }
 
-/* Below the radio buttons, a 5-segment bar */
 .stance-bar {
     display: flex;
     width: 100%;
-    height: 8px; /* adjust thickness */
+    height: 8px;
     margin: 0.5rem 0 1rem;
-    border-radius: 4px; /* optional rounding */
+    border-radius: 4px;
     overflow: hidden;
 }
 
@@ -744,7 +1220,6 @@ button {
 
 .leaflet-interactive.twinkle-marker {
     animation: twinkle 1.5s ease-out infinite;
-    /* now pull each circle's own delay from a CSS var */
     animation-delay: var(--twinkle-delay);
 }
 
@@ -770,7 +1245,7 @@ button {
     max-height: 100vh;
 }
 
-/* Dark Mode Styles */
+/* Dark Mode */
 body.dark-mode {
     background: #1a1a1a;
     color: #e0e0e0;
@@ -825,7 +1300,7 @@ body.dark-mode .feed-date {
 }
 
 body.dark-mode .feed-desc {
-    color: #999; /* previously used for date */
+    color: #999;
 }
 
 body.dark-mode .stance-box {
@@ -834,11 +1309,13 @@ body.dark-mode .stance-box {
 }
 
 .feed-item {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 1rem 0;
-    border-bottom: 1px solid #ccc;
+    padding: 1rem;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    background-color: rgba(0, 0, 0, 0.3); /* Dark background for each item */
+    border-radius: 0; /* NO rounded corners on individual items */
+    margin: 0; /* No margin */
 }
 
 .feed-left {
@@ -855,7 +1332,7 @@ body.dark-mode .feed-right {
     color: #aaa;
 }
 
-/* About Modal Styles */
+/* Modal */
 .modal-overlay {
     position: fixed;
     top: 0;
@@ -943,7 +1420,6 @@ body.dark-mode .feed-right {
         color: #555;
     }
 
-/* Dark mode support for modal */
 body.dark-mode .modal-content {
     background: #2d2d2d;
     color: #e0e0e0;
@@ -966,7 +1442,6 @@ body.dark-mode .modal-close {
         background: #555;
     }
 
-/* Email handle and accordion toggle colors */
 .header-email {
     background: none;
     border: none;
@@ -996,16 +1471,15 @@ body.dark-mode .accordion-toggle {
         background: #555;
     }
 
-/* Dark mode styling for stance summary boxes */
 body.dark-mode .stance-label {
-    color: #9ca3af; /* Same gray as email handle in dark mode */
+    color: #9ca3af;
 }
 
 body.dark-mode .stance-value {
-    color: #e0e0e0; /* Same color as GPS coordinates in dark mode */
+    color: #e0e0e0;
 }
 
-/* Scrollbar styling for light mode */
+/* Scrollbars */
 .feed-list::-webkit-scrollbar {
     width: 8px;
 }
@@ -1024,7 +1498,6 @@ body.dark-mode .stance-value {
         background: #555;
     }
 
-/* Dark mode scrollbar styling */
 body.dark-mode .feed-list::-webkit-scrollbar-track {
     background: #1a1a1a;
 }
@@ -1037,12 +1510,10 @@ body.dark-mode .feed-list::-webkit-scrollbar-thumb {
         background: #555;
     }
 
-/* Dark mode styling for spotlight description text */
 body.dark-mode .spotlight-desc {
     color: #d1d5db;
 }
 
-/* Scrollbar styling for spotlight content in light mode */
 .spotlight-content::-webkit-scrollbar {
     width: 8px;
 }
@@ -1061,7 +1532,6 @@ body.dark-mode .spotlight-desc {
         background: #555;
     }
 
-/* Dark mode scrollbar styling for spotlight */
 body.dark-mode .spotlight-content::-webkit-scrollbar-track {
     background: #1a1a1a;
 }
@@ -1074,7 +1544,6 @@ body.dark-mode .spotlight-content::-webkit-scrollbar-thumb {
         background: #555;
     }
 
-/* Dark mode styling for spotlight close button */
 body.dark-mode .spotlight-close {
     background: #444;
     color: #e0e0e0;
@@ -1084,7 +1553,6 @@ body.dark-mode .spotlight-close {
         background: #555;
     }
 
-/* Spin the 'X' for Topic Spotlight */
 .spotlight-close {
     transition: all 0.2s ease;
 }
@@ -1093,7 +1561,6 @@ body.dark-mode .spotlight-close {
         transform: rotate(90deg);
     }
 
-/* Dark mode styling for Leaflet zoom buttons */
 body.dark-mode .leaflet-control-zoom-in,
 body.dark-mode .leaflet-control-zoom-out {
     background: #444;
@@ -1107,7 +1574,6 @@ body.dark-mode .leaflet-control-zoom-out {
         color: #fff;
     }
 
-/* Twinkle effects */
 @keyframes pulse {
     0%, 100% {
         transform: scale(0.9);
@@ -1129,7 +1595,7 @@ body.dark-mode .leaflet-control-zoom-out {
     box-shadow: 0 0 6px rgba(255, 215, 0, 0.5);
 }
 
-/* Desktop Header Layout - reset any mobile overrides */
+/* Desktop layout */
 @media (min-width: 481px) {
     .app-header {
         display: flex;
@@ -1173,20 +1639,14 @@ body.dark-mode .leaflet-control-zoom-out {
     }
 }
 
-/* ========================================
-   MOBILE RESPONSIVE DESIGN
-   ======================================== */
-
-/* Tablet & iPad (768px and below) */
+/* Responsive - Tablets */
 @media (max-width: 768px) {
-    /* Stack layout vertically on tablets */
     .app-main {
         flex-direction: column;
         gap: 0.5rem;
         padding: 0.5rem;
     }
 
-    /* Hide map on tablets, show feed full-width */
     .map-column {
         display: flex !important;
         flex-direction: column;
@@ -1194,14 +1654,12 @@ body.dark-mode .leaflet-control-zoom-out {
         min-height: 250px;
     }
 
-    /* Sidebar becomes full-width */
     .right-column {
         flex: 1 1 auto;
         width: 100%;
         gap: 0.5rem;
     }
 
-    /* Header adjustments for tablets */
     .app-header {
         padding: 0.5rem 0.75rem;
     }
@@ -1243,21 +1701,18 @@ body.dark-mode .leaflet-control-zoom-out {
         .header-logout svg {
             width: 16px;
             height: 16px;
-            vertical-align: middle; /* 👈 Ensures icon sits flush */
+            vertical-align: middle;
         }
 
-    /* Reduce card padding */
     .card {
         padding: 0.6rem;
     }
 
-    /* Reduce radios gap and font */
     .radios {
         gap: 0.4rem;
         font-size: 0.8rem;
     }
 
-    /* Reduce form gaps */
     .compact-form {
         gap: 0.4rem;
     }
@@ -1275,9 +1730,14 @@ body.dark-mode .leaflet-control-zoom-out {
             padding: 0.4rem 0.5rem;
         }
 
-    /* Feed item adjustments */
     .feed-item {
-        padding: 0.4rem 0;
+        padding: 1rem;
+        cursor: pointer;
+        transition: background-color 0.2s ease;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        background-color: rgba(0, 0, 0, 0.3); /* Dark background for each item */
+        border-radius: 0; /* NO rounded corners on individual items */
+        margin: 0; /* No margin */
     }
 
     .feed-title {
@@ -1293,7 +1753,6 @@ body.dark-mode .leaflet-control-zoom-out {
         font-size: 0.75rem;
     }
 
-    /* Spotlight adjustments */
     .spotlight-section {
         padding: 0.75rem;
     }
@@ -1318,7 +1777,7 @@ body.dark-mode .leaflet-control-zoom-out {
     }
 
     .stance-box {
-        flex: 1; /* Each box takes equal space */
+        flex: 1;
         text-align: center;
         font-size: 0.85rem;
         border-radius: 6px;
@@ -1326,7 +1785,7 @@ body.dark-mode .leaflet-control-zoom-out {
         color: #333;
         border: 1px solid #ccc;
         box-sizing: border-box;
-        margin: 0; /* No gaps */
+        margin: 0;
     }
 
     .spotlight-close {
@@ -1337,7 +1796,6 @@ body.dark-mode .leaflet-control-zoom-out {
         right: 2rem;
     }
 
-    /* Stance summary adjustments */
     .stance-label {
         font-size: 0.65rem;
     }
@@ -1346,7 +1804,6 @@ body.dark-mode .leaflet-control-zoom-out {
         font-size: 0.9rem;
     }
 
-    /* Modal adjustments */
     .modal-content {
         padding: 1.5rem;
     }
@@ -1363,33 +1820,28 @@ body.dark-mode .leaflet-control-zoom-out {
             margin-bottom: 0.75rem;
         }
 
-    /* Share button */
     .share-button {
         padding: 0.35rem 0.6rem;
         font-size: 0.85rem;
     }
 
-    /* Create section title */
     .create-section .accordion-header h3 {
         font-size: 1rem;
     }
 
-    /* Accordion toggle size */
     .accordion-toggle {
         width: 30px;
         height: 30px;
         font-size: 16px;
     }
 
-    /* Width control*/
     html, body {
         overflow-x: hidden;
     }
 }
 
-/* Small phones (480px and below) */
+/* Mobile responsive */
 @media (max-width: 480px) {
-    /* Full width control*/
     .app-main {
         flex-direction: column;
         width: 100vw;
@@ -1412,7 +1864,6 @@ body.dark-mode .leaflet-control-zoom-out {
         overflow-x: hidden;
     }
 
-    /* Restructure header for mobile - improved version */
     .app-header {
         flex-wrap: wrap;
         padding: 0.6rem 0.75rem;
@@ -1449,7 +1900,6 @@ body.dark-mode .leaflet-control-zoom-out {
         z-index: 10;
     }
 
-    /* User info on new row - better aligned */
     .header-user-line {
         flex: 1 1 100%;
         width: 100%;
@@ -1471,7 +1921,7 @@ body.dark-mode .leaflet-control-zoom-out {
         box-shadow: 0 1px 3px rgba(0,0,0,0.1);
     }
 
-    /* Tighter overall spacing */
+    /* Tighter spacing */
     .app-root {
         height: 100vh;
     }
@@ -1523,19 +1973,16 @@ body.dark-mode .leaflet-control-zoom-out {
             height: 14px;
         }
 
-    /* Main layout */
     .app-main {
         padding: 0.25rem;
         gap: 0.25rem;
     }
 
-    /* Card styling */
     .card {
         padding: 0.5rem;
         border-radius: 6px;
     }
 
-    /* Compact form */
     .compact-form {
         gap: 0.35rem;
     }
@@ -1546,7 +1993,7 @@ body.dark-mode .leaflet-control-zoom-out {
         .compact-form textarea,
         .compact-form select {
             padding: 0.35rem;
-            font-size: 1rem; /* Keep at 1rem for mobile readability */
+            font-size: 1rem;
             border-radius: 3px;
         }
 
@@ -1555,7 +2002,6 @@ body.dark-mode .leaflet-control-zoom-out {
             font-size: 0.85rem;
         }
 
-    /* Radios */
     .radios {
         gap: 0.3rem;
         font-size: 0.7rem;
@@ -1572,15 +2018,19 @@ body.dark-mode .leaflet-control-zoom-out {
             min-width: 14px;
         }
 
-    /* Stance bar */
     .stance-bar {
         height: 6px;
         margin: 0.4rem 0 0.75rem;
     }
 
-    /* Feed list */
     .feed-item {
-        padding: 0.35rem 0;
+        padding: 1rem;
+        cursor: pointer;
+        transition: background-color 0.2s ease;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        background-color: rgba(0, 0, 0, 0.3); /* Dark background for each item */
+        border-radius: 0; /* NO rounded corners on individual items */
+        margin: 0; /* No margin */
     }
 
     .feed-title {
@@ -1603,7 +2053,6 @@ body.dark-mode .leaflet-control-zoom-out {
         font-size: 0.75rem;
     }
 
-    /* Spotlight */
     .spotlight-section {
         padding: 0.6rem;
     }
@@ -1643,7 +2092,6 @@ body.dark-mode .leaflet-control-zoom-out {
         margin-top: 0.3rem;
     }
 
-    /* Stance summary */
     .stance-summary {
         display: flex;
         flex-direction: row;
@@ -1654,7 +2102,7 @@ body.dark-mode .leaflet-control-zoom-out {
     }
 
     .stance-box {
-        flex: 1; /* Each box takes equal space */
+        flex: 1;
         text-align: center;
         font-size: 0.85rem;
         border-radius: 6px;
@@ -1662,7 +2110,7 @@ body.dark-mode .leaflet-control-zoom-out {
         color: #333;
         border: 1px solid #ccc;
         box-sizing: border-box;
-        margin: 0; /* No gaps */
+        margin: 0;
     }
 
     .stance-label {
@@ -1674,7 +2122,6 @@ body.dark-mode .leaflet-control-zoom-out {
         font-size: 0.8rem;
     }
 
-    /* Engage */
     .spotlight-engage {
         margin-top: 0.5rem;
     }
@@ -1689,7 +2136,6 @@ body.dark-mode .leaflet-control-zoom-out {
         font-size: 0.85rem;
     }
 
-    /* Create section */
     .create-section .accordion-header h3 {
         font-size: 1.0rem;
     }
@@ -1704,7 +2150,6 @@ body.dark-mode .leaflet-control-zoom-out {
         font-size: 14px;
     }
 
-    /* Modal */
     .modal-content {
         padding: 1rem;
         margin: 0.5rem;
@@ -1730,13 +2175,11 @@ body.dark-mode .leaflet-control-zoom-out {
         font-size: 1rem;
     }
 
-    /* Auth boxes */
     .auth-box h3 {
         font-size: 0.95rem;
         margin-bottom: 0.5rem;
     }
 
-    /* Color palette */
     .palette-item {
         margin-right: 0.75rem;
         font-size: 0.75rem;
@@ -1747,7 +2190,6 @@ body.dark-mode .leaflet-control-zoom-out {
         height: 10px;
     }
 
-    /* Ensure all text inputs are 1rem for mobile zoom prevention */
     input[type="email"],
     input[type="password"],
     input[type="text"],
@@ -1757,7 +2199,7 @@ body.dark-mode .leaflet-control-zoom-out {
     }
 }
 
-/* Light mode AVG stance coloring*/
+/* Stance colors */
 .stance-no-strong {
     background-color: #648FFF !important;
 }
@@ -1788,7 +2230,7 @@ body.dark-mode .stance-box.avg-neutral {
     color: #f9f9f9;
 }
 
-/* Styling for map view toggle button*/
+/* Map options toggle */
 .map-options-toggle {
     font-size: 1.2rem;
     background: none;
@@ -1810,7 +2252,7 @@ body.dark-mode .stance-box.avg-neutral {
     background: rgba(255, 255, 255, 0.1);
 }
 
-/* Styling for info button */
+/* Info toggle */
 .info-toggle {
     font-size: 1.2rem;
     background: none;
@@ -1832,7 +2274,7 @@ body.dark-mode .stance-box.avg-neutral {
     background: rgba(255, 255, 255, 0.1);
 }
 
-/* Styling for icons in Map view toggle modal*/
+/* Map style options */
 .map-style-options {
     display: flex;
     gap: 1rem;
@@ -1877,7 +2319,7 @@ body.dark-mode .stance-box.avg-neutral {
         color: var(--accent-color);
     }
 
-/* Mobile-only class - hide on desktop */
+/* Mobile only */
 .mobile-only {
     display: none;
 }
@@ -1888,7 +2330,7 @@ body.dark-mode .stance-box.avg-neutral {
     }
 }
 
-/* Map expand toggle button styling */
+/* Map expand toggle */
 .map-expand-toggle {
     font-size: 1.2rem;
     background: none;
@@ -1910,9 +2352,8 @@ body.dark-mode .stance-box.avg-neutral {
     background: rgba(255, 255, 255, 0.1);
 }
 
-/* Mobile spotlight minimized state - only on mobile */
+/* Mobile spotlight minimized */
 @media (max-width: 768px) {
-    /* Remove map borders on mobile by default */
     .map-column {
         border-radius: 0 !important;
         box-shadow: none !important;
@@ -1922,7 +2363,6 @@ body.dark-mode .stance-box.avg-neutral {
         border-radius: 0 !important;
     }
 
-    /* When spotlight is minimized, make it fixed at bottom */
     .spotlight-section.spotlight-minimized {
         position: fixed !important;
         bottom: 0 !important;
@@ -1930,23 +2370,21 @@ body.dark-mode .stance-box.avg-neutral {
         right: 0 !important;
         top: auto !important;
         height: auto !important;
-        max-height: 280px !important; /* Increased from 180px to fit count + share button */
+        max-height: 280px !important;
         z-index: 1000;
-        overflow-y: auto !important; /* Changed from visible to auto */
+        overflow-y: auto !important;
         overflow-x: hidden !important;
         border-radius: 12px 12px 0 0;
         box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.15);
-        padding-bottom: 0.5rem; /* Add bottom padding */
+        padding-bottom: 0.5rem;
     }
 
-        /* Hide only the description, meta, and engage section when minimized */
         .spotlight-section.spotlight-minimized .spotlight-meta,
         .spotlight-section.spotlight-minimized .spotlight-desc,
         .spotlight-section.spotlight-minimized .spotlight-engage {
             display: none !important;
         }
 
-        /* Keep count and share button visible */
         .spotlight-section.spotlight-minimized .spotlight-count,
         .spotlight-section.spotlight-minimized .share-button {
             display: block !important;
@@ -1962,31 +2400,28 @@ body.dark-mode .stance-box.avg-neutral {
             margin-bottom: 0.5rem;
         }
 
-        /* Keep close button visible */
         .spotlight-section.spotlight-minimized .spotlight-close {
             display: flex;
         }
 
-    /* Smooth transition for the spotlight panel */
     .spotlight-section {
         transition: all 0.3s ease-in-out, max-height 0.3s ease-in-out;
     }
 
-    /* FIX 1 & 2: Properly expand map to full width and height without gaps */
     .app-main:has(.spotlight-section.spotlight-minimized) {
-        padding: 0 !important; /* Remove padding that causes right gap */
-        gap: 0 !important; /* Remove gap between columns */
+        padding: 0 !important;
+        gap: 0 !important;
     }
 
         .app-main:has(.spotlight-section.spotlight-minimized) .map-column {
             flex: 1 !important;
-            width: 100vw !important; /* Full viewport width */
+            width: 100vw !important;
             max-width: 100vw !important;
-            height: calc(100vh - 60px - 280px) !important; /* Full height minus header and minimized spotlight */
+            height: calc(100vh - 60px - 280px) !important;
             min-height: calc(100vh - 60px - 280px) !important;
             margin: 0 !important;
             padding: 0 !important;
-            border-radius: 0 !important; /* Remove border radius that causes white space */
+            border-radius: 0 !important;
         }
 
         .app-main:has(.spotlight-section.spotlight-minimized) .right-column {
@@ -1999,15 +2434,13 @@ body.dark-mode .stance-box.avg-neutral {
             margin: 0 !important;
         }
 
-        /* Ensure the map container itself grows to fill and remove white space */
         .app-main:has(.spotlight-section.spotlight-minimized) .main-map {
             height: 100% !important;
             min-height: 100% !important;
             width: 100% !important;
-            border-radius: 0 !important; /* Remove any border radius */
+            border-radius: 0 !important;
         }
 
-    /* FIX 3: Custom scrollbar for minimized spotlight */
     .spotlight-section.spotlight-minimized::-webkit-scrollbar {
         width: 6px;
     }
@@ -2026,9 +2459,8 @@ body.dark-mode .stance-box.avg-neutral {
     }
 }
 
-/* Enhanced Mobile Header Layout - only for phones */
+/* Enhanced mobile header */
 @media (max-width: 480px) {
-    /* Override existing header styles for better mobile layout */
     .app-header {
         display: flex;
         flex-wrap: wrap;
@@ -2038,7 +2470,6 @@ body.dark-mode .stance-box.avg-neutral {
         position: relative;
     }
 
-    /* Row 1, Column 1: PulseVote title - left justified */
     .site-title {
         flex: 0 0 auto;
         text-align: left !important;
@@ -2048,7 +2479,6 @@ body.dark-mode .stance-box.avg-neutral {
         order: 1;
     }
 
-    /* Row 1: Logout button - absolute positioned in top right */
     .header-logout {
         position: absolute !important;
         top: 0.5rem;
@@ -2065,7 +2495,6 @@ body.dark-mode .stance-box.avg-neutral {
             height: 14px;
         }
 
-    /* Row 2: Container for user info AND toggle buttons */
     .header-right {
         flex: 1 1 100%;
         order: 2;
@@ -2077,7 +2506,6 @@ body.dark-mode .stance-box.avg-neutral {
         padding-top: 0.2rem;
     }
 
-    /* User info on the left side of row 2 */
     .header-user-line {
         display: flex;
         flex-direction: row !important;
@@ -2085,22 +2513,19 @@ body.dark-mode .stance-box.avg-neutral {
         gap: 0.75rem;
         flex: 0 1 auto;
         margin: 0;
-        order: 1; /* Keep user info on the left */
+        order: 1;
     }
 
-    /* Email */
     .header-email.mono {
         font-size: 0.65rem;
         white-space: nowrap;
     }
 
-    /* GPS coordinates */
     .header-home {
         font-size: 0.65rem;
         white-space: nowrap;
     }
 
-    /* Toggle buttons on the right side of row 2 - with reversed order */
     .info-toggle,
     .map-options-toggle,
     .map-expand-toggle,
@@ -2111,7 +2536,6 @@ body.dark-mode .stance-box.avg-neutral {
         font-size: 1rem;
     }
 
-    /* Reverse the visual order using negative margin trick */
     .map-expand-toggle {
         order: 10;
     }
@@ -2129,4 +2553,573 @@ body.dark-mode .stance-box.avg-neutral {
     }
 }
 
-/* NEWEST MATERIAL TO FIX AFTER STRIPE INTEGRATION*/
+/* Override any feed-item defaults for ad cards */
+ul.topic-list li.feed-item.ad-card {
+    cursor: pointer !important;
+    border: 2px solid rgba(255, 255, 255, 0.3) !important;
+    border-bottom: 2px solid rgba(255, 255, 255, 0.3) !important;
+    position: relative !important;
+    overflow: hidden !important; /* This is important */
+    padding: 0 !important;
+    height: 120px !important;
+    min-height: 120px !important;
+    max-height: 120px !important;
+    width: 100% !important; /* Ensure full width */
+    display: block !important;
+    border-radius: 8px !important;
+    background: #f0f0f0 !important;
+    margin-bottom: 0rem !important;
+    transition: transform 0.2s ease, box-shadow 0.2s ease !important;
+    box-sizing: border-box !important; /* Important for proper sizing */
+}
+
+    ul.topic-list li.feed-item.ad-card:hover {
+        transform: translateY(-2px) !important;
+        box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2) !important;
+        background: #f0f0f0 !important;
+    }
+
+    ul.topic-list li.feed-item.ad-card img {
+        width: 100% !important;
+        height: 100% !important;
+        object-fit: cover !important;
+        position: absolute !important;
+        top: 0 !important;
+        left: 0 !important;
+        z-index: 0 !important;
+        display: block !important;
+    }
+
+    ul.topic-list li.feed-item.ad-card .ad-overlay {
+        position: absolute !important;
+        top: 0 !important;
+        left: 0 !important;
+        right: 0 !important;
+        bottom: 0 !important;
+        width: 100% !important;
+        height: 100% !important;
+        background: linear-gradient(to bottom, rgba(0,0,0,0.3) 0%, rgba(0,0,0,0.6) 100%) !important;
+        display: flex !important;
+        flex-direction: column !important;
+        justify-content: center !important;
+        align-items: center !important;
+        padding: 1rem !important;
+        padding-top: 2rem !important; /* Add top padding to avoid badge */
+        text-align: center !important;
+        z-index: 1 !important;
+        box-sizing: border-box !important;
+    }
+
+    ul.topic-list li.feed-item.ad-card .sponsored-badge {
+        position: absolute !important;
+        top: 8px !important;
+        right: 8px !important;
+        background: rgba(0,0,0,0.7) !important;
+        color: #fff !important;
+        padding: 4px 8px !important;
+        border-radius: 4px !important;
+        font-size: 0.7rem !important;
+        font-weight: bold !important;
+        letter-spacing: 0.5px !important;
+        z-index: 10 !important; /* Higher z-index */
+        white-space: nowrap !important;
+        line-height: 1 !important; /* Tighter line height */
+    }
+
+    ul.topic-list li.feed-item.ad-card .ad-company-name {
+        font-size: 1.15rem !important;
+        font-weight: bold !important;
+        margin-bottom: 0.25rem !important;
+        color: #fff !important;
+        text-shadow: 0 2px 8px rgba(0,0,0,0.8) !important;
+        z-index: 2 !important;
+    }
+
+    ul.topic-list li.feed-item.ad-card .ad-text {
+        font-size: 0.85rem !important;
+        color: #fff !important;
+        text-shadow: 0 2px 6px rgba(0,0,0,0.8) !important;
+        margin-bottom: 0.5rem !important;
+        z-index: 2 !important;
+    }
+
+    ul.topic-list li.feed-item.ad-card .ad-cta {
+        padding: 6px 16px !important;
+        background: rgba(255,255,255,0.25) !important;
+        border-radius: 20px !important;
+        font-size: 0.8rem !important;
+        font-weight: bold !important;
+        color: #fff !important;
+        backdrop-filter: blur(10px) !important;
+        border: 1px solid rgba(255,255,255,0.3) !important;
+        z-index: 2 !important;
+    }
+
+    /* No ads state */
+    ul.topic-list li.feed-item.ad-card.no-ads {
+        background: #f9f9f9 !important;
+        border: 2px dashed #ddd !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+    }
+
+        ul.topic-list li.feed-item.ad-card.no-ads div {
+            color: #666 !important;
+            font-size: 0.9rem !important;
+        }
+
+/* Dark mode overrides */
+body.dark-mode ul.topic-list li.feed-item.ad-card {
+    border-color: rgba(255, 255, 255, 0.2) !important;
+    background: #2d2d2d !important;
+}
+
+    body.dark-mode ul.topic-list li.feed-item.ad-card:hover {
+        background: #2d2d2d !important;
+    }
+
+    body.dark-mode ul.topic-list li.feed-item.ad-card.no-ads {
+        background: #1a1a1a !important;
+        border-color: #444 !important;
+    }
+
+        body.dark-mode ul.topic-list li.feed-item.ad-card.no-ads div {
+            color: #999 !important;
+        }
+
+/* ========================================
+   TOPIC LIST, CREATE, AND FILTERS STYLING FIXES
+   To match the original Leaflet version
+   ======================================== */
+
+/* CREATE A NEW TOPIC SECTION */
+.create-section.card {
+    background: #2d2d2d;
+    border-radius: 8px;
+    padding: 0.75rem;
+    margin-bottom: 0.75rem;
+}
+
+.create-section .section-title {
+    margin: 0 0 0.75rem 0;
+    font-size: 1.1rem;
+    font-weight: 600;
+    text-align: center;
+    color: #e0e0e0;
+}
+
+/* Create button when closed */
+.create-section .btn-primary {
+    width: 100%;
+    padding: 0.75rem;
+    font-size: 1rem;
+    font-weight: 600;
+    background: #0b63a4;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background 0.2s ease;
+}
+
+    .create-section .btn-primary:hover:not(:disabled) {
+        background: #094d7f;
+    }
+
+    .create-section .btn-primary:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+    }
+
+/* FILTERS SECTION - ACCORDION STYLE */
+.feed-section {
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 auto;
+    min-height: 0;
+}
+
+.feed-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.75rem;
+    padding: 0.75rem;
+    background: #2d2d2d;
+    border-radius: 8px;
+}
+
+    .feed-header .section-title {
+        margin: 0;
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: #e0e0e0;
+    }
+
+.feed-controls .btn-secondary {
+    padding: 0.5rem 0.75rem;
+    font-size: 0.9rem;
+    background: #444;
+    color: #e0e0e0;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background 0.2s ease;
+}
+
+    .feed-controls .btn-secondary:hover {
+        background: #555;
+    }
+
+/* Filters card when expanded */
+.filters.card {
+    background: #2d2d2d;
+    border-radius: 8px;
+    padding: 0.75rem;
+    margin-bottom: 0.75rem;
+}
+
+    .filters.card input,
+    .filters.card select {
+        width: 100%;
+        padding: 0.5rem;
+        border-radius: 6px;
+        border: 1px solid #444;
+        background: #1a1a1a;
+        color: #e0e0e0;
+        font-size: 0.95rem;
+        box-sizing: border-box;
+        margin-bottom: 0.5rem;
+    }
+
+        .filters.card input::placeholder {
+            color: #999;
+        }
+
+        .filters.card select:last-child {
+            margin-bottom: 0;
+        }
+
+/* TOPIC LIST STYLING */
+.topic-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0; /* NO gap */
+    background-color: transparent; /* No container background */
+    border-radius: 0; /* NO rounded corners */
+    overflow: visible;
+}
+
+    /* Individual topic items (not ad cards) */
+    .topic-list > .feed-item:not(.ad-card) {
+        background: #2d2d2d;
+        border: 1px solid #444;
+        border-radius: 8px;
+        padding: 0.75rem;
+        margin-bottom: 0.5rem;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+
+        .topic-list > .feed-item:not(.ad-card):hover {
+            background: #363636;
+            border-color: #555;
+            transform: translateY(-1px);
+        }
+
+    /* Topic header layout */
+    .topic-list .topic-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 0.5rem;
+    }
+
+    .topic-list .topic-title {
+        font-size: 1rem;
+        font-weight: 600;
+        color: #e0e0e0;
+        margin: 0;
+        flex: 1;
+    }
+
+    .topic-list .topic-date {
+        font-size: 0.8rem;
+        color: #999;
+        white-space: nowrap;
+        margin-left: 0.5rem;
+    }
+
+    /* Topic description */
+    .topic-list .topic-description {
+        font-size: 0.9rem;
+        color: #ccc;
+        margin: 0.5rem 0;
+        line-height: 1.4;
+    }
+
+    /* Vote count badge */
+    .topic-list .vote-count {
+        display: inline-block;
+        font-size: 0.85rem;
+        color: #999;
+        font-weight: 600;
+        margin-top: 0.25rem;
+    }
+
+    /* Scrollbar styling for topic list */
+    .topic-list::-webkit-scrollbar {
+        width: 8px;
+    }
+
+    .topic-list::-webkit-scrollbar-track {
+        background: #1a1a1a;
+        border-radius: 4px;
+    }
+
+    .topic-list::-webkit-scrollbar-thumb {
+        background: #444;
+        border-radius: 4px;
+    }
+
+        .topic-list::-webkit-scrollbar-thumb:hover {
+            background: #555;
+        }
+
+/* Light mode overrides */
+body:not(.dark-mode) .create-section.card,
+body:not(.dark-mode) .feed-header,
+body:not(.dark-mode) .filters.card {
+    background: #fff;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+}
+
+    body:not(.dark-mode) .create-section .section-title,
+    body:not(.dark-mode) .feed-header .section-title {
+        color: #333;
+    }
+
+body:not(.dark-mode) .feed-controls .btn-secondary {
+    background: #f0f0f0;
+    color: #333;
+}
+
+    body:not(.dark-mode) .feed-controls .btn-secondary:hover {
+        background: #e0e0e0;
+    }
+
+body:not(.dark-mode) .filters.card input,
+body:not(.dark-mode) .filters.card select {
+    background: #fff;
+    border-color: #ddd;
+    color: #333;
+}
+
+    body:not(.dark-mode) .filters.card input::placeholder {
+        color: #999;
+    }
+
+body:not(.dark-mode) .topic-list > .feed-item:not(.ad-card) {
+    background: #fff;
+    border-color: #e0e0e0;
+}
+
+    body:not(.dark-mode) .topic-list > .feed-item:not(.ad-card):hover {
+        background: #f8f9fa;
+        border-color: #ccc;
+    }
+
+body:not(.dark-mode) .topic-list .topic-title {
+    color: #333;
+}
+
+body:not(.dark-mode) .topic-list .topic-description {
+    color: #666;
+}
+
+body:not(.dark-mode) .topic-list .topic-date,
+body:not(.dark-mode) .topic-list .vote-count {
+    color: #999;
+}
+
+body:not(.dark-mode) .topic-list::-webkit-scrollbar-track {
+    background: #f1f1f1;
+}
+
+body:not(.dark-mode) .topic-list::-webkit-scrollbar-thumb {
+    background: #888;
+}
+
+    body:not(.dark-mode) .topic-list::-webkit-scrollbar-thumb:hover {
+        background: #555;
+    }
+
+/* Mobile responsive adjustments */
+@media (max-width: 768px) {
+    .feed-header {
+        flex-direction: column;
+        gap: 0.5rem;
+        align-items: stretch;
+    }
+
+        .feed-header .section-title {
+            text-align: center;
+        }
+
+    .topic-list {
+        max-height: calc(100vh - 450px);
+    }
+
+        .topic-list .topic-title {
+            font-size: 0.95rem;
+        }
+
+        .topic-list .topic-description {
+            font-size: 0.85rem;
+        }
+}
+
+@media (max-width: 480px) {
+    .create-section.card,
+    .feed-header,
+    .filters.card {
+        padding: 0.6rem;
+    }
+
+        .create-section .section-title,
+        .feed-header .section-title {
+            font-size: 1rem;
+        }
+
+    .topic-list {
+        max-height: calc(100vh - 500px);
+    }
+
+        .topic-list .topic-title {
+            font-size: 0.9rem;
+        }
+
+        .topic-list .topic-description {
+            font-size: 0.8rem;
+        }
+
+        .topic-list .topic-date,
+        .topic-list .vote-count {
+            font-size: 0.75rem;
+        }
+}
+
+/* CREATE A TOPIC - ACCORDION STYLE */
+.create-section.card {
+    background: #2d2d2d;
+    border-radius: 8px;
+    padding: 0.75rem;
+    margin-bottom: 0.75rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+    .create-section.card:hover {
+        background: #363636;
+        transform: translateY(-1px);
+    }
+
+/* Accordion header for Create section */
+.create-section .accordion-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin: 0;
+    padding: 0;
+}
+
+    .create-section .accordion-header h3,
+    .create-section .accordion-header .section-title {
+        margin: 0;
+        font-size: 1.1rem;
+        font-weight: 600;
+        text-align: center;
+        flex: 1;
+        color: #e0e0e0;
+        cursor: pointer;
+    }
+
+/* Plus/minus toggle button */
+.create-section .accordion-toggle {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    border: none;
+    background: #0b63a4;
+    color: white;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 1.2rem;
+    line-height: 1;
+    transition: all 0.2s ease;
+    flex-shrink: 0;
+}
+
+    .create-section .accordion-toggle:hover {
+        background: #094d7f;
+        transform: scale(1.1);
+    }
+
+    .create-section .accordion-toggle .plus {
+        display: inline-block;
+        transition: transform 0.2s ease;
+    }
+
+    .create-section .accordion-toggle.open .plus {
+        transform: rotate(45deg);
+    }
+
+/* Accordion body - hidden by default */
+.create-section .accordion-body {
+    overflow: hidden;
+    max-height: 0;
+    opacity: 0;
+    transition: max-height 0.3s ease, opacity 0.3s ease;
+    pointer-events: none;
+    margin-top: 0;
+}
+
+    .create-section .accordion-body.expanded {
+        max-height: 600px;
+        opacity: 1;
+        pointer-events: auto;
+        margin-top: 0.75rem;
+    }
+
+/* Hide the standalone button when using accordion */
+.create-section > .btn-primary:not(form .btn-primary) {
+    display: none;
+}
+
+/* Form inside accordion body */
+.create-section .accordion-body form {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+/* Light mode */
+body:not(.dark-mode) .create-section.card {
+    background: #fff;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+}
+
+    body:not(.dark-mode) .create-section.card:hover {
+        background: #f8f9fa;
+    }
+
+body:not(.dark-mode) .create-section .accordion-header h3,
+body:not(.dark-mode) .create-section .accordion-header .section-title {
+    color: #333;
+}
