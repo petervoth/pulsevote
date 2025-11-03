@@ -2547,12 +2547,14 @@ A lone Canadian data scientist has built this site and runs everything independe
                                         </div>
                                     )}
 
-                                <div className="spotlight-description card">
-                                    <p>{selectedTopic.description}</p>
-                                    <p className="topic-meta">
-                                        Created {new Date(selectedTopic.created_at).toLocaleDateString()}                                        
-                                    </p>
-                                </div>
+                                    <div className="spotlight-description card">
+                                        <p>{selectedTopic.description}<br /><br /></p>
+                                        <p className="topic-meta">
+                                            Created {new Date(selectedTopic.created_at).toLocaleDateString()}
+                                            <br />
+                                            User ID: {selectedTopic.created_by}
+                                        </p>
+                                    </div>
                             </div>
 
                             {/* Move the engage form outside spotlight-content to fix it to bottom */}

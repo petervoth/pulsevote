@@ -273,6 +273,7 @@
         margin: 0 0 0.5rem 0;
         line-height: 1.4;
         color: #333;
+        white-space: pre-wrap;
     }
 
 .topic-meta {
