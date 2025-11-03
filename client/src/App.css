@@ -404,13 +404,19 @@ body.dark-mode .stance-label.stance-yes\+ {
     color: #FFB000;
 }
 
-/* Remove background boxes from stance labels */
+/* Remove background boxes from stance labels - dark mode */
 .stance-label {
     background: none !important;
     background-color: transparent !important;
 }
 
 body.dark-mode .stance-label {
+    background: none !important;
+    background-color: transparent !important;
+}
+
+/* Remove background boxes from stance labels - light mode */
+body:not(.dark-mode) .stance-label {
     background: none !important;
     background-color: transparent !important;
 }
