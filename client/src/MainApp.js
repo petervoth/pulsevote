@@ -346,6 +346,7 @@ function useQuery() {
 export default function MainApp() {
     const mapContainerRef = useRef(null);
     const mapRef = useRef(null);
+    const [mapStyleLoaded, setMapStyleLoaded] = useState(false);
     const [user, setUser] = useState(null);
     const [profile, setProfile] = useState(null);
 
@@ -958,6 +959,7 @@ export default function MainApp() {
 
         map.on('load', () => {
             mapRef.current = map;
+            setMapStyleLoaded(true);
 
             const updateBounds = () => {
                 const bounds = map.getBounds();
@@ -984,6 +986,11 @@ export default function MainApp() {
         if (!mapRef.current) return;
 
         const map = mapRef.current;
+
+        // Store current center and zoom before style change
+        const center = map.getCenter();
+        const zoom = map.getZoom();
+
         const newStyle = {
             version: 8,
             sources: {
@@ -1005,23 +1012,175 @@ export default function MainApp() {
         };
 
         map.setStyle(newStyle);
+
+        // Wait for style to load, then restore position and trigger state update
+        map.once('styledata', () => {
+            map.setCenter(center);
+            map.setZoom(zoom);
+
+            // Update visible bounds to trigger stats recalculation
+            const bounds = map.getBounds();
+            setVisibleBounds({
+                getSouthWest: () => ({ lat: bounds.getSouth(), lng: bounds.getWest() }),
+                getNorthEast: () => ({ lat: bounds.getNorth(), lng: bounds.getEast() })
+            });
+
+            // Force re-render by toggling state
+            setMapStyleLoaded(false);
+            setTimeout(() => {
+                setMapStyleLoaded(true);
+                // Trigger moveend after a short delay to ensure layers are ready
+                setTimeout(() => map.fire('moveend'), 50);
+            }, 0);
+        });
     }, [darkMode]);
 
-    // Update heatmap visualization
+    // Twinkle points (ambient visualization)
     useEffect(() => {
-        if (!mapRef.current || !selectedTopic || heatPoints.length === 0) return;
-        if (selectedMapStyle !== 'heatmap') return;
-
         const map = mapRef.current;
+        if (!map || !mapStyleLoaded || twinklePoints.length === 0) return;
 
-        if (!map.isStyleLoaded()) {
-            map.once('styledata', () => updateHeatmap(map, heatPoints));
+        // Only show twinkle points when NO topic is selected
+        if (selectedTopic) {
             return;
         }
 
-        updateHeatmap(map, heatPoints);
+        let animationId = null;
+
+        const renderTwinklePoints = () => {
+            if (!map.isStyleLoaded()) {
+                // Wait for style to load
+                setTimeout(renderTwinklePoints, 100);
+                return;
+            }
+
+            // Clean up existing layer/source first
+            const sourceId = 'twinkle-points';
+            const layerId = 'twinkle-layer';
+
+            try {
+                if (map.getLayer(layerId)) {
+                    map.removeLayer(layerId);
+                }
+                if (map.getSource(sourceId)) {
+                    map.removeSource(sourceId);
+                }
+            } catch (e) {
+                // Ignore errors during cleanup
+            }
+
+            const features = twinklePoints.map((p) => ({
+                type: 'Feature',
+                geometry: {
+                    type: 'Point',
+                    coordinates: [Number(p.lng), Number(p.lat)]
+                },
+                properties: {
+                    color: STANCE_COLOR[p.stance] || '#888',
+                    randomOffset: Math.random() * Math.PI * 2
+                }
+            }));
+
+            const geojson = {
+                type: 'FeatureCollection',
+                features
+            };
+
+            map.addSource(sourceId, {
+                type: 'geojson',
+                data: geojson
+            });
+
+            map.addLayer({
+                id: layerId,
+                type: 'circle',
+                source: sourceId,
+                paint: {
+                    'circle-radius': [
+                        'interpolate',
+                        ['linear'],
+                        ['zoom'],
+                        2, 3,
+                        12, 8
+                    ],
+                    'circle-color': ['get', 'color'],
+                    'circle-opacity': 0.6,
+                    'circle-blur': 0.5
+                }
+            });
+
+            // Start animation
+            let time = 0;
+            const animate = () => {
+                time += 0.04;
+
+                const opacity = [
+                    'interpolate',
+                    ['linear'],
+                    [
+                        '+',
+                        [
+                            'sin',
+                            [
+                                '+',
+                                time,
+                                ['get', 'randomOffset']
+                            ]
+                        ],
+                        1
+                    ],
+                    0, 0.2,
+                    1, 0.5,
+                    2, 0.8
+                ];
+
+                try {
+                    if (map.getLayer(layerId)) {
+                        map.setPaintProperty(layerId, 'circle-opacity', opacity);
+                        animationId = requestAnimationFrame(animate);
+                    }
+                } catch (e) {
+                    // Layer was removed, stop animation
+                    if (animationId) {
+                        cancelAnimationFrame(animationId);
+                    }
+                }
+            };
+
+            animate();
+        };
+
+        renderTwinklePoints();
+
+        // Cleanup
+        return () => {
+            if (animationId) {
+                cancelAnimationFrame(animationId);
+            }
+            const layerId = 'twinkle-layer';
+            const sourceId = 'twinkle-points';
+            try {
+                if (map.getLayer(layerId)) {
+                    map.removeLayer(layerId);
+                }
+                if (map.getSource(sourceId)) {
+                    map.removeSource(sourceId);
+                }
+            } catch (e) {
+                // Ignore cleanup errors
+            }
+        };
+    }, [mapStyleLoaded, selectedTopic, twinklePoints]);
+
+    // Update heatmap visualization
+    useEffect(() => {
+        const map = mapRef.current;
+        if (!map || !mapStyleLoaded || !selectedTopic || heatPoints.length === 0) return;
+        if (selectedMapStyle !== 'heatmap') return;
 
         function updateHeatmap(map, points) {
+            if (!map.isStyleLoaded()) return;
+
             const stanceGroups = {
                 "-No": { color: STANCE_COLOR["-No"], points: [] },
                 "No": { color: STANCE_COLOR["No"], points: [] },
@@ -1112,6 +1271,8 @@ export default function MainApp() {
             });
         }
 
+        updateHeatmap(map, heatPoints);
+
         return () => {
             const stances = ["-No", "No", "Neutral", "Yes", "Yes+"];
             stances.forEach(stance => {
@@ -1125,21 +1286,13 @@ export default function MainApp() {
                 }
             });
         };
-    }, [heatPoints, selectedTopic, selectedMapStyle]);
+    }, [heatPoints, selectedTopic, selectedMapStyle, mapStyleLoaded]);
 
     // Update choropleth visualization
     useEffect(() => {
-        if (!mapRef.current || !selectedTopic || heatPoints.length === 0) return;
-        if (selectedMapStyle !== 'choropleth') return;
-
         const map = mapRef.current;
-
-        if (!map.isStyleLoaded()) {
-            map.once('styledata', () => updateChoropleth(map));
-            return;
-        }
-
-        updateChoropleth(map);
+        if (!map || !mapStyleLoaded || !selectedTopic || heatPoints.length === 0) return;
+        if (selectedMapStyle !== 'choropleth') return;
 
         function getGridSizeForZoom(zoom) {
             if (zoom <= 2) return 6;
@@ -1156,6 +1309,8 @@ export default function MainApp() {
         }
 
         function updateChoropleth(map) {
+            if (!map.isStyleLoaded()) return;
+
             const bounds = map.getBounds();
             const gridSize = getGridSizeForZoom(map.getZoom());
 
@@ -1241,11 +1396,10 @@ export default function MainApp() {
         }
 
         const handleMoveEnd = () => {
-            if (map.isStyleLoaded()) {
-                updateChoropleth(map);
-            }
+            updateChoropleth(map);
         };
 
+        updateChoropleth(map);
         map.on('moveend', handleMoveEnd);
 
         return () => {
@@ -1259,14 +1413,13 @@ export default function MainApp() {
                 map.removeSource(sourceId);
             }
         };
-    }, [heatPoints, selectedTopic, selectedMapStyle]);
+    }, [heatPoints, selectedTopic, selectedMapStyle, mapStyleLoaded]);
 
     // Custom choropleth (loads GeoJSON file)
     useEffect(() => {
-        if (!mapRef.current || !selectedTopic || heatPoints.length === 0) return;
-        if (selectedMapStyle !== 'custom-choropleth') return;
-
         const map = mapRef.current;
+        if (!map || !mapStyleLoaded || !selectedTopic || heatPoints.length === 0) return;
+        if (selectedMapStyle !== 'custom-choropleth') return;
 
         async function loadCustomChoropleth() {
             try {
@@ -1296,9 +1449,6 @@ export default function MainApp() {
                 }
 
                 if (!map.isStyleLoaded()) {
-                    map.once('styledata', () => {
-                        renderCustomChoropleth(map, geoJSONData);
-                    });
                     return;
                 }
 
@@ -1422,125 +1572,7 @@ export default function MainApp() {
                 map.removeSource(sourceId);
             }
         };
-    }, [heatPoints, selectedTopic, selectedMapStyle]);
-
-    // Twinkle points (ambient visualization)
-    useEffect(() => {
-        if (!mapRef.current || selectedTopic || twinklePoints.length === 0) return;
-
-        const map = mapRef.current;
-        let animationId = null;
-
-        const renderTwinklePoints = () => {
-            // Clean up existing layer/source
-            const sourceId = 'twinkle-points';
-            const layerId = 'twinkle-layer';
-
-            if (map.getLayer(layerId)) {
-                map.removeLayer(layerId);
-            }
-            if (map.getSource(sourceId)) {
-                map.removeSource(sourceId);
-            }
-
-            const features = twinklePoints.map((p) => ({
-                type: 'Feature',
-                geometry: {
-                    type: 'Point',
-                    coordinates: [Number(p.lng), Number(p.lat)]
-                },
-                properties: {
-                    color: STANCE_COLOR[p.stance] || '#888',
-                    randomOffset: Math.random() * Math.PI * 2
-                }
-            }));
-
-            const geojson = {
-                type: 'FeatureCollection',
-                features
-            };
-
-            if (features.length > 0) {
-                map.addSource(sourceId, {
-                    type: 'geojson',
-                    data: geojson
-                });
-
-                map.addLayer({
-                    id: layerId,
-                    type: 'circle',
-                    source: sourceId,
-                    paint: {
-                        'circle-radius': [
-                            'interpolate',
-                            ['linear'],
-                            ['zoom'],
-                            2, 3,
-                            12, 8
-                        ],
-                        'circle-color': ['get', 'color'],
-                        'circle-opacity': 0.6,
-                        'circle-blur': 0.5
-                    }
-                });
-
-                // Start animation
-                let time = 0;
-                const animate = () => {
-                    time += 0.04;
-
-                    const opacity = [
-                        'interpolate',
-                        ['linear'],
-                        [
-                            '+',
-                            [
-                                'sin',
-                                [
-                                    '+',
-                                    time,
-                                    ['get', 'randomOffset']
-                                ]
-                            ],
-                            1
-                        ],
-                        0, 0.2,
-                        1, 0.5,
-                        2, 0.8
-                    ];
-
-                    if (map.getLayer(layerId)) {
-                        map.setPaintProperty(layerId, 'circle-opacity', opacity);
-                        animationId = requestAnimationFrame(animate);
-                    }
-                };
-
-                animate();
-            }
-        };
-
-        // Wait for map to be ready
-        if (map.isStyleLoaded()) {
-            renderTwinklePoints();
-        } else {
-            map.once('styledata', renderTwinklePoints);
-        }
-
-        // Cleanup
-        return () => {
-            if (animationId) {
-                cancelAnimationFrame(animationId);
-            }
-            const layerId = 'twinkle-layer';
-            const sourceId = 'twinkle-points';
-            if (map.getLayer(layerId)) {
-                map.removeLayer(layerId);
-            }
-            if (map.getSource(sourceId)) {
-                map.removeSource(sourceId);
-            }
-        };
-    }, [twinklePoints, selectedTopic, mapRef.current]);
+    }, [heatPoints, selectedTopic, selectedMapStyle, mapStyleLoaded]);
 
     // Fetch twinkle points on initial load
     useEffect(() => {
