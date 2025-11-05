@@ -2575,7 +2575,7 @@ A lone Canadian data scientist has built this site and runs everything independe
                             </section>
                         )
                     ) : selectedTopic ? (
-                            <section className="spotlight-section">
+                            <section className={`spotlight-section ${mapExpanded ? 'spotlight-minimized' : ''}`}>
                                 <button className="spotlight-close" onClick={closeSpotlight}>✕</button>
 
                                 <div className="spotlight-header">

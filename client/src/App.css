@@ -1747,6 +1747,37 @@ body.dark-mode .leaflet-control-zoom-out {
         flex: none;
     }
 
+    /* CRITICAL: Make feed-section fill remaining space */
+    .feed-section {
+        display: flex !important;
+        flex-direction: column !important;
+        flex: 1 1 auto !important;
+        min-height: 0 !important;
+        overflow: hidden !important;
+        height: auto !important;
+    }
+
+    /* CRITICAL: Make topic-list scrollable and fill space */
+    .topic-list {
+        flex: 1 1 auto !important;
+        overflow-y: auto !important;
+        min-height: 0 !important;
+        height: auto !important;
+        max-height: none !important;
+    }
+
+    /* Keep accordions from shrinking */
+    .filter-section.card,
+    .create-section.card {
+        flex-shrink: 0 !important;
+        flex-grow: 0 !important;
+    }
+
+    /* Remove any conflicting max-height rules */
+    .topic-list {
+        max-height: none !important;
+    }
+
     body:not(.dark-mode) .right-column {
         background: #f5f5f5;
     }
@@ -2005,10 +2036,12 @@ body.dark-mode .leaflet-control-zoom-out {
     .right-column {
         position: relative;
         z-index: 2;
-        height: calc(100vh - 56px);
+        height: calc(100vh - 60px);
         background: #1a1a1a;
-        overflow-y: auto;
+        overflow: hidden;
         flex: none;
+        display: flex;
+        flex-direction: column;
     }
 
     body:not(.dark-mode) .right-column {
@@ -2526,34 +2559,33 @@ body.dark-mode .stance-box.avg-neutral {
         right: 0 !important;
         top: auto !important;
         height: auto !important;
-        max-height: 280px !important;
+        max-height: 320px !important;
         z-index: 1000;
         overflow-y: auto !important;
         overflow-x: hidden !important;
         border-radius: 12px 12px 0 0;
         box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.15);
-        padding-bottom: 0.5rem;
+        padding: 0.75rem !important;
     }
 
-        .spotlight-section.spotlight-minimized .spotlight-meta,
-        .spotlight-section.spotlight-minimized .spotlight-desc,
-        .spotlight-section.spotlight-minimized .spotlight-engage {
-            display: none !important;
+        /* Keep header and stats visible when minimized */
+        .spotlight-section.spotlight-minimized .spotlight-header {
+            display: flex !important;
         }
 
-        .spotlight-section.spotlight-minimized .spotlight-count,
-        .spotlight-section.spotlight-minimized .share-button {
+        .spotlight-section.spotlight-minimized .stats-panel {
             display: block !important;
         }
 
-        .spotlight-section.spotlight-minimized .spotlight-title {
-            font-size: 0.85rem;
-            margin-bottom: 0.5rem;
+        /* Hide description and engage form when minimized */
+        .spotlight-section.spotlight-minimized .spotlight-description-wrapper,
+        .spotlight-section.spotlight-minimized .engage-form,
+        .spotlight-section.spotlight-minimized .auth-prompt {
+            display: none !important;
         }
 
-        .spotlight-section.spotlight-minimized .stance-summary {
-            margin-top: 0.5rem;
-            margin-bottom: 0.5rem;
+        .spotlight-section.spotlight-minimized .spotlight-title {
+            font-size: 0.9rem;
         }
 
         .spotlight-section.spotlight-minimized .spotlight-close {
@@ -2561,9 +2593,10 @@ body.dark-mode .stance-box.avg-neutral {
         }
 
     .spotlight-section {
-        transition: all 0.3s ease-in-out, max-height 0.3s ease-in-out;
+        transition: all 0.3s ease-in-out;
     }
 
+    /* When spotlight is minimized, expand map to fill space */
     .app-main:has(.spotlight-section.spotlight-minimized) {
         padding: 0 !important;
         gap: 0 !important;
@@ -2573,8 +2606,8 @@ body.dark-mode .stance-box.avg-neutral {
             flex: 1 !important;
             width: 100vw !important;
             max-width: 100vw !important;
-            height: calc(100vh - 60px - 280px) !important;
-            min-height: calc(100vh - 60px - 280px) !important;
+            height: calc(100vh - 60px - 320px) !important;
+            min-height: calc(100vh - 60px - 320px) !important;
             margin: 0 !important;
             padding: 0 !important;
             border-radius: 0 !important;
@@ -2892,10 +2925,9 @@ body.dark-mode ul.topic-list li.feed-item.ad-card {
 .feed-section {
     display: flex;
     flex-direction: column;
-    flex: 1 1 auto; /* Let it grow */
+    flex: 1 1 auto;
     min-height: 0;
     overflow: hidden;
-    height: 100%;
 }
 
 .feed-header {
@@ -3183,6 +3215,8 @@ body:not(.dark-mode) .topic-list::-webkit-scrollbar-thumb {
     margin-bottom: 0.75rem;
     cursor: pointer;
     transition: all 0.2s ease;
+    flex-shrink: 0;
+    overflow: hidden;
 }
 
     .create-section.card:hover {
@@ -3253,10 +3287,11 @@ body:not(.dark-mode) .topic-list::-webkit-scrollbar-thumb {
 }
 
     .create-section .accordion-body.expanded {
-        max-height: 600px;
+        max-height: none;
         opacity: 1;
         pointer-events: auto;
         margin-top: 0.75rem;
+        overflow: visible;
     }
 
 /* Hide the standalone button when using accordion */
@@ -3269,6 +3304,13 @@ body:not(.dark-mode) .topic-list::-webkit-scrollbar-thumb {
     display: flex;
     flex-direction: column;
     gap: 0rem;
+}
+
+/*Filters card */
+.filter-section.card {
+    flex-shrink: 0;
+    overflow: hidden;
+    margin-bottom: 0.75rem;
 }
 
 /* Light mode */
