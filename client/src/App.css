@@ -1881,6 +1881,7 @@ body.dark-mode .leaflet-control-zoom-out {
         height: calc(100vh - 60px) !important;
         overflow: hidden !important;
         padding: 0.75rem !important;
+        padding-bottom: 0 !important;
         box-sizing: border-box !important;
     }
 
@@ -1898,20 +1899,38 @@ body.dark-mode .leaflet-control-zoom-out {
         flex: 1 1 auto !important;
         overflow-y: auto !important;
         min-height: 0 !important;
-        margin-bottom: 0.75rem !important;
+        margin-bottom: 0 !important;
     }
 
     .engage-form,
     .auth-prompt {
         flex: 0 0 auto !important;
-        margin-top: 0 !important;
-        margin-bottom: 0.5rem !important;
+        margin-top: auto !important;
+        margin-bottom: 0 !important;
+        padding: 0.75rem !important;
+        padding-bottom: 2.5rem !important;
+        background: #1a1a1a !important;
+        position: sticky !important;
+        bottom: 0 !important;
+        left: 0 !important;
+        right: 0 !important;
+        z-index: 10 !important;
     }
 
-        /* Make sure buttons stay visible */
-        .engage-form .btn-primary {
-            margin-top: 0.5rem !important;
-        }
+    body:not(.dark-mode) .engage-form,
+    body:not(.dark-mode) .auth-prompt {
+        background: #f8f9fa !important;
+    }
+
+    /* Make sure buttons stay visible */
+    .engage-form .btn-primary {
+        margin-top: 0.5rem !important;
+    }
+
+    /* Create a scrollable container for description + vote form */
+    .spotlight-section > div:not(.spotlight-header):not(.stats-panel) {
+        overflow-y: auto !important;
+    }
 
     .spotlight-title {
         font-size: 0.95rem;
