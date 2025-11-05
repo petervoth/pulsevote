@@ -2591,7 +2591,7 @@ A lone Canadian data scientist has built this site and runs everything independe
                                     </button>
                                 </div>
 
-                                {visiblePoints.length > 0 && (
+                                {heatPoints.length > 0 && (
                                     <div className="stats-panel card">
                                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
                                             <h3 style={{ margin: 0 }}>Visible Area Stats</h3>

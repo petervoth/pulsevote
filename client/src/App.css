@@ -3211,8 +3211,17 @@ body:not(.dark-mode) .create-section .accordion-header .section-title {
 }
 
 .filter-section .accordion-header h3 {
-    font-size: 1.25rem;
+    font-size: 1.1rem;
     font-weight: 600;
+    margin: 0;
+    flex: 1 1 auto;
+    text-align: center;
+    color: #e0e0e0;
+}
+
+/* Light mode override */
+body:not(.dark-mode) .filter-section .accordion-header h3 {
+    color: #333;
 }
 
 /* Fix stance selector layout in Create Topic form */
