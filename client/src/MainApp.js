@@ -1114,8 +1114,8 @@ export default function MainApp() {
                         'interpolate',
                         ['linear'],
                         ['zoom'],
-                        2, 3,
-                        12, 8
+                        2, 6,      // At zoom 2, radius is 3px
+                        12, 16      // At zoom 12, radius is 8px
                     ],
                     'circle-color': ['get', 'color'],
                     'circle-opacity': 0.6,
@@ -1126,7 +1126,7 @@ export default function MainApp() {
             // Start animation
             let time = 0;
             const animate = () => {
-                time += 0.04;
+                time += 0.04;  // ← This controls pulse speed (higher = faster)
 
                 const opacity = [
                     'interpolate',
@@ -1143,9 +1143,9 @@ export default function MainApp() {
                         ],
                         1
                     ],
-                    0, 0.2,
-                    1, 0.5,
-                    2, 0.8
+                    0, 0.0,    // Minimum opacity
+                    1, 0.5,    // Mid opacity
+                    2, 1.0     // Maximum opacity
                 ];
 
                 try {
@@ -1406,6 +1406,41 @@ export default function MainApp() {
                         'fill-outline-color': '#666'
                     }
                 });
+
+                // Add click handler for popups
+                map.on('click', layerId, (e) => {
+                    if (e.features.length > 0) {
+                        const avg = e.features[0].properties.avg;
+
+                        new maplibregl.Popup()
+                            .setLngLat(e.lngLat)
+                            .setHTML(`
+                            <div style="
+                                text-align: center; 
+                                padding: 12px;
+                                background: ${darkMode ? '#2d2d2d' : '#fff'};
+                                color: ${darkMode ? '#e0e0e0' : '#333'};
+                                border-radius: 6px;
+                                min-width: 120px;
+                            ">
+                                <strong style="font-size: 1.1rem;">Average Score</strong><br/>
+                                <span style="font-size: 1.5rem; font-weight: bold; color: #0b63a4;">
+                                    ${parseFloat(avg).toFixed(2)}
+                                </span>
+                            </div>
+                        `)
+                            .addTo(map);
+                    }
+                });
+
+                // Change cursor on hover
+                map.on('mouseenter', layerId, () => {
+                    map.getCanvas().style.cursor = 'pointer';
+                });
+
+                map.on('mouseleave', layerId, () => {
+                    map.getCanvas().style.cursor = '';
+                });
             }
         }
 
@@ -1420,6 +1455,12 @@ export default function MainApp() {
             map.off('moveend', handleMoveEnd);
             const layerId = 'choropleth-layer';
             const sourceId = 'choropleth-grid';
+
+            // Remove event listeners
+            map.off('click', layerId);
+            map.off('mouseenter', layerId);
+            map.off('mouseleave', layerId);
+
             if (map.getLayer(layerId)) {
                 map.removeLayer(layerId);
             }
@@ -1427,7 +1468,7 @@ export default function MainApp() {
                 map.removeSource(sourceId);
             }
         };
-    }, [heatPoints, selectedTopic, selectedMapStyle, mapStyleLoaded]);
+    }, [heatPoints, selectedTopic, selectedMapStyle, mapStyleLoaded, darkMode]);
 
     // Custom choropleth (loads GeoJSON file)
     useEffect(() => {
@@ -1526,6 +1567,44 @@ export default function MainApp() {
                     'fill-outline-color': '#666'
                 }
             });
+
+            // Add click handler for popups
+            map.on('click', layerId, (e) => {
+                if (e.features.length > 0) {
+                    const feature = e.features[0];
+                    const name = feature.properties.name || feature.properties.NAME || 'Region';
+                    const avg = feature.properties.avg;
+
+                    new maplibregl.Popup()
+                        .setLngLat(e.lngLat)
+                        .setHTML(`
+                        <div style="
+                            text-align: center; 
+                            padding: 12px;
+                            background: ${darkMode ? '#2d2d2d' : '#fff'};
+                            color: ${darkMode ? '#e0e0e0' : '#333'};
+                            border-radius: 6px;
+                            min-width: 150px;
+                        ">
+                            <strong style="font-size: 1.1rem;">${name}</strong><br/>
+                            <span style="font-size: 1.3rem; font-weight: bold; color: #0b63a4;">
+                                ${avg !== null ? parseFloat(avg).toFixed(2) : 'No data'}
+                            </span>
+                            ${avg !== null ? '<div style="font-size: 0.85rem; color: #666; margin-top: 4px;">Average Score</div>' : ''}
+                        </div>
+                    `)
+                        .addTo(map);
+                }
+            });
+
+            // Change cursor on hover
+            map.on('mouseenter', layerId, () => {
+                map.getCanvas().style.cursor = 'pointer';
+            });
+
+            map.on('mouseleave', layerId, () => {
+                map.getCanvas().style.cursor = '';
+            });
         }
 
         function calculateAvgForFeature(feature) {
@@ -1579,6 +1658,12 @@ export default function MainApp() {
         return () => {
             const layerId = 'custom-choropleth-layer';
             const sourceId = 'custom-choropleth';
+
+            // Remove event listeners
+            map.off('click', layerId);
+            map.off('mouseenter', layerId);
+            map.off('mouseleave', layerId);
+
             if (map.getLayer(layerId)) {
                 map.removeLayer(layerId);
             }
@@ -1586,7 +1671,7 @@ export default function MainApp() {
                 map.removeSource(sourceId);
             }
         };
-    }, [heatPoints, selectedTopic, selectedMapStyle, mapStyleLoaded]);
+    }, [heatPoints, selectedTopic, selectedMapStyle, mapStyleLoaded, darkMode]);
 
     // Fetch twinkle points on initial load
     useEffect(() => {
@@ -2793,7 +2878,7 @@ A lone Canadian data scientist has built this site and runs everything independe
                                         <section className="auth-section card">
                                             <h2 className="section-title">Welcome to PulseVote</h2>
                                             <p style={{ marginBottom: '1rem', color: '#666' }}>
-                                                Sign in to create topics, vote, and see your homebase on the map.
+                                                Sign in to create topics and vote.
                                             </p>
 
                                             <div className="auth-tabs" style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem' }}>
