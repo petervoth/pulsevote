@@ -3653,3 +3653,23 @@ body.globe-mode .maplibregl-canvas-container {
     position: relative;
     z-index: 1;
 }
+
+/* Make MapLibre popups appear on top of the globe */
+.maplibregl-popup {
+    z-index: 999 !important;
+}
+
+/* Ensure the popup container is also elevated */
+.maplibregl-popup-content {
+    z-index: 1000 !important;
+    position: relative;
+}
+
+/* Globe mode - extra z-index boost */
+body.globe-mode .maplibregl-popup {
+    z-index: 9999 !important;
+}
+
+body.globe-mode .maplibregl-popup-content {
+    z-index: 10000 !important;
+}
