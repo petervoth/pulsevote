@@ -3622,11 +3622,7 @@ body:not(.dark-mode) .spotlight-description-wrapper::-webkit-scrollbar-thumb {
    3D GLOBE MODE STARFIELD - FIXED
    ======================================== */
 
-/* Space background for globe mode */
-.map-column {
-    position: relative;
-}
-
+/* Realistic starfield background */
 body.globe-mode .map-column::before {
     content: '';
     position: absolute;
@@ -3634,29 +3630,26 @@ body.globe-mode .map-column::before {
     left: 0;
     right: 0;
     bottom: 0;
-    background: radial-gradient(2px 2px at 20% 30%, white, transparent), radial-gradient(2px 2px at 60% 70%, white, transparent), radial-gradient(1px 1px at 50% 50%, white, transparent), radial-gradient(1px 1px at 80% 10%, white, transparent), radial-gradient(2px 2px at 90% 60%, white, transparent), radial-gradient(1px 1px at 33% 80%, white, transparent), radial-gradient(1px 1px at 15% 90%, white, transparent), #000;
-    background-size: 200% 200%;
-    background-position: 0% 0%;
+    background: #000;
     pointer-events: none;
     z-index: 0;
+}
+
+body.globe-mode .map-column::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-image: radial-gradient(2px 2px at 10% 20%, rgba(255,255,255,0.8), transparent), radial-gradient(1px 1px at 20% 40%, rgba(255,255,255,0.6), transparent), radial-gradient(1px 1px at 30% 60%, rgba(255,255,255,0.7), transparent), radial-gradient(2px 2px at 40% 80%, rgba(255,255,255,0.5), transparent), radial-gradient(1px 1px at 50% 10%, rgba(255,255,255,0.9), transparent), radial-gradient(1px 1px at 60% 30%, rgba(255,255,255,0.6), transparent), radial-gradient(2px 2px at 70% 50%, rgba(255,255,255,0.7), transparent), radial-gradient(1px 1px at 80% 70%, rgba(255,255,255,0.8), transparent), radial-gradient(1px 1px at 90% 90%, rgba(255,255,255,0.6), transparent), radial-gradient(1px 1px at 15% 75%, rgba(255,255,255,0.5), transparent), radial-gradient(1px 1px at 25% 15%, rgba(255,255,255,0.7), transparent), radial-gradient(2px 2px at 35% 35%, rgba(255,255,255,0.6), transparent), radial-gradient(1px 1px at 45% 55%, rgba(255,255,255,0.8), transparent), radial-gradient(1px 1px at 55% 85%, rgba(255,255,255,0.5), transparent), radial-gradient(2px 2px at 65% 25%, rgba(255,255,255,0.7), transparent), radial-gradient(1px 1px at 75% 45%, rgba(255,255,255,0.6), transparent), radial-gradient(1px 1px at 85% 65%, rgba(255,255,255,0.9), transparent), radial-gradient(1px 1px at 95% 5%, rgba(255,255,255,0.5), transparent);
+    background-size: 100% 100%;
+    pointer-events: none;
+    z-index: 0;
+    opacity: 0.8;
 }
 
 body.globe-mode .maplibregl-canvas-container {
     position: relative;
     z-index: 1;
-}
-
-/* Animate stars slowly */
-@keyframes stars {
-    0% {
-        background-position: 0% 0%;
-    }
-
-    100% {
-        background-position: 100% 100%;
-    }
-}
-
-body.globe-mode .map-column::before {
-    animation: stars 200s linear infinite;
 }
