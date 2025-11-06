@@ -423,6 +423,7 @@ export default function MainApp() {
 
     const [useMapView, setUseMapView] = useState(true);
     const [visibleBounds, setVisibleBounds] = useState(null);
+    const [useGlobe, setUseGlobe] = useState(false);
 
     const handleAdFormChange = (field, value) => {
         setAdFormData(prev => ({
@@ -963,11 +964,14 @@ export default function MainApp() {
                         minzoom: 0,
                         maxzoom: 19
                     }
-                ]
+                ],
+                projection: {
+                    type: 'mercator'  // Start with mercator, will toggle to globe
+                }
             },
             center: [0, 20],
             zoom: 2,
-            minZoom: 2,
+            minZoom: 1,
             maxZoom: 12
         });
 
@@ -994,6 +998,42 @@ export default function MainApp() {
             }
         };
     }, []);
+
+
+    // Toggle between 2D and 3D globe
+    useEffect(() => {
+        const map = mapRef.current;
+        if (!map || !mapStyleLoaded) return;
+
+        if (useGlobe) {
+            map.setProjection({
+                type: 'globe'
+            });
+
+            // Add globe mode class for styling
+            document.body.classList.add('globe-mode');
+
+            // Optional: Add atmosphere effect for better visuals
+            map.setPaintProperty('osm-tiles', 'raster-opacity', 1);
+
+            // Auto-zoom out when enabling globe for best view
+            if (map.getZoom() > 4) {
+                map.flyTo({ zoom: 2, duration: 1000 });
+            }
+        } else {
+            map.setProjection({
+                type: 'mercator'
+            });
+
+            // Remove globe mode class
+            document.body.classList.remove('globe-mode');
+        }
+
+        // Cleanup on unmount
+        return () => {
+            document.body.classList.remove('globe-mode');
+        };
+    }, [useGlobe, mapStyleLoaded]);
 
     // Update map style when dark mode changes
     useEffect(() => {
@@ -2561,11 +2601,58 @@ A lone Canadian data scientist has built this site and runs everything independe
                         <button className="modal-close" onClick={() => setMapOptionsOpen(false)}>✕</button>
                         <h2 className="modal-title">Map Visualization Options</h2>
                         <div className="modal-body">
+                            {/* Globe Toggle */}
+                            <div style={{
+                                marginBottom: '1.5rem',
+                                padding: '1rem',
+                                border: `2px solid ${darkMode ? '#444' : '#ddd'}`,
+                                borderRadius: '8px',
+                                backgroundColor: darkMode ? '#2d2d2d' : '#f8f9fa'
+                            }}>
+                                <label style={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '0.75rem',
+                                    cursor: 'pointer',
+                                    fontSize: '1rem',
+                                    fontWeight: '600'
+                                }}>
+                                    <input
+                                        type="checkbox"
+                                        checked={useGlobe}
+                                        onChange={(e) => setUseGlobe(e.target.checked)}
+                                        style={{
+                                            width: '20px',
+                                            height: '20px',
+                                            cursor: 'pointer'
+                                        }}
+                                    />
+                                    <span style={{ color: darkMode ? '#e0e0e0' : '#333' }}>
+                                        🌍 Enable 3D Globe View
+                                    </span>
+                                </label>
+                                <p style={{
+                                    fontSize: '0.85rem',
+                                    color: darkMode ? '#999' : '#666',
+                                    marginTop: '0.5rem',
+                                    marginLeft: '2rem'
+                                }}>
+                                    View the map as a rotating 3D globe (works best at low zoom levels)
+                                </p>
+                            </div>
+
+                            {/* Visualization Style Options */}
+                            <h3 style={{
+                                marginBottom: '1rem',
+                                color: darkMode ? '#e0e0e0' : '#333',
+                                fontSize: '1rem'
+                            }}>
+                                Visualization Style
+                            </h3>
                             <div className="map-style-options" style={{
                                 display: 'grid',
                                 gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))',
-                                gap: '1rem',
-                                marginTop: '1rem'
+                                gap: '1rem'
                             }}>
                                 <div
                                     className={`map-style-card ${selectedMapStyle === "heatmap" ? "selected" : ""}`}

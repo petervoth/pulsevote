@@ -3617,3 +3617,46 @@ body:not(.dark-mode) .spotlight-description-wrapper::-webkit-scrollbar-thumb {
     body:not(.dark-mode) .spotlight-description-wrapper::-webkit-scrollbar-thumb:hover {
         background: #555;
     }
+
+/* ======================================== 
+   3D GLOBE MODE STARFIELD - FIXED
+   ======================================== */
+
+/* Space background for globe mode */
+.map-column {
+    position: relative;
+}
+
+body.globe-mode .map-column::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: radial-gradient(2px 2px at 20% 30%, white, transparent), radial-gradient(2px 2px at 60% 70%, white, transparent), radial-gradient(1px 1px at 50% 50%, white, transparent), radial-gradient(1px 1px at 80% 10%, white, transparent), radial-gradient(2px 2px at 90% 60%, white, transparent), radial-gradient(1px 1px at 33% 80%, white, transparent), radial-gradient(1px 1px at 15% 90%, white, transparent), #000;
+    background-size: 200% 200%;
+    background-position: 0% 0%;
+    pointer-events: none;
+    z-index: 0;
+}
+
+body.globe-mode .maplibregl-canvas-container {
+    position: relative;
+    z-index: 1;
+}
+
+/* Animate stars slowly */
+@keyframes stars {
+    0% {
+        background-position: 0% 0%;
+    }
+
+    100% {
+        background-position: 100% 100%;
+    }
+}
+
+body.globe-mode .map-column::before {
+    animation: stars 200s linear infinite;
+}
