@@ -1283,43 +1283,19 @@ export default function MainApp() {
 
                 map.addLayer({
                     id: layerId,
-                    type: 'heatmap',
+                    type: 'circle',
                     source: sourceId,
-                    maxzoom: 12,
                     paint: {
-                        'heatmap-weight': [
-                            'interpolate',
-                            ['linear'],
-                            ['get', 'intensity'],
-                            0, 0,
-                            100, 1
-                        ],
-                        'heatmap-intensity': [
+                        'circle-radius': [
                             'interpolate',
                             ['linear'],
                             ['zoom'],
-                            0, 0.5,
-                            12, 1
+                            0, 3,
+                            12, 55
                         ],
-                        'heatmap-color': [
-                            'interpolate',
-                            ['linear'],
-                            ['heatmap-density'],
-                            0, 'rgba(0, 0, 0, 0)',
-                            0.2, hexToRgba(data.color, 0.2),
-                            0.4, hexToRgba(data.color, 0.4),
-                            0.6, hexToRgba(data.color, 0.6),
-                            0.8, hexToRgba(data.color, 0.8),
-                            1, hexToRgba(data.color, 1)
-                        ],
-                        'heatmap-radius': [
-                            'interpolate',
-                            ['linear'],
-                            ['zoom'],
-                            0, 2,
-                            12, 50
-                        ],
-                        'heatmap-opacity': 0.6
+                        'circle-color': data.color,
+                        'circle-opacity': 0.4,
+                        'circle-blur': 0.8
                     }
                 });
             });
