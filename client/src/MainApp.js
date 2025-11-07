@@ -1291,7 +1291,7 @@ export default function MainApp() {
                             ['linear'],
                             ['zoom'],
                             0, 3,
-                            12, 55
+                            12, 35
                         ],
                         'circle-color': data.color,
                         'circle-opacity': 0.4,
