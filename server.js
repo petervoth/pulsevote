@@ -89,37 +89,38 @@ io.on("connection", (socket) => {
 // Get all topics with vote counts
 app.get("/topics", async (req, res) => {
     try {
-        // Get limit and offset from query params for pagination
         const limit = parseInt(req.query.limit) || 1000;
         const offset = parseInt(req.query.offset) || 0;
 
         const result = await pool.query(
             `SELECT
-        t.id,
-        t.title,
-        t.description,
-        t.created_by,
-        t.stance,
-        t.created_at,
-        COUNT(DISTINCT p.user_id) as vote_count
-      FROM topics t
-      LEFT JOIN points p ON t.id::text = p.topic_id::text
-      GROUP BY t.id, t.title, t.description, t.created_by, t.stance, t.created_at
-      ORDER BY t.created_at DESC
-      LIMIT $1 OFFSET $2`,
+                t.id,
+                t.title,
+                t.description,
+                t.created_by,
+                t.stance,
+                t.created_at,
+                t.lat,
+                t.lng,
+                COUNT(DISTINCT p.user_id) as vote_count
+            FROM topics t
+            LEFT JOIN points p ON t.id::text = p.topic_id::text
+            GROUP BY t.id, t.title, t.description, t.created_by, t.stance, t.created_at, t.lat, t.lng
+            ORDER BY t.created_at DESC
+            LIMIT $1 OFFSET $2`,
             [limit, offset]
         );
 
-        // Ensure result.rows exists and is an array
         if (!result || !result.rows || !Array.isArray(result.rows)) {
             console.error("Unexpected query result:", result);
             return res.json([]);
         }
 
-        // Convert vote_count from string to number
         const topics = result.rows.map(row => ({
             ...row,
-            vote_count: parseInt(row.vote_count) || 0
+            vote_count: parseInt(row.vote_count) || 0,
+            lat: row.lat ? parseFloat(row.lat) : null,
+            lng: row.lng ? parseFloat(row.lng) : null
         }));
 
         res.json(topics);
@@ -132,7 +133,7 @@ app.get("/topics", async (req, res) => {
 // Create a new topic (with rate limiting: 1 per day per user)
 app.post("/topics", async (req, res) => {
     try {
-        const { title, description, created_by, stance } = req.body;
+        const { title, description, created_by, stance, lat, lng } = req.body;
 
         if (!title || !created_by) {
             return res
@@ -164,14 +165,14 @@ app.post("/topics", async (req, res) => {
             });
         }
 
-        // If no recent topic, proceed with creation
+        // If no recent topic, proceed with creation - NOW INCLUDING LAT/LNG
         const result = await pool.query(
             `INSERT INTO topics
-      (title, description, created_by, stance, created_at)
+      (title, description, created_by, stance, lat, lng, created_at)
       VALUES
-      ($1, $2, $3, $4, NOW())
+      ($1, $2, $3, $4, $5, $6, NOW())
       RETURNING *`,
-            [title, description || null, created_by, stance || null]
+            [title, description || null, created_by, stance || null, lat || null, lng || null]
         );
 
         const newTopic = result.rows[0];
@@ -338,17 +339,19 @@ app.get("/topics/:id", async (req, res) => {
 
         const result = await pool.query(
             `SELECT
-        t.id,
-        t.title,
-        t.description,
-        t.created_by,
-        t.stance,
-        t.created_at,
-        COUNT(DISTINCT p.user_id) as vote_count
-      FROM topics t
-      LEFT JOIN points p ON t.id::text = p.topic_id::text
-      WHERE t.id = $1
-      GROUP BY t.id, t.title, t.description, t.created_by, t.stance, t.created_at`,
+                t.id,
+                t.title,
+                t.description,
+                t.created_by,
+                t.stance,
+                t.created_at,
+                t.lat,
+                t.lng,
+                COUNT(DISTINCT p.user_id) as vote_count
+            FROM topics t
+            LEFT JOIN points p ON t.id::text = p.topic_id::text
+            WHERE t.id = $1
+            GROUP BY t.id, t.title, t.description, t.created_by, t.stance, t.created_at, t.lat, t.lng`,
             [topicId]
         );
 
@@ -358,7 +361,9 @@ app.get("/topics/:id", async (req, res) => {
 
         const topic = {
             ...result.rows[0],
-            vote_count: parseInt(result.rows[0].vote_count) || 0
+            vote_count: parseInt(result.rows[0].vote_count) || 0,
+            lat: result.rows[0].lat ? parseFloat(result.rows[0].lat) : null,
+            lng: result.rows[0].lng ? parseFloat(result.rows[0].lng) : null
         };
 
         res.json(topic);

@@ -135,6 +135,19 @@ function AdCard({ adIndex, liveAds }) {
     );
 }
 
+// Haversine formula to calculate distance between two coordinates in km
+function calculateDistance(lat1, lon1, lat2, lon2) {
+    const R = 6371; // Earth's radius in kilometers
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLon = (lon2 - lon1) * Math.PI / 180;
+    const a =
+        Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+        Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+        Math.sin(dLon / 2) * Math.sin(dLon / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    return R * c;
+}
+
 function getAvgBoxColor(avg) {
     if (avg === "–") return "avg-neutral";
     if (avg < -1) return 'stance-no-strong';
@@ -424,6 +437,15 @@ export default function MainApp() {
     const [useMapView, setUseMapView] = useState(true);
     const [visibleBounds, setVisibleBounds] = useState(null);
     const [useGlobe, setUseGlobe] = useState(false);
+
+    // GEO FILTER state (add this with your other useState declarations, before the return)
+    const GEO_FILTERS = {
+        GLOBAL: 'global',
+        WITHIN_10KM: 'within_10km',
+        WITHIN_100KM: 'within_100km'
+    };
+    const [geoFilter, setGeoFilter] = useState(GEO_FILTERS.GLOBAL);
+    const [visibleTopics, setVisibleTopics] = useState([]); // optional now or later
 
     const handleAdFormChange = (field, value) => {
         setAdFormData(prev => ({
@@ -1854,6 +1876,14 @@ export default function MainApp() {
     }, [heatPoints, visibleBounds, useMapView]);
 
     const filteredTopics = useMemo(() => {
+
+        console.log('=== FILTERING TOPICS ===');
+        console.log('Total topics:', uniqueTopics.length);
+        console.log('Geo filter:', geoFilter);
+        console.log('Profile homebase:', profile?.homebase_set, [profile?.home_lat, profile?.home_lng]);
+        console.log('Sample topic:', uniqueTopics[0]);
+        console.log('Topics with coordinates:', uniqueTopics.filter(t => t.lat && t.lng).length);
+
         let result = uniqueTopics.filter(t => {
             const matchesText = searchText
                 ? t.description?.toLowerCase().includes(searchText.toLowerCase())
@@ -1862,7 +1892,48 @@ export default function MainApp() {
             const created = new Date(t.created_at);
             const afterStart = startDate ? created >= new Date(startDate) : true;
             const beforeEnd = endDate ? created <= new Date(endDate) : true;
-            return matchesText && matchesTitle && afterStart && beforeEnd;
+
+            // Geo filter logic
+            let matchesGeoFilter = true;
+            if (geoFilter !== GEO_FILTERS.GLOBAL) {
+                if (!profile?.homebase_set) {
+                    // User needs homebase for distance filtering
+                    matchesGeoFilter = false;
+                } else if (!t.lat || !t.lng) {
+                    // Topic has no coordinates - exclude it from distance filter
+                    matchesGeoFilter = false;
+                } else {
+                    // Both user and topic have coordinates - calculate distance
+                    const distance = calculateDistance(
+                        profile.home_lat,
+                        profile.home_lng,
+                        t.lat,
+                        t.lng
+                    );
+
+                    // DEBUG: Log the calculation
+                    console.log('Distance calc:', {
+                        topicId: t.id,
+                        topicTitle: t.title,
+                        topicCoords: [t.lat, t.lng],
+                        topicCoordsTypes: [typeof t.lat, typeof t.lng],
+                        homeCoords: [profile.home_lat, profile.home_lng],
+                        homeCoordsTypes: [typeof profile.home_lat, typeof profile.home_lng],
+                        distance: distance,
+                        filter: geoFilter,
+                        threshold: geoFilter === GEO_FILTERS.WITHIN_10KM ? 10 : 100,
+                        passes: geoFilter === GEO_FILTERS.WITHIN_10KM ? distance <= 10 : distance <= 100
+                    });
+
+                    if (geoFilter === GEO_FILTERS.WITHIN_10KM) {
+                        matchesGeoFilter = distance <= 10;
+                    } else if (geoFilter === GEO_FILTERS.WITHIN_100KM) {
+                        matchesGeoFilter = distance <= 100;
+                    }
+                }
+            }
+
+            return matchesText && matchesTitle && afterStart && beforeEnd && matchesGeoFilter;
         });
 
         result.sort((a, b) => {
@@ -1882,7 +1953,7 @@ export default function MainApp() {
         });
 
         return result;
-    }, [uniqueTopics, searchText, filterTitle, startDate, endDate, sortOption]);
+    }, [uniqueTopics, searchText, filterTitle, startDate, endDate, sortOption, geoFilter, profile]);
 
     const topicsWithAds = useMemo(() => {
         const result = [];
@@ -3405,6 +3476,34 @@ A lone Canadian data scientist has built this site and runs everything independe
                                                         <option value="mostVotes">Most Votes</option>
                                                         <option value="leastVotes">Least Votes</option>
                                                     </select>
+
+                                                    <select
+                                                        value={geoFilter}
+                                                        onChange={(e) => setGeoFilter(e.target.value)}
+                                                        style={{
+                                                            padding: '0.75rem',
+                                                            borderRadius: '6px',
+                                                            border: `1px solid ${darkMode ? '#444' : '#ddd'}`,
+                                                            backgroundColor: darkMode ? '#2d2d2d' : '#fff',
+                                                            color: darkMode ? '#e0e0e0' : '#333'
+                                                        }}
+                                                    >
+                                                        <option value={GEO_FILTERS.GLOBAL}>Global</option>
+                                                        <option value={GEO_FILTERS.WITHIN_10KM}>Within 10km</option>
+                                                        <option value={GEO_FILTERS.WITHIN_100KM}>Within 100km</option>
+                                                    </select>
+
+                                                    {geoFilter !== GEO_FILTERS.GLOBAL && !profile?.homebase_set && (
+                                                        <p style={{
+                                                            fontSize: '0.85rem',
+                                                            color: '#dc3545',
+                                                            marginTop: '0.5rem',
+                                                            textAlign: 'center'
+                                                        }}>
+                                                            ⚠️ Set your homebase to use distance filters
+                                                        </p>
+                                                    )}
+
                                                     {(searchText || filterTitle || startDate || endDate || sortOption !== 'newest') && (
                                                         <button
                                                             type="button"
