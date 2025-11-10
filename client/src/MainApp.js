@@ -365,7 +365,10 @@ export default function MainApp() {
 
     const [mapExpanded, setMapExpanded] = useState(false);
     const [mapOptionsOpen, setMapOptionsOpen] = useState(false);
-    const [selectedMapStyle, setSelectedMapStyle] = useState("choropleth");
+    const [selectedMapStyle, setSelectedMapStyle] = useState(() => {
+        const savedStyle = localStorage.getItem('mapVisualizationStyle');
+        return savedStyle || "choropleth";
+    });
 
     const [aboutText, setAboutText] = useState('');
     const [darkMode, setDarkMode] = useState(() => {
@@ -436,7 +439,10 @@ export default function MainApp() {
 
     const [useMapView, setUseMapView] = useState(true);
     const [visibleBounds, setVisibleBounds] = useState(null);
-    const [useGlobe, setUseGlobe] = useState(true);
+    const [useGlobe, setUseGlobe] = useState(() => {
+        const savedGlobe = localStorage.getItem('useGlobe');
+        return savedGlobe === 'true';
+    });
 
     // GEO FILTER state (add this with your other useState declarations, before the return)
     const GEO_FILTERS = {
@@ -1820,6 +1826,8 @@ export default function MainApp() {
         loadSharedTopic();
     }, [location.search, topics]);
 
+
+    // Save light/dark mode preference
     useEffect(() => {
         if (darkMode) {
             document.body.classList.add('dark-mode');
@@ -1829,6 +1837,16 @@ export default function MainApp() {
             localStorage.setItem('darkMode', 'false');
         }
     }, [darkMode]);
+
+    // Save globe preference to localStorage
+    useEffect(() => {
+        localStorage.setItem('useGlobe', useGlobe.toString());
+    }, [useGlobe]);
+
+    // Save map visualization style preference to localStorage
+    useEffect(() => {
+        localStorage.setItem('mapVisualizationStyle', selectedMapStyle);
+    }, [selectedMapStyle]);
 
     useEffect(() => {
         async function fetchLiveAds() {
