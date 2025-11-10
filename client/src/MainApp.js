@@ -436,7 +436,7 @@ export default function MainApp() {
 
     const [useMapView, setUseMapView] = useState(true);
     const [visibleBounds, setVisibleBounds] = useState(null);
-    const [useGlobe, setUseGlobe] = useState(false);
+    const [useGlobe, setUseGlobe] = useState(true);
 
     // GEO FILTER state (add this with your other useState declarations, before the return)
     const GEO_FILTERS = {
@@ -1054,6 +1054,61 @@ export default function MainApp() {
         // Cleanup on unmount
         return () => {
             document.body.classList.remove('globe-mode');
+        };
+    }, [useGlobe, mapStyleLoaded]);
+
+    // Auto-rotate globe on initial load
+    useEffect(() => {
+        const map = mapRef.current;
+        if (!map || !mapStyleLoaded || !useGlobe) return;
+
+        let rotationAnimation = null;
+        let userHasInteracted = false;
+
+        // Gentle rotation speed (degrees per frame)
+        const rotationSpeed = 0.05;
+
+        const rotateCamera = (timestamp) => {
+            if (userHasInteracted) return;
+
+            // Rotate the globe by adjusting the center longitude
+            const center = map.getCenter();
+            map.setCenter([center.lng - rotationSpeed, center.lat]);
+
+            // Continue the animation
+            rotationAnimation = requestAnimationFrame(rotateCamera);
+        };
+
+        // Start rotation after a short delay to let the map settle
+        const startDelay = setTimeout(() => {
+            rotationAnimation = requestAnimationFrame(rotateCamera);
+        }, 500);
+
+        // Stop rotation on any user interaction
+        const stopRotation = () => {
+            userHasInteracted = true;
+            if (rotationAnimation) {
+                cancelAnimationFrame(rotationAnimation);
+                rotationAnimation = null;
+            }
+        };
+
+        // Listen for user interactions
+        map.once('mousedown', stopRotation);
+        map.once('touchstart', stopRotation);
+        map.once('wheel', stopRotation);
+        map.once('dragstart', stopRotation);
+
+        // Cleanup
+        return () => {
+            clearTimeout(startDelay);
+            if (rotationAnimation) {
+                cancelAnimationFrame(rotationAnimation);
+            }
+            map.off('mousedown', stopRotation);
+            map.off('touchstart', stopRotation);
+            map.off('wheel', stopRotation);
+            map.off('dragstart', stopRotation);
         };
     }, [useGlobe, mapStyleLoaded]);
 
