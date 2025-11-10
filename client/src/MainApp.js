@@ -992,7 +992,7 @@ export default function MainApp() {
                 }
             },
             center: [0, 20],
-            zoom: 2,
+            zoom: 2.6,
             minZoom: 1,
             maxZoom: 12
         });
