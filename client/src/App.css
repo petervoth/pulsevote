@@ -3673,3 +3673,12 @@ body.globe-mode .maplibregl-popup {
 body.globe-mode .maplibregl-popup-content {
     z-index: 10000 !important;
 }
+
+/* 3D Globe background colors */
+body.globe-mode .maplibregl-map {
+    background-color: #000000;
+}
+
+body:not(.dark-mode).globe-mode .maplibregl-map {
+    background-color: #E1F9FF;
+}
