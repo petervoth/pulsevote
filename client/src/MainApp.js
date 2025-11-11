@@ -410,6 +410,7 @@ export default function MainApp() {
     const [reportModalOpen, setReportModalOpen] = useState(false);
     const [reportReason, setReportReason] = useState('');
     const [topicHasReport, setTopicHasReport] = useState(false);
+    const [topicReportStatus, setTopicReportStatus] = useState(null);
 
     const [hasFilteredWords, setHasFilteredWords] = useState(false);
 
@@ -1961,6 +1962,7 @@ export default function MainApp() {
                 if (res.ok) {
                     const data = await res.json();
                     setTopicHasReport(data.hasReport);
+                    setTopicReportStatus(data.report); // Store the full report object
                 }
             } catch (err) {
                 console.error('Error checking topic report:', err);
@@ -3130,22 +3132,56 @@ A lone Canadian data scientist has built this site and runs everything independe
                                             <br />
                                             User ID: {selectedTopic.created_by}
                                             <br />
-                                            <button
-                                                onClick={() => setReportModalOpen(true)}
-                                                disabled={topicHasReport}
-                                                style={{
-                                                    background: 'none',
-                                                    border: 'none',
-                                                    color: topicHasReport ? '#999' : '#dc3545',
-                                                    cursor: topicHasReport ? 'not-allowed' : 'pointer',
-                                                    fontSize: '0.9rem',
-                                                    textDecoration: topicHasReport ? 'none' : 'underline',
-                                                    padding: '0.25rem 0',
-                                                    marginTop: '0.5rem'
-                                                }}
-                                            >
-                                                {topicHasReport ? '⚠️ Already Reported' : '🚨 Report'}
-                                            </button>
+                                            {topicReportStatus ? (
+                                                // Show status based on review action
+                                                topicReportStatus.status === 'pending_review' ? (
+                                                    <span style={{
+                                                        color: '#ffa500',
+                                                        fontSize: '0.9rem',
+                                                        padding: '0.25rem 0',
+                                                        marginTop: '0.5rem',
+                                                        display: 'inline-block'
+                                                    }}>
+                                                        ⏳ Report Pending Review
+                                                    </span>
+                                                ) : topicReportStatus.review_action === 'approved' ? (
+                                                    <span style={{
+                                                        color: '#28a745',
+                                                        fontSize: '0.9rem',
+                                                        padding: '0.25rem 0',
+                                                        marginTop: '0.5rem',
+                                                        display: 'inline-block'
+                                                    }}>
+                                                        ⭐ Reviewed - Approved
+                                                    </span>
+                                                ) : topicReportStatus.review_action === 'denied' ? (
+                                                    <span style={{
+                                                        color: '#666',
+                                                        fontSize: '0.9rem',
+                                                        padding: '0.25rem 0',
+                                                        marginTop: '0.5rem',
+                                                        display: 'inline-block'
+                                                    }}>
+                                                        ✓ Reviewed - Report Denied
+                                                    </span>
+                                                ) : null
+                                            ) : (
+                                                <button
+                                                    onClick={() => setReportModalOpen(true)}
+                                                    style={{
+                                                        background: 'none',
+                                                        border: 'none',
+                                                        color: '#dc3545',
+                                                        cursor: 'pointer',
+                                                        fontSize: '0.9rem',
+                                                        textDecoration: 'underline',
+                                                        padding: '0.25rem 0',
+                                                        marginTop: '0.5rem'
+                                                    }}
+                                                >
+                                                    🚨 Report
+                                                </button>
+                                            )}
                                         </p>
                                     </div>
                                 </div>

@@ -1071,25 +1071,33 @@ app.get("/api/topic-reports", async (req, res) => {
 
 /**
  * GET /api/topic-reports/check/:topicId
- * Check if a topic has been reported and is pending
+ * Check if a topic has been reported (any status)
  */
 app.get("/api/topic-reports/check/:topicId", async (req, res) => {
     try {
         const { topicId } = req.params;
 
         const result = await pool.query(
-            `SELECT id, status 
+            `SELECT id, status, review_action 
              FROM topic_reports 
              WHERE topic_id = $1 
-             AND status = 'pending_review'
+             ORDER BY reported_at DESC
              LIMIT 1`,
             [topicId]
         );
 
-        res.json({
-            hasReport: result.rows.length > 0,
-            report: result.rows[0] || null
-        });
+        if (result.rows.length > 0) {
+            const report = result.rows[0];
+            res.json({
+                hasReport: true,
+                report: report
+            });
+        } else {
+            res.json({
+                hasReport: false,
+                report: null
+            });
+        }
     } catch (err) {
         console.error("Error checking topic report:", err);
         res.status(500).json({ error: "Server error" });
