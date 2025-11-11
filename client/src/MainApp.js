@@ -407,6 +407,9 @@ export default function MainApp() {
     const [heatPoints, setHeatPoints] = useState([]);
     const [twinklePoints, setTwinklePoints] = useState([]);
     const [selectedTopic, setSelectedTopic] = useState(null);
+    const [reportModalOpen, setReportModalOpen] = useState(false);
+    const [reportReason, setReportReason] = useState('');
+    const [topicHasReport, setTopicHasReport] = useState(false);
 
     const [hasFilteredWords, setHasFilteredWords] = useState(false);
 
@@ -1945,6 +1948,60 @@ export default function MainApp() {
         };
     }, []);
 
+    // Check if selected topic has been reported
+    useEffect(() => {
+        if (!selectedTopic?.id) {
+            setTopicHasReport(false);
+            return;
+        }
+
+        const checkReport = async () => {
+            try {
+                const res = await fetch(`${API_BASE}/api/topic-reports/check/${selectedTopic.id}`);
+                if (res.ok) {
+                    const data = await res.json();
+                    setTopicHasReport(data.hasReport);
+                }
+            } catch (err) {
+                console.error('Error checking topic report:', err);
+            }
+        };
+
+        checkReport();
+    }, [selectedTopic]);
+
+    const handleReportSubmit = async () => {
+        if (!reportReason) {
+            alert('Please select a reason for reporting');
+            return;
+        }
+
+        try {
+            const res = await fetch(`${API_BASE}/api/topic-reports`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    topic_id: selectedTopic.id,
+                    report_reason: reportReason,
+                    reported_by: user?.id || 'anonymous'
+                })
+            });
+
+            if (res.ok) {
+                alert('✅ Report submitted successfully. Thank you for helping keep our community safe.');
+                setReportModalOpen(false);
+                setReportReason('');
+                setTopicHasReport(true);
+            } else {
+                const error = await res.json();
+                alert(`❌ ${error.error || 'Failed to submit report'}`);
+            }
+        } catch (err) {
+            console.error('Error submitting report:', err);
+            alert('❌ Network error. Please try again.');
+        }
+    };
+
     const uniqueTopics = useMemo(() => {
         const m = new Map();
         topics.forEach(t => m.set(t.id, t));
@@ -2730,6 +2787,118 @@ A lone Canadian data scientist has built this site and runs everything independe
                 </div>
             )}
 
+            {reportModalOpen && (
+                <div className="modal-overlay" onClick={() => setReportModalOpen(false)}>
+                    <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '500px' }}>
+                        <button className="modal-close" onClick={() => setReportModalOpen(false)}>✕</button>
+                        <h2 className="modal-title">🚨 Report Topic</h2>
+                        <div className="modal-body">
+                            <p style={{
+                                fontSize: '0.9rem',
+                                color: darkMode ? '#ccc' : '#666',
+                                marginBottom: '1.5rem'
+                            }}>
+                                Please select a reason for reporting this topic. Reports are reviewed by our moderation team.
+                            </p>
+
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                                <label style={{
+                                    display: 'block',
+                                    marginBottom: '0.5rem',
+                                    fontWeight: '600',
+                                    color: darkMode ? '#e0e0e0' : '#333'
+                                }}>
+                                    Reason for Report *
+                                </label>
+
+                                {[
+                                    { value: 'spam', label: '🚫 Spam' },
+                                    { value: 'inappropriate', label: '⚠️ Inappropriate Content' },
+                                    { value: 'misinformation', label: '🔍 Misinformation' },
+                                    { value: 'harassment', label: '🛑 Harassment' },
+                                    { value: 'off_topic', label: '📌 Off Topic' },
+                                    { value: 'duplicate', label: '📋 Duplicate' },
+                                    { value: 'other', label: '❓ Other' }
+                                ].map(reason => (
+                                    <label
+                                        key={reason.value}
+                                        style={{
+                                            padding: '1rem',
+                                            border: `2px solid ${reportReason === reason.value ? '#dc3545' : (darkMode ? '#444' : '#ddd')}`,
+                                            borderRadius: '8px',
+                                            cursor: 'pointer',
+                                            backgroundColor: reportReason === reason.value
+                                                ? (darkMode ? '#3d1f1f' : '#ffe5e5')
+                                                : (darkMode ? '#2d2d2d' : '#fff'),
+                                            transition: 'all 0.2s ease',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            gap: '0.75rem'
+                                        }}
+                                    >
+                                        <input
+                                            type="radio"
+                                            name="report-reason"
+                                            value={reason.value}
+                                            checked={reportReason === reason.value}
+                                            onChange={(e) => setReportReason(e.target.value)}
+                                            style={{ width: '18px', height: '18px' }}
+                                        />
+                                        <span style={{
+                                            fontSize: '1rem',
+                                            color: darkMode ? '#e0e0e0' : '#333'
+                                        }}>
+                                            {reason.label}
+                                        </span>
+                                    </label>
+                                ))}
+
+                                <div style={{ display: 'flex', gap: '0.75rem', marginTop: '1rem' }}>
+                                    <button
+                                        onClick={handleReportSubmit}
+                                        disabled={!reportReason}
+                                        style={{
+                                            flex: 1,
+                                            padding: '0.75rem',
+                                            fontSize: '1rem',
+                                            fontWeight: '600',
+                                            borderRadius: '6px',
+                                            border: 'none',
+                                            backgroundColor: reportReason ? '#dc3545' : '#999',
+                                            color: '#fff',
+                                            cursor: reportReason ? 'pointer' : 'not-allowed',
+                                            opacity: reportReason ? 1 : 0.6,
+                                            transition: 'background-color 0.2s ease'
+                                        }}
+                                    >
+                                        Submit Report
+                                    </button>
+                                    <button
+                                        onClick={() => {
+                                            setReportModalOpen(false);
+                                            setReportReason('');
+                                        }}
+                                        style={{
+                                            flex: 1,
+                                            padding: '0.75rem',
+                                            fontSize: '1rem',
+                                            fontWeight: '600',
+                                            borderRadius: '6px',
+                                            border: `2px solid ${darkMode ? '#444' : '#ddd'}`,
+                                            backgroundColor: 'transparent',
+                                            color: darkMode ? '#e0e0e0' : '#333',
+                                            cursor: 'pointer'
+                                        }}
+                                    >
+                                        Cancel
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             {mapOptionsOpen && (
                 <div className="modal-overlay" onClick={() => setMapOptionsOpen(false)}>
                     <div className="modal-content" onClick={(e) => e.stopPropagation()}>
@@ -2960,6 +3129,23 @@ A lone Canadian data scientist has built this site and runs everything independe
                                             Created {new Date(selectedTopic.created_at).toLocaleDateString()}
                                             <br />
                                             User ID: {selectedTopic.created_by}
+                                            <br />
+                                            <button
+                                                onClick={() => setReportModalOpen(true)}
+                                                disabled={topicHasReport}
+                                                style={{
+                                                    background: 'none',
+                                                    border: 'none',
+                                                    color: topicHasReport ? '#999' : '#dc3545',
+                                                    cursor: topicHasReport ? 'not-allowed' : 'pointer',
+                                                    fontSize: '0.9rem',
+                                                    textDecoration: topicHasReport ? 'none' : 'underline',
+                                                    padding: '0.25rem 0',
+                                                    marginTop: '0.5rem'
+                                                }}
+                                            >
+                                                {topicHasReport ? '⚠️ Already Reported' : '🚨 Report'}
+                                            </button>
                                         </p>
                                     </div>
                                 </div>

@@ -3682,3 +3682,25 @@ body.globe-mode .maplibregl-map {
 body:not(.dark-mode).globe-mode .maplibregl-map {
     background-color: #E1F9FF;
 }
+
+/* Topic list item descriptions - keep them simple */
+.feed-item .topic-description {
+    margin: 0.5rem 0;
+    color: #888;
+    font-size: 0.9rem;
+    line-height: 1.4;
+    background: transparent !important;
+    padding: 0 !important;
+    border: none !important;
+}
+
+/* Dark mode topic descriptions */
+.dark-mode .feed-item .topic-description {
+    color: #aaa;
+    background: transparent !important;
+}
+
+/* Keep the spotlight description styled differently */
+.spotlight-description {
+    /* Your existing spotlight styles */
+}

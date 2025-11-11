@@ -105,6 +105,7 @@ app.get("/topics", async (req, res) => {
                 COUNT(DISTINCT p.user_id) as vote_count
             FROM topics t
             LEFT JOIN points p ON t.id::text = p.topic_id::text
+            WHERE t.hidden = FALSE
             GROUP BY t.id, t.title, t.description, t.created_by, t.stance, t.created_at, t.lat, t.lng
             ORDER BY t.created_at DESC
             LIMIT $1 OFFSET $2`,
@@ -969,6 +970,240 @@ app.put("/api/ad-submissions/:id/reject", async (req, res) => {
         });
     } catch (err) {
         console.error("Error rejecting ad submission:", err);
+        res.status(500).json({ error: "Server error" });
+    }
+});
+
+// ===========================
+// TOPIC REPORTS ENDPOINTS
+// ===========================
+
+/**
+ * POST /api/topic-reports
+ * Submit a report for a topic
+ */
+app.post("/api/topic-reports", async (req, res) => {
+    try {
+        const { topic_id, report_reason, reported_by } = req.body;
+
+        if (!topic_id || !report_reason) {
+            return res.status(400).json({ error: "topic_id and report_reason are required" });
+        }
+
+        // Check if this topic has already been reported and is pending
+        const existingReport = await pool.query(
+            `SELECT id FROM topic_reports 
+             WHERE topic_id = $1 
+             AND status = 'pending_review'
+             LIMIT 1`,
+            [topic_id]
+        );
+
+        if (existingReport.rows.length > 0) {
+            return res.status(400).json({
+                error: "This topic has already been reported and is under review"
+            });
+        }
+
+        const result = await pool.query(
+            `INSERT INTO topic_reports 
+             (topic_id, report_reason, reported_by, reported_at, status)
+             VALUES ($1, $2, $3, NOW(), 'pending_review')
+             RETURNING *`,
+            [topic_id, report_reason, reported_by || 'anonymous']
+        );
+
+        res.status(201).json({
+            message: "Report submitted successfully",
+            report: result.rows[0]
+        });
+    } catch (err) {
+        console.error("Error creating topic report:", err);
+        res.status(500).json({ error: "Server error" });
+    }
+});
+
+/**
+ * GET /api/topic-reports
+ * Get all topic reports (admin only)
+ */
+app.get("/api/topic-reports", async (req, res) => {
+    try {
+        const status = req.query.status;
+
+        let query = `
+            SELECT 
+                tr.id,
+                tr.topic_id,
+                tr.report_reason,
+                tr.reported_by,
+                tr.reported_at,
+                tr.status,
+                tr.reviewed_at,
+                tr.reviewed_by,
+                tr.review_action,
+                tr.notes,
+                t.title,
+                t.description,
+                t.created_by,
+                t.created_at,
+                t.hidden
+            FROM topic_reports tr
+            JOIN topics t ON tr.topic_id = t.id
+        `;
+
+        const params = [];
+
+        if (status) {
+            query += ` WHERE tr.status = $1`;
+            params.push(status);
+        }
+
+        query += ` ORDER BY tr.reported_at DESC`;
+
+        const result = await pool.query(query, params);
+        res.json(result.rows);
+    } catch (err) {
+        console.error("Error fetching topic reports:", err);
+        res.status(500).json({ error: "Server error" });
+    }
+});
+
+/**
+ * GET /api/topic-reports/check/:topicId
+ * Check if a topic has been reported and is pending
+ */
+app.get("/api/topic-reports/check/:topicId", async (req, res) => {
+    try {
+        const { topicId } = req.params;
+
+        const result = await pool.query(
+            `SELECT id, status 
+             FROM topic_reports 
+             WHERE topic_id = $1 
+             AND status = 'pending_review'
+             LIMIT 1`,
+            [topicId]
+        );
+
+        res.json({
+            hasReport: result.rows.length > 0,
+            report: result.rows[0] || null
+        });
+    } catch (err) {
+        console.error("Error checking topic report:", err);
+        res.status(500).json({ error: "Server error" });
+    }
+});
+
+/**
+ * PUT /api/topic-reports/:id/approve
+ * Approve a report and hide the topic
+ */
+app.put("/api/topic-reports/:id/approve", async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { reviewedBy, notes } = req.body;
+
+        const reportCheck = await pool.query(
+            `SELECT * FROM topic_reports WHERE id = $1`,
+            [id]
+        );
+
+        if (reportCheck.rows.length === 0) {
+            return res.status(404).json({ error: "Report not found" });
+        }
+
+        const report = reportCheck.rows[0];
+
+        if (report.status !== 'pending_review') {
+            return res.status(400).json({
+                error: "Report is not in pending_review status",
+                currentStatus: report.status
+            });
+        }
+
+        // Update the report status
+        const reportResult = await pool.query(
+            `UPDATE topic_reports
+             SET status = 'reviewed',
+                 reviewed_at = NOW(),
+                 reviewed_by = $1,
+                 review_action = 'approved',
+                 notes = $2
+             WHERE id = $3
+             RETURNING *`,
+            [reviewedBy || 'admin', notes || 'Report approved - topic hidden', id]
+        );
+
+        // Hide the topic from public view
+        await pool.query(
+            `UPDATE topics
+             SET hidden = TRUE
+             WHERE id = $1`,
+            [report.topic_id]
+        );
+
+        console.log('✅ Report approved, topic hidden:', report.topic_id);
+
+        res.json({
+            message: "Report approved and topic hidden",
+            report: reportResult.rows[0]
+        });
+    } catch (err) {
+        console.error("Error approving report:", err);
+        res.status(500).json({ error: "Server error" });
+    }
+});
+
+/**
+ * PUT /api/topic-reports/:id/deny
+ * Deny a report and keep the topic visible
+ */
+app.put("/api/topic-reports/:id/deny", async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { reviewedBy, notes } = req.body;
+
+        const reportCheck = await pool.query(
+            `SELECT * FROM topic_reports WHERE id = $1`,
+            [id]
+        );
+
+        if (reportCheck.rows.length === 0) {
+            return res.status(404).json({ error: "Report not found" });
+        }
+
+        const report = reportCheck.rows[0];
+
+        if (report.status !== 'pending_review') {
+            return res.status(400).json({
+                error: "Report is not in pending_review status",
+                currentStatus: report.status
+            });
+        }
+
+        // Update the report status
+        const result = await pool.query(
+            `UPDATE topic_reports
+             SET status = 'reviewed',
+                 reviewed_at = NOW(),
+                 reviewed_by = $1,
+                 review_action = 'denied',
+                 notes = $2
+             WHERE id = $3
+             RETURNING *`,
+            [reviewedBy || 'admin', notes || 'Report denied - topic remains visible', id]
+        );
+
+        console.log('❌ Report denied, topic remains visible:', report.topic_id);
+
+        res.json({
+            message: "Report denied and topic remains visible",
+            report: result.rows[0]
+        });
+    } catch (err) {
+        console.error("Error denying report:", err);
         res.status(500).json({ error: "Server error" });
     }
 });

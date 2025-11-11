@@ -3,6 +3,7 @@ import React from "react";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import MainApp from "./MainApp"; // Your current App component will become MainApp
 import AdminAds from "./AdminAds";
+import AdminReports from './AdminReports';
 
 export default function App() {
     return (
@@ -10,6 +11,7 @@ export default function App() {
             <Routes>
                 <Route path="/" element={<MainApp />} />
                 <Route path="/admin/ads" element={<AdminAds />} />
+                <Route path="/admin/reports" element={<AdminReports />} />
             </Routes>
         </Router>
     );
