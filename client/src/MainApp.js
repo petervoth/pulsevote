@@ -1544,11 +1544,19 @@ export default function MainApp() {
         }
 
         const handleMoveEnd = () => {
-            updateChoropleth(map);
+            // Don't recalculate during globe rotation - only when user manually moves/zooms
+            if (!useGlobe) {
+                updateChoropleth(map);
+            }
         };
 
+        // Initial calculation
         updateChoropleth(map);
-        map.on('moveend', handleMoveEnd);
+
+        // Only listen to moveend in 2D mode
+        if (!useGlobe) {
+            map.on('moveend', handleMoveEnd);
+        }
 
         return () => {
             map.off('moveend', handleMoveEnd);
