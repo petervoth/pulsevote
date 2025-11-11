@@ -1550,15 +1550,22 @@ export default function MainApp() {
             }
         };
 
+        const handleZoomEnd = () => {
+            // Always recalculate on zoom (both 2D and 3D) to adjust grid size
+            updateChoropleth(map);
+        };
+
         // Initial calculation
         updateChoropleth(map);
 
-        // Only listen to moveend in 2D mode
+        // Listen to zoom in both modes, but moveend only in 2D mode
+        map.on('zoomend', handleZoomEnd);
         if (!useGlobe) {
             map.on('moveend', handleMoveEnd);
         }
 
         return () => {
+            map.off('zoomend', handleZoomEnd);
             map.off('moveend', handleMoveEnd);
             const layerId = 'choropleth-layer';
             const sourceId = 'choropleth-grid';
