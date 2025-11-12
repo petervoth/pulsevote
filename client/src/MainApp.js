@@ -1322,94 +1322,94 @@ export default function MainApp() {
         function updatePointMap(map, points) {
             if (!map.isStyleLoaded()) return;
 
-            const stanceGroups = {
-                "-No": { color: STANCE_COLOR["-No"], points: [] },
-                "No": { color: STANCE_COLOR["No"], points: [] },
-                "Neutral": { color: STANCE_COLOR["Neutral"], points: [] },
-                "Yes": { color: STANCE_COLOR["Yes"], points: [] },
-                "Yes+": { color: STANCE_COLOR["Yes+"], points: [] }
-            };
+            const sourceId = 'pointmap-combined';
+            const layerId = 'pointmap-layer-combined';
 
-            points.forEach(p => {
-                if (stanceGroups[p.stance]) {
-                    stanceGroups[p.stance].points.push(p);
-                }
+            // Remove old layers if they exist
+            const oldLayers = ["-No", "No", "Neutral", "Yes", "Yes+"].map(s => `pointmap-layer-${s}`);
+            oldLayers.forEach(layer => {
+                if (map.getLayer(layer)) map.removeLayer(layer);
+            });
+            const oldSources = ["-No", "No", "Neutral", "Yes", "Yes+"].map(s => `pointmap-${s}`);
+            oldSources.forEach(source => {
+                if (map.getSource(source)) map.removeSource(source);
             });
 
-            // Render in reverse order so all colors show equally
-            const stanceOrder = ["Yes+", "Yes", "Neutral", "No", "-No"];
-
-            stanceOrder.forEach(stance => {
-                const data = stanceGroups[stance];
-                if (!data || data.points.length === 0) return;
-
-                const sourceId = `pointmap-${stance}`;
-                const layerId = `pointmap-layer-${stance}`;
-
-                const geojson = {
-                    type: 'FeatureCollection',
-                    features: data.points.map(p => ({
-                        type: 'Feature',
-                        geometry: {
-                            type: 'Point',
-                            coordinates: [Number(p.lng), Number(p.lat)]
-                        },
-                        properties: {
-                            intensity: Number(p.intensity) || 35
-                        }
-                    }))
-                };
-
-                if (map.getLayer(layerId)) {
-                    map.removeLayer(layerId);
+            // Create a single GeoJSON with all points, colored by stance
+            const features = points.map(p => ({
+                type: 'Feature',
+                geometry: {
+                    type: 'Point',
+                    coordinates: [Number(p.lng), Number(p.lat)]
+                },
+                properties: {
+                    stance: p.stance,
+                    color: STANCE_COLOR[p.stance] || '#888'
                 }
-                if (map.getSource(sourceId)) {
-                    map.removeSource(sourceId);
+            }));
+
+            const geojson = {
+                type: 'FeatureCollection',
+                features
+            };
+
+            if (map.getLayer(layerId)) {
+                map.removeLayer(layerId);
+            }
+            if (map.getSource(sourceId)) {
+                map.removeSource(sourceId);
+            }
+
+            map.addSource(sourceId, {
+                type: 'geojson',
+                data: geojson
+            });
+
+            map.addLayer({
+                id: layerId,
+                type: 'circle',
+                source: sourceId,
+                paint: {
+                    'circle-radius': [
+                        'interpolate',
+                        ['linear'],
+                        ['zoom'],
+                        2, 3,      // Small when zoomed out
+                        6, 5,
+                        12, 10     // Larger when zoomed in
+                    ],
+                    'circle-color': ['get', 'color'],  // Get color from feature properties
+                    'circle-opacity': 0.65,    // Semi-transparent for blending
+                    'circle-blur': 0.3,        // Slight blur for smoother color mixing
+                    'circle-stroke-width': 0.5,
+                    'circle-stroke-color': '#fff',
+                    'circle-stroke-opacity': 0.4
                 }
-
-                map.addSource(sourceId, {
-                    type: 'geojson',
-                    data: geojson
-                });
-
-                map.addLayer({
-                    id: layerId,
-                    type: 'circle',
-                    source: sourceId,
-                    paint: {
-                        'circle-radius': [
-                            'interpolate',
-                            ['linear'],
-                            ['zoom'],
-                            2, 3,      // Smaller at zoom 2
-                            6, 5,      // Medium at zoom 6
-                            12, 10     // Larger at zoom 12
-                        ],
-                        'circle-color': data.color,
-                        'circle-opacity': 0.6,     // Lower opacity so colors blend better
-                        'circle-blur': 0.2,        // Slight blur for smoother appearance
-                        'circle-stroke-width': 0.5,
-                        'circle-stroke-color': '#fff',
-                        'circle-stroke-opacity': 0.3
-                    }
-                });
             });
         }
 
         updatePointMap(map, heatPoints);
 
         return () => {
-            const stances = ["-No", "No", "Neutral", "Yes", "Yes+"];
-            stances.forEach(stance => {
-                const layerId = `pointmap-layer-${stance}`;
-                const sourceId = `pointmap-${stance}`;
-                if (map.getLayer(layerId)) {
-                    map.removeLayer(layerId);
-                }
-                if (map.getSource(sourceId)) {
-                    map.removeSource(sourceId);
-                }
+            const layerId = 'pointmap-layer-combined';
+            const sourceId = 'pointmap-combined';
+
+            // Also clean up old separate layers
+            const oldLayers = ["-No", "No", "Neutral", "Yes", "Yes+"].map(s => `pointmap-layer-${s}`);
+            oldLayers.forEach(layer => {
+                if (map.getLayer(layer)) map.removeLayer(layer);
             });
+            const oldSources = ["-No", "No", "Neutral", "Yes", "Yes+"].map(s => `pointmap-${s}`);
+            oldSources.forEach(source => {
+                if (map.getSource(source)) map.removeSource(source);
+            });
+
+            if (map.getLayer(layerId)) {
+                map.removeLayer(layerId);
+            }
+            if (map.getSource(sourceId)) {
+                map.removeSource(sourceId);
+            }
         };
     }, [heatPoints, selectedTopic, selectedMapStyle, mapStyleLoaded]);
 
