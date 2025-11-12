@@ -1336,8 +1336,12 @@ export default function MainApp() {
                 }
             });
 
-            Object.entries(stanceGroups).forEach(([stance, data]) => {
-                if (data.points.length === 0) return;
+            // Render in reverse order so all colors show equally
+            const stanceOrder = ["Yes+", "Yes", "Neutral", "No", "-No"];
+
+            stanceOrder.forEach(stance => {
+                const data = stanceGroups[stance];
+                if (!data || data.points.length === 0) return;
 
                 const sourceId = `pointmap-${stance}`;
                 const layerId = `pointmap-layer-${stance}`;
@@ -1377,22 +1381,16 @@ export default function MainApp() {
                             'interpolate',
                             ['linear'],
                             ['zoom'],
-                            2, 4,      // At zoom 2, radius is 4px
-                            6, 6,      // At zoom 6, radius is 6px
-                            12, 12     // At zoom 12, radius is 12px
+                            2, 3,      // Smaller at zoom 2
+                            6, 5,      // Medium at zoom 6
+                            12, 10     // Larger at zoom 12
                         ],
                         'circle-color': data.color,
-                        'circle-opacity': 0.8,     // High opacity to stay visible
-                        'circle-blur': 0,          // No blur - crisp points
-                        'circle-stroke-width': [
-                            'interpolate',
-                            ['linear'],
-                            ['zoom'],
-                            2, 0.5,    // Thin stroke when zoomed out
-                            12, 1.5    // Thicker stroke when zoomed in
-                        ],
+                        'circle-opacity': 0.6,     // Lower opacity so colors blend better
+                        'circle-blur': 0.2,        // Slight blur for smoother appearance
+                        'circle-stroke-width': 0.5,
                         'circle-stroke-color': '#fff',
-                        'circle-stroke-opacity': 0.6
+                        'circle-stroke-opacity': 0.3
                     }
                 });
             });
