@@ -1313,13 +1313,13 @@ export default function MainApp() {
         };
     }, [mapStyleLoaded, selectedTopic, twinklePoints]);
 
-    // Update heatmap visualization
+    // Update point map visualization
     useEffect(() => {
         const map = mapRef.current;
         if (!map || !mapStyleLoaded || !selectedTopic || heatPoints.length === 0) return;
         if (selectedMapStyle !== 'heatmap') return;
 
-        function updateHeatmap(map, points) {
+        function updatePointMap(map, points) {
             if (!map.isStyleLoaded()) return;
 
             const stanceGroups = {
@@ -1339,8 +1339,8 @@ export default function MainApp() {
             Object.entries(stanceGroups).forEach(([stance, data]) => {
                 if (data.points.length === 0) return;
 
-                const sourceId = `heatmap-${stance}`;
-                const layerId = `heatmap-layer-${stance}`;
+                const sourceId = `pointmap-${stance}`;
+                const layerId = `pointmap-layer-${stance}`;
 
                 const geojson = {
                     type: 'FeatureCollection',
@@ -1377,24 +1377,34 @@ export default function MainApp() {
                             'interpolate',
                             ['linear'],
                             ['zoom'],
-                            0, 1,
-                            12, 35
+                            2, 4,      // At zoom 2, radius is 4px
+                            6, 6,      // At zoom 6, radius is 6px
+                            12, 12     // At zoom 12, radius is 12px
                         ],
                         'circle-color': data.color,
-                        'circle-opacity': 0.4,
-                        'circle-blur': 0.8
+                        'circle-opacity': 0.8,     // High opacity to stay visible
+                        'circle-blur': 0,          // No blur - crisp points
+                        'circle-stroke-width': [
+                            'interpolate',
+                            ['linear'],
+                            ['zoom'],
+                            2, 0.5,    // Thin stroke when zoomed out
+                            12, 1.5    // Thicker stroke when zoomed in
+                        ],
+                        'circle-stroke-color': '#fff',
+                        'circle-stroke-opacity': 0.6
                     }
                 });
             });
         }
 
-        updateHeatmap(map, heatPoints);
+        updatePointMap(map, heatPoints);
 
         return () => {
             const stances = ["-No", "No", "Neutral", "Yes", "Yes+"];
             stances.forEach(stance => {
-                const layerId = `heatmap-layer-${stance}`;
-                const sourceId = `heatmap-${stance}`;
+                const layerId = `pointmap-layer-${stance}`;
+                const sourceId = `pointmap-${stance}`;
                 if (map.getLayer(layerId)) {
                     map.removeLayer(layerId);
                 }
