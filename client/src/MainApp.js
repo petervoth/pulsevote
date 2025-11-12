@@ -1380,7 +1380,7 @@ export default function MainApp() {
                     ],
                     'circle-color': ['get', 'color'],  // Get color from feature properties
                     'circle-opacity': 0.65,    // Semi-transparent for blending
-                    'circle-blur': 0.3,        // Slight blur for smoother color mixing
+                    'circle-blur': 0.3,        // Slight blur for smoother color mix
                     'circle-stroke-width': 0.5,
                     'circle-stroke-color': '#fff',
                     'circle-stroke-opacity': 0.4
