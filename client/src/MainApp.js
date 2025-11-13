@@ -149,8 +149,8 @@ function calculateDistance(lat1, lon1, lat2, lon2) {
 }
 
 function getZoomLevel(zoom) {
-    if (zoom < 5) return 'countries';
-    if (zoom < 8) return 'states';
+    if (zoom < 2.5) return 'countries';
+    if (zoom < 4) return 'states';
     return 'counties';
 }
 
