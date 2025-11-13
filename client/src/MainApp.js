@@ -148,6 +148,12 @@ function calculateDistance(lat1, lon1, lat2, lon2) {
     return R * c;
 }
 
+function getZoomLevel(zoom) {
+    if (zoom < 5) return 'countries';
+    if (zoom < 8) return 'states';
+    return 'counties';
+}
+
 function getAvgBoxColor(avg) {
     if (avg === "–") return "avg-neutral";
     if (avg < -1) return 'stance-no-strong';
@@ -442,6 +448,7 @@ export default function MainApp() {
     const location = useLocation();
 
     const [useMapView, setUseMapView] = useState(true);
+    const [choroplethLevel, setChoroplethLevel] = useState('countries'); // 'countries', 'states', or 'counties'
     const [visibleBounds, setVisibleBounds] = useState(null);
     const [useGlobe, setUseGlobe] = useState(() => {
         const savedGlobe = localStorage.getItem('useGlobe');
@@ -1602,21 +1609,45 @@ export default function MainApp() {
         if (!map || !mapStyleLoaded || !selectedTopic || heatPoints.length === 0) return;
         if (selectedMapStyle !== 'custom-choropleth') return;
 
-        async function loadCustomChoropleth() {
-            try {
-                const paths = [
-                    '/custom.geo.json',
-                    '/custom.geo',
-                    `${process.env.PUBLIC_URL}/custom.geo.json`,
-                    `${process.env.PUBLIC_URL}/custom.geo`
-                ];
+        let currentLevel = null;
 
+        async function loadChoroplethForZoom(zoom) {
+            const level = getZoomLevel(zoom);
+
+            // Don't reload if we're already showing this level
+            if (currentLevel === level) return;
+            currentLevel = level;
+            setChoroplethLevel(level);
+
+            try {
                 let geoJSONData = null;
-                for (const path of paths) {
+
+                // Try to load the appropriate file based on zoom level
+                const paths = {
+                    'countries': [
+                        '/custom.geo.json',
+                        '/countries.geo.json',
+                        `${process.env.PUBLIC_URL}/custom.geo.json`
+                    ],
+                    'states': [
+                        '/states.geo.json',
+                        '/adm1.geo.json',
+                        `${process.env.PUBLIC_URL}/states.geo.json`
+                    ],
+                    'counties': [
+                        '/counties.geo.json',
+                        '/adm2.geo.json',
+                        `${process.env.PUBLIC_URL}/counties.geo.json`
+                    ]
+                };
+
+                // Try each path for the current level
+                for (const path of paths[level]) {
                     try {
                         const response = await fetch(path);
                         if (response.ok) {
                             geoJSONData = await response.json();
+                            console.log(`✅ Loaded ${level} data from ${path}`);
                             break;
                         }
                     } catch (err) {
@@ -1624,36 +1655,58 @@ export default function MainApp() {
                     }
                 }
 
+                // Fallback to countries if higher detail levels aren't available
+                if (!geoJSONData && level !== 'countries') {
+                    console.warn(`⚠️ ${level} data not found, falling back to countries`);
+                    for (const path of paths['countries']) {
+                        try {
+                            const response = await fetch(path);
+                            if (response.ok) {
+                                geoJSONData = await response.json();
+                                currentLevel = 'countries';
+                                setChoroplethLevel('countries');
+                                break;
+                            }
+                        } catch (err) {
+                            continue;
+                        }
+                    }
+                }
+
                 if (!geoJSONData) {
-                    console.error('Could not load custom GeoJSON');
+                    console.error('❌ Could not load any choropleth data');
                     return;
                 }
 
-                if (!map.isStyleLoaded()) {
-                    return;
-                }
+                if (!map.isStyleLoaded()) return;
 
-                renderCustomChoropleth(map, geoJSONData);
+                renderCustomChoropleth(map, geoJSONData, level);
 
             } catch (error) {
-                console.error('Error loading custom GeoJSON:', error);
+                console.error('Error loading choropleth:', error);
             }
         }
 
-        function renderCustomChoropleth(map, geoJSONData) {
+        function renderCustomChoropleth(map, geoJSONData, level) {
             const sourceId = 'custom-choropleth';
             const layerId = 'custom-choropleth-layer';
+            const outlineLayerId = 'custom-choropleth-outline';
 
-            if (map.getLayer(layerId)) {
-                map.removeLayer(layerId);
-            }
+            // Remove existing layers
+            [layerId, outlineLayerId].forEach(id => {
+                if (map.getLayer(id)) {
+                    map.removeLayer(id);
+                }
+            });
+
             if (map.getSource(sourceId)) {
                 map.removeSource(sourceId);
             }
 
+            // Calculate average stance for each region
             const featuresWithColors = geoJSONData.features.map(feature => {
                 const avg = calculateAvgForFeature(feature);
-                let color = 'rgba(0,0,0,0)';
+                let color = 'rgba(128, 128, 128, 0.1)'; // Default gray for no data
 
                 if (avg !== null) {
                     if (avg < -1) color = STANCE_COLOR["-No"];
@@ -1668,7 +1721,8 @@ export default function MainApp() {
                     properties: {
                         ...feature.properties,
                         avg: avg,
-                        color: color
+                        color: color,
+                        hasData: avg !== null
                     }
                 };
             });
@@ -1683,23 +1737,60 @@ export default function MainApp() {
                 data: coloredGeoJSON
             });
 
+            // Add fill layer
             map.addLayer({
                 id: layerId,
                 type: 'fill',
                 source: sourceId,
                 paint: {
                     'fill-color': ['get', 'color'],
-                    'fill-opacity': 0.6,
-                    'fill-outline-color': '#666'
+                    'fill-opacity': [
+                        'case',
+                        ['get', 'hasData'],
+                        0.6,
+                        0.1  // Very transparent for regions with no data
+                    ]
                 }
+            });
+
+            // Add outline layer for better definition at higher zooms
+            map.addLayer({
+                id: outlineLayerId,
+                type: 'line',
+                source: sourceId,
+                paint: {
+                    'line-color': darkMode ? '#666' : '#999',
+                    'line-width': [
+                        'interpolate',
+                        ['linear'],
+                        ['zoom'],
+                        1, 0.5,    // Thin at low zoom
+                        8, 1.5     // Thicker at high zoom
+                    ],
+                    'line-opacity': 0.5
+                }
+            });
+
+            // Add hover effect
+            map.on('mousemove', layerId, (e) => {
+                map.getCanvas().style.cursor = 'pointer';
+            });
+
+            map.on('mouseleave', layerId, () => {
+                map.getCanvas().style.cursor = '';
             });
 
             // Add click handler for popups
             map.on('click', layerId, (e) => {
                 if (e.features.length > 0) {
                     const feature = e.features[0];
-                    const name = feature.properties.name || feature.properties.NAME || 'Region';
+                    const name = feature.properties.shapeName ||
+                        feature.properties.name ||
+                        feature.properties.NAME ||
+                        feature.properties.NAME_1 ||
+                        'Region';
                     const avg = feature.properties.avg;
+                    const hasData = feature.properties.hasData;
 
                     new maplibregl.Popup()
                         .setLngLat(e.lngLat)
@@ -1713,23 +1804,25 @@ export default function MainApp() {
                             min-width: 150px;
                         ">
                             <strong style="font-size: 1.1rem;">${name}</strong><br/>
-                            <span style="font-size: 1.3rem; font-weight: bold; color: #0b63a4;">
-                                ${avg !== null ? parseFloat(avg).toFixed(2) : 'No data'}
-                            </span>
-                            ${avg !== null ? '<div style="font-size: 0.85rem; color: #666; margin-top: 4px;">Average Score</div>' : ''}
+                            ${hasData ? `
+                                <span style="font-size: 1.3rem; font-weight: bold; color: #0b63a4;">
+                                    ${parseFloat(avg).toFixed(2)}
+                                </span>
+                                <div style="font-size: 0.85rem; color: #666; margin-top: 4px;">
+                                    Average Score
+                                </div>
+                            ` : `
+                                <span style="font-size: 0.9rem; color: #999; margin-top: 8px; display: block;">
+                                    No votes in this region
+                                </span>
+                            `}
+                            <div style="font-size: 0.75rem; color: #999; margin-top: 8px;">
+                                ${level === 'countries' ? '🌍 Country' : level === 'states' ? '📍 State/Province' : '🏘️ County/District'}
+                            </div>
                         </div>
                     `)
                         .addTo(map);
                 }
-            });
-
-            // Change cursor on hover
-            map.on('mouseenter', layerId, () => {
-                map.getCanvas().style.cursor = 'pointer';
-            });
-
-            map.on('mouseleave', layerId, () => {
-                map.getCanvas().style.cursor = '';
             });
         }
 
@@ -1779,20 +1872,36 @@ export default function MainApp() {
             return totalScore / pointsInFeature.length;
         }
 
-        loadCustomChoropleth();
+        // Initial load
+        const initialZoom = map.getZoom();
+        loadChoroplethForZoom(initialZoom);
+
+        // Listen for zoom changes
+        const handleZoomEnd = () => {
+            const zoom = map.getZoom();
+            loadChoroplethForZoom(zoom);
+        };
+
+        map.on('zoomend', handleZoomEnd);
 
         return () => {
+            map.off('zoomend', handleZoomEnd);
             const layerId = 'custom-choropleth-layer';
+            const outlineLayerId = 'custom-choropleth-outline';
             const sourceId = 'custom-choropleth';
 
             // Remove event listeners
             map.off('click', layerId);
             map.off('mouseenter', layerId);
             map.off('mouseleave', layerId);
+            map.off('mousemove', layerId);
 
-            if (map.getLayer(layerId)) {
-                map.removeLayer(layerId);
-            }
+            [layerId, outlineLayerId].forEach(id => {
+                if (map.getLayer(id)) {
+                    map.removeLayer(id);
+                }
+            });
+
             if (map.getSource(sourceId)) {
                 map.removeSource(sourceId);
             }
