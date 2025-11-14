@@ -97,6 +97,22 @@ const BASE_MAP_STYLES = {
         getTiles: () => [
             'https://tiles.stadiamaps.com/tiles/stamen_watercolor/{z}/{x}/{y}.jpg'
         ]
+    },
+    // Dark matter (always dark, nice alternative to standard dark)
+    darkMatter: {
+        name: 'Dark Matter',
+        icon: '🌑',
+        getTiles: () => [
+            'https://a.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png'
+        ]
+    },
+    // Positron (always light, clean minimal style)
+    positron: {
+        name: 'Positron',
+        icon: '⚪',
+        getTiles: () => [
+            'https://a.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png'
+        ]
     }
 };
 
