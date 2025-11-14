@@ -91,11 +91,11 @@ const BASE_MAP_STYLES = {
             'https://tile.opentopomap.org/{z}/{x}/{y}.png'
         ]
     },
-    watercolor: {
-        name: 'Watercolor',
-        icon: '🎨',
+    esriOcean: {
+        name: 'Ocean',
+        icon: '🌊',
         getTiles: () => [
-            'https://tiles.stadiamaps.com/tiles/stamen_watercolor/{z}/{x}/{y}.jpg'
+            'https://server.arcgisonline.com/ArcGIS/rest/services/Ocean/World_Ocean_Base/MapServer/tile/{z}/{y}/{x}'
         ]
     },
     // Dark matter (always dark, nice alternative to standard dark)
