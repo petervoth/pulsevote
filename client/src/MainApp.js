@@ -69,6 +69,37 @@ const FILTERED_WORDS = [
     "asshole",
 ];
 
+const BASE_MAP_STYLES = {
+    standard: {
+        name: 'Standard',
+        icon: '🗺️',
+        getTiles: (darkMode) => darkMode
+            ? ['https://a.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png']
+            : ['https://tile.openstreetmap.org/{z}/{x}/{y}.png']
+    },
+    satellite: {
+        name: 'Satellite',
+        icon: '🛰️',
+        getTiles: () => [
+            'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'
+        ]
+    },
+    terrain: {
+        name: 'Terrain',
+        icon: '⛰️',
+        getTiles: () => [
+            'https://tile.opentopomap.org/{z}/{x}/{y}.png'
+        ]
+    },
+    watercolor: {
+        name: 'Watercolor',
+        icon: '🎨',
+        getTiles: () => [
+            'https://tiles.stadiamaps.com/tiles/stamen_watercolor/{z}/{x}/{y}.jpg'
+        ]
+    }
+};
+
 function containsFilteredWords(text) {
     const lowerText = text.toLowerCase();
     return FILTERED_WORDS.some(word => lowerText.includes(word));
@@ -374,6 +405,11 @@ export default function MainApp() {
     const [selectedMapStyle, setSelectedMapStyle] = useState(() => {
         const savedStyle = localStorage.getItem('mapVisualizationStyle');
         return savedStyle || "choropleth";
+    });
+
+    const [baseMapStyle, setBaseMapStyle] = useState(() => {
+        const savedStyle = localStorage.getItem('baseMapStyle');
+        return savedStyle || 'standard';
     });
 
     const [aboutText, setAboutText] = useState('');
@@ -979,6 +1015,8 @@ export default function MainApp() {
     useEffect(() => {
         if (mapRef.current || !mapContainerRef.current) return;
 
+        const tiles = BASE_MAP_STYLES[baseMapStyle].getTiles(darkMode);
+
         const map = new maplibregl.Map({
             container: mapContainerRef.current,
             style: {
@@ -986,13 +1024,17 @@ export default function MainApp() {
                 sources: {
                     'osm': {
                         type: 'raster',
-                        tiles: darkMode
-                            ? ['https://a.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png']
-                            : ['https://tile.openstreetmap.org/{z}/{x}/{y}.png'],
+                        tiles: tiles,
                         tileSize: 256,
-                        attribution: darkMode
-                            ? '© OpenStreetMap contributors © CARTO'
-                            : '© OpenStreetMap contributors'
+                        attribution: baseMapStyle === 'satellite'
+                            ? '© Esri'
+                            : baseMapStyle === 'terrain'
+                                ? '© OpenTopoMap'
+                                : baseMapStyle === 'watercolor'
+                                    ? '© Stamen Design'
+                                    : darkMode
+                                        ? '© OpenStreetMap contributors © CARTO'
+                                        : '© OpenStreetMap contributors'
                     }
                 },
                 layers: [
@@ -1005,7 +1047,7 @@ export default function MainApp() {
                     }
                 ],
                 projection: {
-                    type: 'mercator'  // Start with mercator, will toggle to globe
+                    type: 'mercator'
                 }
             },
             center: [0, 20],
@@ -1129,24 +1171,22 @@ export default function MainApp() {
         };
     }, [useGlobe, mapStyleLoaded]);
 
-    // Update map style when dark mode changes
+    // Update map style when dark mode OR base map style changes
     useEffect(() => {
         if (!mapRef.current) return;
 
         const map = mapRef.current;
-
-        // Store current center and zoom before style change
         const center = map.getCenter();
         const zoom = map.getZoom();
+
+        const tiles = BASE_MAP_STYLES[baseMapStyle].getTiles(darkMode);
 
         const newStyle = {
             version: 8,
             sources: {
                 'osm': {
                     type: 'raster',
-                    tiles: darkMode
-                        ? ['https://a.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png']
-                        : ['https://tile.openstreetmap.org/{z}/{x}/{y}.png'],
+                    tiles: tiles,
                     tileSize: 256
                 }
             },
@@ -1161,27 +1201,23 @@ export default function MainApp() {
 
         map.setStyle(newStyle);
 
-        // Wait for style to load, then restore position and trigger state update
         map.once('styledata', () => {
             map.setCenter(center);
             map.setZoom(zoom);
 
-            // Update visible bounds to trigger stats recalculation
             const bounds = map.getBounds();
             setVisibleBounds({
                 getSouthWest: () => ({ lat: bounds.getSouth(), lng: bounds.getWest() }),
                 getNorthEast: () => ({ lat: bounds.getNorth(), lng: bounds.getEast() })
             });
 
-            // Force re-render by toggling state
             setMapStyleLoaded(false);
             setTimeout(() => {
                 setMapStyleLoaded(true);
-                // Trigger moveend after a short delay to ensure layers are ready
                 setTimeout(() => map.fire('moveend'), 50);
             }, 0);
         });
-    }, [darkMode]);
+    }, [darkMode, baseMapStyle]);
 
     // Twinkle points (ambient visualization)
     useEffect(() => {
@@ -1983,6 +2019,11 @@ export default function MainApp() {
     useEffect(() => {
         localStorage.setItem('mapVisualizationStyle', selectedMapStyle);
     }, [selectedMapStyle]);
+
+    // Save base map style preference to localStorage
+    useEffect(() => {
+        localStorage.setItem('baseMapStyle', baseMapStyle);
+    }, [baseMapStyle]);
 
     useEffect(() => {
         async function fetchLiveAds() {
@@ -3024,6 +3065,51 @@ A lone Canadian data scientist has built this site and runs everything independe
                         <button className="modal-close" onClick={() => setMapOptionsOpen(false)}>✕</button>
                         <h2 className="modal-title">Map Visualization Options</h2>
                         <div className="modal-body">
+                            {/* Base Map Style Section */}
+                            <div style={{ marginBottom: '1.5rem' }}>
+                                <h3 style={{
+                                    marginBottom: '1rem',
+                                    color: darkMode ? '#e0e0e0' : '#333',
+                                    fontSize: '1rem'
+                                }}>
+                                    Base Map Style
+                                </h3>
+                                <div style={{
+                                    display: 'grid',
+                                    gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))',
+                                    gap: '0.75rem'
+                                }}>
+                                    {Object.entries(BASE_MAP_STYLES).map(([key, style]) => (
+                                        <div
+                                            key={key}
+                                            onClick={() => setBaseMapStyle(key)}
+                                            style={{
+                                                padding: '1rem',
+                                                border: `3px solid ${baseMapStyle === key ? '#0b63a4' : (darkMode ? '#444' : '#ddd')}`,
+                                                borderRadius: '12px',
+                                                textAlign: 'center',
+                                                cursor: 'pointer',
+                                                backgroundColor: baseMapStyle === key
+                                                    ? (darkMode ? '#1a3a52' : '#e3f2fd')
+                                                    : (darkMode ? '#2d2d2d' : '#fff'),
+                                                transition: 'all 0.2s ease'
+                                            }}
+                                        >
+                                            <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>
+                                                {style.icon}
+                                            </div>
+                                            <span style={{
+                                                fontWeight: 'bold',
+                                                fontSize: '0.85rem',
+                                                color: darkMode ? '#e0e0e0' : '#333'
+                                            }}>
+                                                {style.name}
+                                            </span>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+
                             {/* Globe Toggle */}
                             <div style={{
                                 marginBottom: '1.5rem',
