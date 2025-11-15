@@ -975,6 +975,142 @@ app.put("/api/ad-submissions/:id/reject", async (req, res) => {
 });
 
 // ===========================
+// DONATION ENDPOINTS
+// ===========================
+
+/**
+ * POST /api/stripe/create-donation-intent
+ * Create a PaymentIntent for donations
+ */
+app.post("/api/stripe/create-donation-intent", async (req, res) => {
+    try {
+        const { amount, email, donorName, message } = req.body;
+
+        if (!amount || !email) {
+            return res.status(400).json({ error: "Amount and email are required" });
+        }
+
+        // Validate amount (minimum $1)
+        if (amount < 1) {
+            return res.status(400).json({ error: "Minimum donation amount is $1 USD" });
+        }
+
+        // Create PaymentIntent for immediate capture
+        const paymentIntent = await stripe.paymentIntents.create({
+            amount: Math.round(amount * 100), // Convert to cents
+            currency: 'usd',
+            receipt_email: email,
+            description: `PulseVote Donation${donorName ? ` from ${donorName}` : ''}`,
+            metadata: {
+                donor_name: donorName || 'Anonymous',
+                donor_email: email,
+                message: message || '',
+                type: 'donation'
+            }
+        });
+
+        console.log('💝 Donation Intent created:', paymentIntent.id);
+
+        res.json({
+            clientSecret: paymentIntent.client_secret,
+            paymentIntentId: paymentIntent.id
+        });
+    } catch (error) {
+        console.error('Error creating donation intent:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+/**
+ * POST /api/donations
+ * Record a successful donation
+ */
+app.post("/api/donations", async (req, res) => {
+    try {
+        const { amount, donorName, donorEmail, message, paymentIntentId } = req.body;
+
+        if (!amount || !donorEmail || !paymentIntentId) {
+            return res.status(400).json({
+                error: "Amount, email, and paymentIntentId are required"
+            });
+        }
+
+        // Verify payment was successful
+        try {
+            const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
+
+            if (paymentIntent.status !== 'succeeded') {
+                return res.status(400).json({
+                    error: "Payment not completed",
+                    status: paymentIntent.status
+                });
+            }
+        } catch (stripeError) {
+            console.error('❌ Stripe verification error:', stripeError);
+            return res.status(400).json({ error: "Invalid payment" });
+        }
+
+        // Store donation in database
+        const result = await pool.query(
+            `INSERT INTO donations (
+                donor_name,
+                donor_email,
+                amount_cents,
+                message,
+                payment_intent_id,
+                donated_at
+            ) VALUES ($1, $2, $3, $4, $5, NOW())
+            RETURNING *`,
+            [
+                donorName || 'Anonymous',
+                donorEmail,
+                Math.round(amount * 100),
+                message || null,
+                paymentIntentId
+            ]
+        );
+
+        const donation = result.rows[0];
+        console.log('💝 Donation recorded:', donation.id);
+
+        res.status(201).json({
+            success: true,
+            donation: donation,
+            message: "Thank you for your donation!"
+        });
+    } catch (err) {
+        console.error("❌ Error recording donation:", err);
+        res.status(500).json({ error: "Server error", details: err.message });
+    }
+});
+
+/**
+ * GET /api/donations
+ * Get all donations (admin only - add authentication later)
+ */
+app.get("/api/donations", async (req, res) => {
+    try {
+        const result = await pool.query(
+            `SELECT 
+                id,
+                donor_name,
+                donor_email,
+                amount_cents,
+                message,
+                donated_at
+            FROM donations
+            ORDER BY donated_at DESC
+            LIMIT 100`
+        );
+
+        res.json(result.rows);
+    } catch (err) {
+        console.error("Error fetching donations:", err);
+        res.status(500).json({ error: "Server error" });
+    }
+});
+
+// ===========================
 // TOPIC REPORTS ENDPOINTS
 // ===========================
 

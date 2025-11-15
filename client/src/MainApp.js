@@ -449,6 +449,12 @@ export default function MainApp() {
     const [adFormErrors, setAdFormErrors] = useState({});
     const [adFormSubmitting, setAdFormSubmitting] = useState(false);
 
+    const [donationModalOpen, setDonationModalOpen] = useState(false);
+    const [donationAmount, setDonationAmount] = useState('');
+    const [donorName, setDonorName] = useState('');
+    const [donorEmail, setDonorEmail] = useState('');
+    const [donationMessage, setDonationMessage] = useState('');
+
     const [liveAds, setLiveAds] = useState([]);
     const [homebaseName, setHomebaseName] = useState("Loading...");
 
@@ -2434,6 +2440,7 @@ Create topics, share your stance, and see how opinions cluster across the map. E
 
 Set your homebase, engage with topics that matter to you, and be part of a geo-social movement that brings transparency to public opinion.`}
                             </div>
+
                             <div style={{
                                 display: 'flex',
                                 justifyContent: 'space-around',
@@ -2456,21 +2463,31 @@ No, but setting a homebase unlocks more features.
 Yes! Just click "Create a New Topic" and start engaging.
 
 4. Are there any limitations when making a topic?
-Yes. Though moderation is very minimal on the site, certain words have been blocked to improve the user experience on PulseVote. You are also limited to creating only 1 voting topic in a 24 hour period to reduce spam.
+Yes. Though moderation is very minimal on the site, certain words have been blocked to improve the user experience on PulseVote. No topics about bullying anyone or death threats will be allowed either. You are also limited to creating only 1 voting topic in a 24 hour period to reduce spam.
 
 5. Are there any limitations when voting?
 No! Return to a topic and change your vote as often as you would like. For user-safety, there is no accessible voting history so your most recent selection is always included in the live results.
 
 6. Are these votes legally binding or used anywhere?
-Not yet. In a perfect world, we would trust our police forces to always protect us from any encroachment on our personal freedoms. This in turn would allow us to trust a public voting system without fear of repercussions, harassment, or assault. For now, PulseVote is a thought-experiment to give the world a voice and to show everyone there are more of us than you think.
+Not yet. In a perfect world, we would trust our police to always protect us from any encroachment on our personal freedoms. This in turn would allow us to trust a public voting system without fear of repercussions, harassment, or assault. For now, PulseVote is a thought-experiment to give the world a voice and to show everyone there are more of us than you think.
 
-7. Who runs PulseVote?
-A lone Canadian data scientist has built this site and runs everything independently, there is no "big government" behind this project. Please be patient with him.`
+7. Can I make recommendations to improve the site?
+Absolutely! You can make recommendatins by creating a vote using the PulseVote - Site Suggestions category. Topics with a very high ratio of Yes responses will be considered for the Live site.
+
+8. I like what PulseVote is trying to do, can I make a donation?
+Yes, donations can be made on the same page we sell Advertising. 
+
+9. Who runs PulseVote?
+A lone data scientist has built this site and runs everything independently. There are no secret financial backers or "big government" behind the project.`
                                 )}>F.A.Q.</span>
                                 <span onClick={() => {
                                     setAboutModalOpen(false);
                                     setAdSubmissionOpen(true);
-                                }}>Advertise with Us</span>
+                                }}>Advertise</span>
+                                <span onClick={() => {
+                                    setAboutModalOpen(false);
+                                    setDonationModalOpen(true);
+                                }}>💝 Donate</span>
                             </div>
                         </div>
                     </div>
@@ -2962,6 +2979,221 @@ A lone Canadian data scientist has built this site and runs everything independe
                     </div>
                 </div>
             )}
+
+                    {donationModalOpen && (
+                        <div className="modal-overlay" onClick={() => setDonationModalOpen(false)}>
+                            <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '600px', maxHeight: '90vh', overflowY: 'auto' }}>
+                                <button className="modal-close" onClick={() => setDonationModalOpen(false)}>✕</button>
+                                <h2 className="modal-title">💝 Support PulseVote</h2>
+                                <div className="modal-body">
+                                    <p style={{
+                                        fontSize: '0.95rem',
+                                        color: darkMode ? '#ccc' : '#666',
+                                        marginBottom: '1.5rem',
+                                        textAlign: 'center'
+                                    }}>
+                                        PulseVote is run independently with no financial backers. Your donation helps keep the platform running.
+                                    </p>
+
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                                        {/* Preset donation amounts */}
+                                        <div>
+                                            <label style={{
+                                                display: 'block',
+                                                marginBottom: '0.5rem',
+                                                fontWeight: '600',
+                                                color: darkMode ? '#e0e0e0' : '#333'
+                                            }}>
+                                                Select Amount (USD)
+                                            </label>
+                                            <div style={{
+                                                display: 'grid',
+                                                gridTemplateColumns: 'repeat(4, 1fr)',
+                                                gap: '0.5rem'
+                                            }}>
+                                                {[5, 10, 25, 50].map(amount => (
+                                                    <button
+                                                        key={amount}
+                                                        onClick={() => setDonationAmount(amount.toString())}
+                                                        style={{
+                                                            padding: '0.75rem',
+                                                            border: `2px solid ${donationAmount === amount.toString() ? '#0b63a4' : (darkMode ? '#444' : '#ddd')}`,
+                                                            borderRadius: '6px',
+                                                            background: donationAmount === amount.toString()
+                                                                ? (darkMode ? '#1a3a52' : '#e3f2fd')
+                                                                : (darkMode ? '#2d2d2d' : '#fff'),
+                                                            color: darkMode ? '#e0e0e0' : '#333',
+                                                            cursor: 'pointer',
+                                                            fontWeight: '600',
+                                                            fontSize: '1rem',
+                                                            transition: 'all 0.2s ease'
+                                                        }}
+                                                    >
+                                                        ${amount}
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        </div>
+
+                                        {/* Custom amount */}
+                                        <div>
+                                            <label style={{
+                                                display: 'block',
+                                                marginBottom: '0.5rem',
+                                                fontWeight: '600',
+                                                color: darkMode ? '#e0e0e0' : '#333'
+                                            }}>
+                                                Or Enter Custom Amount
+                                            </label>
+                                            <input
+                                                type="number"
+                                                min="1"
+                                                placeholder="Enter amount in USD"
+                                                value={donationAmount}
+                                                onChange={(e) => setDonationAmount(e.target.value)}
+                                                style={{
+                                                    width: '100%',
+                                                    padding: '0.75rem',
+                                                    borderRadius: '6px',
+                                                    border: `1px solid ${darkMode ? '#444' : '#ddd'}`,
+                                                    fontSize: '1rem',
+                                                    backgroundColor: darkMode ? '#2d2d2d' : '#fff',
+                                                    color: darkMode ? '#e0e0e0' : '#333'
+                                                }}
+                                            />
+                                        </div>
+
+                                        {/* Donor name (optional) */}
+                                        <div>
+                                            <label style={{
+                                                display: 'block',
+                                                marginBottom: '0.5rem',
+                                                fontWeight: '600',
+                                                color: darkMode ? '#e0e0e0' : '#333'
+                                            }}>
+                                                Your Name (optional)
+                                            </label>
+                                            <input
+                                                type="text"
+                                                placeholder="Anonymous"
+                                                value={donorName}
+                                                onChange={(e) => setDonorName(e.target.value)}
+                                                style={{
+                                                    width: '100%',
+                                                    padding: '0.75rem',
+                                                    borderRadius: '6px',
+                                                    border: `1px solid ${darkMode ? '#444' : '#ddd'}`,
+                                                    fontSize: '1rem',
+                                                    backgroundColor: darkMode ? '#2d2d2d' : '#fff',
+                                                    color: darkMode ? '#e0e0e0' : '#333'
+                                                }}
+                                            />
+                                        </div>
+
+                                        {/* Donor email */}
+                                        <div>
+                                            <label style={{
+                                                display: 'block',
+                                                marginBottom: '0.5rem',
+                                                fontWeight: '600',
+                                                color: darkMode ? '#e0e0e0' : '#333'
+                                            }}>
+                                                Email *
+                                            </label>
+                                            <input
+                                                type="email"
+                                                placeholder="your@email.com"
+                                                value={donorEmail}
+                                                onChange={(e) => setDonorEmail(e.target.value)}
+                                                required
+                                                style={{
+                                                    width: '100%',
+                                                    padding: '0.75rem',
+                                                    borderRadius: '6px',
+                                                    border: `1px solid ${darkMode ? '#444' : '#ddd'}`,
+                                                    fontSize: '1rem',
+                                                    backgroundColor: darkMode ? '#2d2d2d' : '#fff',
+                                                    color: darkMode ? '#e0e0e0' : '#333'
+                                                }}
+                                            />
+                                        </div>
+
+                                        {/* Optional message */}
+                                        <div>
+                                            <label style={{
+                                                display: 'block',
+                                                marginBottom: '0.5rem',
+                                                fontWeight: '600',
+                                                color: darkMode ? '#e0e0e0' : '#333'
+                                            }}>
+                                                Message (optional)
+                                            </label>
+                                            <textarea
+                                                placeholder="Leave a message of support..."
+                                                value={donationMessage}
+                                                onChange={(e) => setDonationMessage(e.target.value)}
+                                                rows={3}
+                                                style={{
+                                                    width: '100%',
+                                                    padding: '0.75rem',
+                                                    borderRadius: '6px',
+                                                    border: `1px solid ${darkMode ? '#444' : '#ddd'}`,
+                                                    fontSize: '1rem',
+                                                    resize: 'vertical',
+                                                    backgroundColor: darkMode ? '#2d2d2d' : '#fff',
+                                                    color: darkMode ? '#e0e0e0' : '#333'
+                                                }}
+                                            />
+                                        </div>
+
+                                        <div style={{
+                                            padding: '1rem',
+                                            backgroundColor: darkMode ? '#1a3a52' : '#e3f2fd',
+                                            borderRadius: '8px',
+                                            border: '1px solid #0b63a4',
+                                            textAlign: 'center'
+                                        }}>
+                                            <div style={{
+                                                fontSize: '1.5rem',
+                                                fontWeight: 'bold',
+                                                color: darkMode ? '#e0e0e0' : '#333'
+                                            }}>
+                                                Total: ${donationAmount || '0'} USD
+                                            </div>
+                                        </div>
+
+                                        <button
+                                            disabled={!donationAmount || !donorEmail}
+                                            style={{
+                                                width: '100%',
+                                                padding: '0.75rem',
+                                                fontSize: '1rem',
+                                                fontWeight: '600',
+                                                borderRadius: '6px',
+                                                border: 'none',
+                                                backgroundColor: (!donationAmount || !donorEmail) ? '#999' : '#0b63a4',
+                                                color: '#fff',
+                                                cursor: (!donationAmount || !donorEmail) ? 'not-allowed' : 'pointer',
+                                                opacity: (!donationAmount || !donorEmail) ? 0.6 : 1
+                                            }}
+                                            onClick={() => alert('Stripe integration for donations coming soon!')}
+                                        >
+                                            Donate ${donationAmount || '0'} USD
+                                        </button>
+
+                                        <p style={{
+                                            fontSize: '0.75rem',
+                                            color: darkMode ? '#999' : '#666',
+                                            textAlign: 'center',
+                                            marginTop: '0.5rem'
+                                        }}>
+                                            🙏 Thank you for supporting independent civic technology!
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    )}
 
             {reportModalOpen && (
                 <div className="modal-overlay" onClick={() => setReportModalOpen(false)}>
