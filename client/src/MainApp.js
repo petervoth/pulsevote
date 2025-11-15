@@ -448,6 +448,7 @@ export default function MainApp() {
     });
     const [adFormErrors, setAdFormErrors] = useState({});
     const [adFormSubmitting, setAdFormSubmitting] = useState(false);
+    const [adTermsModalOpen, setAdTermsModalOpen] = useState(false);
 
     const [donationModalOpen, setDonationModalOpen] = useState(false);
     const [donationAmount, setDonationAmount] = useState('');
@@ -2972,7 +2973,169 @@ A lone data scientist has built this site and runs everything independently. The
                                     textAlign: 'center',
                                     marginTop: '0.5rem'
                                 }}>
-                                    By submitting, you agree to our advertising terms. We'll review your ad within 24 hours.
+                                    By submitting, you agree to our{' '}
+                                    <span
+                                        onClick={(e) => {
+                                            e.preventDefault();
+                                            setAdTermsModalOpen(true);
+                                        }}
+                                        style={{
+                                            color: '#0b63a4',
+                                            textDecoration: 'underline',
+                                            cursor: 'pointer',
+                                            fontWeight: '600'
+                                        }}
+                                    >
+                                        advertising terms
+                                    </span>
+                                    . We'll review your ad within 24 hours.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {adTermsModalOpen && (
+                <div className="modal-overlay" onClick={() => setAdTermsModalOpen(false)}>
+                    <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '700px', maxHeight: '90vh', overflowY: 'auto' }}>
+                        <button className="modal-close" onClick={() => setAdTermsModalOpen(false)}>✕</button>
+                        <h2 className="modal-title">Advertising Terms & Conditions</h2>
+                        <div className="modal-body" style={{
+                            fontSize: '0.9rem',
+                            color: darkMode ? '#ccc' : '#444',
+                            lineHeight: '1.6'
+                        }}>
+                            <p style={{ marginBottom: '1.5rem', fontStyle: 'italic' }}>
+                                By submitting an advertisement to PulseVote, you agree to the following terms:
+                            </p>
+
+                            <div style={{ marginBottom: '1.5rem' }}>
+                                <h3 style={{ color: darkMode ? '#e0e0e0' : '#333', marginBottom: '0.5rem' }}>
+                                    1. Content Standards
+                                </h3>
+                                <ul style={{ paddingLeft: '1.5rem', marginTop: '0.5rem' }}>
+                                    <li>Ads must not contain false, misleading, or deceptive content</li>
+                                    <li>No illegal products, services, or activities</li>
+                                    <li>No illegal drugs, or substances</li>
+                                    <li>No hate speech, discrimination, or offensive content</li>
+                                    <li>Must comply with all applicable laws and regulations</li>
+                                </ul>
+                            </div>
+
+                            <div style={{ marginBottom: '1.5rem' }}>
+                                <h3 style={{ color: darkMode ? '#e0e0e0' : '#333', marginBottom: '0.5rem' }}>
+                                    2. Approval & Review
+                                </h3>
+                                <ul style={{ paddingLeft: '1.5rem', marginTop: '0.5rem' }}>
+                                    <li>All ads subject to review and approval before going live</li>
+                                    <li>Platform reserves right to reject any ad without explanation</li>
+                                    <li>Review typically completed within 24-48 hours</li>
+                                    <li>Resubmission allowed if ad is rejected with revisions</li>
+                                </ul>
+                            </div>
+
+                            <div style={{ marginBottom: '1.5rem' }}>
+                                <h3 style={{ color: darkMode ? '#e0e0e0' : '#333', marginBottom: '0.5rem' }}>
+                                    3. Payment & Refunds
+                                </h3>
+                                <ul style={{ paddingLeft: '1.5rem', marginTop: '0.5rem' }}>
+                                    <li>Payment authorized upon submission, charged upon approval</li>
+                                    <li><strong>No refunds</strong> once ad is approved and goes live</li>
+                                    <li>Refunds issued only if ad is rejected during review</li>
+                                    <li>All fees are non-transferable</li>
+                                </ul>
+                            </div>
+
+                            <div style={{ marginBottom: '1.5rem' }}>
+                                <h3 style={{ color: darkMode ? '#e0e0e0' : '#333', marginBottom: '0.5rem' }}>
+                                    4. Ad Specifications
+                                </h3>
+                                <ul style={{ paddingLeft: '1.5rem', marginTop: '0.5rem' }}>
+                                    <li>Must meet image size and format requirements (280x60px recommended, 5MB max)</li>
+                                    <li>Links must be functional and lead to legitimate websites</li>
+                                    <li>No broken links, malware, or phishing attempts</li>
+                                </ul>
+                            </div>
+
+                            <div style={{ marginBottom: '1.5rem' }}>
+                                <h3 style={{ color: darkMode ? '#e0e0e0' : '#333', marginBottom: '0.5rem' }}>
+                                    5. Duration & Placement
+                                </h3>
+                                <ul style={{ paddingLeft: '1.5rem', marginTop: '0.5rem' }}>
+                                    <li>Ad runs for selected duration (7, 14, or 30 days)</li>
+                                    <li>Placement location not guaranteed (feed rotation)</li>
+                                    <li>Platform reserves right to adjust ad frequency</li>
+                                    <li>Start date subject to approval timing</li>
+                                </ul>
+                            </div>
+
+                            <div style={{ marginBottom: '1.5rem' }}>
+                                <h3 style={{ color: darkMode ? '#e0e0e0' : '#333', marginBottom: '0.5rem' }}>
+                                    6. Modifications & Cancellations
+                                </h3>
+                                <ul style={{ paddingLeft: '1.5rem', marginTop: '0.5rem' }}>
+                                    <li>No changes allowed once ad is approved</li>
+                                    <li>No early cancellation refunds</li>
+                                    <li>Platform may remove ads that violate terms at any time</li>
+                                </ul>
+                            </div>
+
+                            <div style={{ marginBottom: '1.5rem' }}>
+                                <h3 style={{ color: darkMode ? '#e0e0e0' : '#333', marginBottom: '0.5rem' }}>
+                                    7. Intellectual Property
+                                </h3>
+                                <ul style={{ paddingLeft: '1.5rem', marginTop: '0.5rem' }}>
+                                    <li>Advertiser owns all ad content rights</li>
+                                    <li>Advertiser grants platform license to display ad</li>
+                                    <li>Must not infringe on third-party copyrights or trademarks</li>
+                                </ul>
+                            </div>
+
+                            <div style={{ marginBottom: '1.5rem' }}>
+                                <h3 style={{ color: darkMode ? '#e0e0e0' : '#333', marginBottom: '0.5rem' }}>
+                                    8. Liability & Warranties
+                                </h3>
+                                <ul style={{ paddingLeft: '1.5rem', marginTop: '0.5rem' }}>
+                                    <li>Advertiser responsible for all ad content accuracy</li>
+                                    <li>Platform not liable for ad performance or click-through rates</li>
+                                    <li>No guarantees on impressions, conversions, or ROI</li>
+                                    <li>Ads shown "as-is" without performance warranties</li>
+                                </ul>
+                            </div>
+
+                            <div style={{ marginBottom: '1.5rem' }}>
+                                <h3 style={{ color: darkMode ? '#e0e0e0' : '#333', marginBottom: '0.5rem' }}>
+                                    9. Indemnification
+                                </h3>
+                                <ul style={{ paddingLeft: '1.5rem', marginTop: '0.5rem' }}>
+                                    <li>Advertiser indemnifies platform against claims arising from ad content</li>
+                                    <li>Advertiser liable for any damages from false/misleading ads</li>
+                                </ul>
+                            </div>
+
+                            <div style={{ marginBottom: '1.5rem' }}>
+                                <h3 style={{ color: darkMode ? '#e0e0e0' : '#333', marginBottom: '0.5rem' }}>
+                                    10. Termination Rights
+                                </h3>
+                                <ul style={{ paddingLeft: '1.5rem', marginTop: '0.5rem' }}>
+                                    <li>Platform may terminate advertiser account for violations</li>
+                                    <li>Platform may remove ads immediately if harmful content detected</li>
+                                </ul>
+                            </div>
+
+                            <div style={{
+                                marginTop: '2rem',
+                                padding: '1rem',
+                                backgroundColor: darkMode ? '#1a3a52' : '#e3f2fd',
+                                borderRadius: '6px',
+                                textAlign: 'center'
+                            }}>
+                                <p style={{ margin: 0, fontWeight: '600' }}>
+                                    Questions? Contact us at{' '}
+                                    <a href="mailto:ads@pulsevote.org" style={{ color: '#0b63a4', textDecoration: 'underline' }}>
+                                        ads@pulsevote.org
+                                    </a>
                                 </p>
                             </div>
                         </div>
