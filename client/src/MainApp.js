@@ -507,7 +507,7 @@ export default function MainApp() {
         return savedGlobe === 'true';
     });
 
-    // GEO FILTER state (add this with your other useState declarations, before the return)
+    // GEO FILTER state 
     const GEO_FILTERS = {
         GLOBAL: 'global',
         WITHIN_10KM: 'within_10km',
@@ -2366,7 +2366,7 @@ export default function MainApp() {
                             aria-label={mapExpanded ? "Shrink map" : "Expand map"}
                             title={mapExpanded ? "Shrink map view" : "Expand map view"}
                         >
-                            {mapExpanded ? '⬇️' : '⬆️'}
+                            {mapExpanded ? '⬆️' : '⬇️'}
                         </button>
                     )}
 
