@@ -1477,7 +1477,7 @@ export default function MainApp() {
                 map.removeSource(sourceId);
             }
         };
-    }, [heatPoints, selectedTopic, selectedMapStyle, mapStyleLoaded]);
+    }, [heatPoints, selectedTopic, selectedMapStyle, mapStyleLoaded, darkMode, useGlobe, baseMapStyle]);
 
     // Update choropleth visualization
     useEffect(() => {
@@ -1660,7 +1660,7 @@ export default function MainApp() {
                 map.removeSource(sourceId);
             }
         };
-    }, [heatPoints, selectedTopic, selectedMapStyle, mapStyleLoaded, darkMode]);
+    }, [heatPoints, selectedTopic, selectedMapStyle, mapStyleLoaded, darkMode, useGlobe, baseMapStyle]);
 
     // Custom choropleth (loads GeoJSON file)
     useEffect(() => {
@@ -1965,7 +1965,7 @@ export default function MainApp() {
                 map.removeSource(sourceId);
             }
         };
-    }, [heatPoints, selectedTopic, selectedMapStyle, mapStyleLoaded, darkMode]);
+    }, [heatPoints, selectedTopic, selectedMapStyle, mapStyleLoaded, darkMode, useGlobe, baseMapStyle]);
 
     // Fetch twinkle points on initial load
     useEffect(() => {
