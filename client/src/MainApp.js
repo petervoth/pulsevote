@@ -2404,7 +2404,11 @@ export default function MainApp() {
 
         let result = uniqueTopics.filter(t => {
             const matchesText = searchText
-                ? t.description?.toLowerCase().includes(searchText.toLowerCase())
+                ? (
+                    t.description?.toLowerCase().includes(searchText.toLowerCase()) ||
+                    t.title?.toLowerCase().includes(searchText.toLowerCase()) ||
+                    String(t.id).toLowerCase().includes(searchText.toLowerCase())
+                )
                 : true;
             const matchesTitle = filterTitle ? t.title === filterTitle : true;
             const created = new Date(t.created_at);
@@ -3932,6 +3936,8 @@ A lone data scientist has built this site and runs everything independently. The
                                     <div className="spotlight-description card">
                                         <p>{selectedTopic.description}<br /><br /><br /></p>
                                         <p className="topic-meta">
+                                            <strong>Topic ID:</strong> {selectedTopic.id}
+                                            <br />
                                             Created {new Date(selectedTopic.created_at).toLocaleDateString()}
                                             <br />
                                             User ID: {selectedTopic.created_by}
