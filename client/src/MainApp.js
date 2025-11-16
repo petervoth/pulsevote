@@ -2407,7 +2407,8 @@ export default function MainApp() {
                 ? (
                     t.description?.toLowerCase().includes(searchText.toLowerCase()) ||
                     t.title?.toLowerCase().includes(searchText.toLowerCase()) ||
-                    String(t.id).toLowerCase().includes(searchText.toLowerCase())
+                    String(t.id).toLowerCase().includes(searchText.toLowerCase()) ||
+                    String(t.created_by).toLowerCase().includes(searchText.toLowerCase())
                 )
                 : true;
             const matchesTitle = filterTitle ? t.title === filterTitle : true;
@@ -2481,7 +2482,7 @@ export default function MainApp() {
         const result = [];
         filteredTopics.forEach((topic, index) => {
             result.push(topic);
-            if ((index + 1) % 8 === 0) {
+            if ((index + 1) % 13 === 0) {   // CHANGE % 13 TO DESIRED INTERVAL FOR AD PLACEMENT FREQUENCY IN TOPIC LIST
                 result.push({ isAd: true, adIndex: Math.floor(index / 8) });
             }
         });
