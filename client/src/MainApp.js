@@ -1866,6 +1866,17 @@ export default function MainApp() {
             const layerId = 'custom-choropleth-layer';
             const outlineLayerId = 'custom-choropleth-outline';
 
+            // ===== CRITICAL: REMOVE OLD EVENT LISTENERS FIRST =====
+            // Remove ALL old event listeners before doing anything else
+            try {
+                map.off('click', layerId);
+                map.off('mouseenter', layerId);
+                map.off('mouseleave', layerId);
+                map.off('mousemove', layerId);
+            } catch (e) {
+                // Ignore errors if listeners don't exist
+            }
+
             // Remove existing layers
             [layerId, outlineLayerId].forEach(id => {
                 if (map.getLayer(id)) {
@@ -1945,8 +1956,9 @@ export default function MainApp() {
                 }
             });
 
-            // Add hover effect
-            map.on('mousemove', layerId, (e) => {
+            // ===== ADD EVENT LISTENERS ONLY ONCE =====
+            // Hover effect - cursor change
+            map.on('mouseenter', layerId, () => {
                 map.getCanvas().style.cursor = 'pointer';
             });
 
@@ -1954,9 +1966,9 @@ export default function MainApp() {
                 map.getCanvas().style.cursor = '';
             });
 
-            // Add click handler for popups
+            // Click handler for popups - ONLY ONE HANDLER
             map.on('click', layerId, (e) => {
-                if (e.features.length > 0) {
+                if (e.features && e.features.length > 0) {
                     const feature = e.features[0];
                     const name = feature.properties.shapeName ||
                         feature.properties.name ||
@@ -1966,35 +1978,41 @@ export default function MainApp() {
                     const avg = feature.properties.avg;
                     const hasData = feature.properties.hasData;
 
+                    // Remove any existing popups first
+                    const existingPopups = document.getElementsByClassName('maplibregl-popup');
+                    while (existingPopups.length > 0) {
+                        existingPopups[0].remove();
+                    }
+
                     new maplibregl.Popup()
                         .setLngLat(e.lngLat)
                         .setHTML(`
-                        <div style="
-                            text-align: center; 
-                            padding: 12px;
-                            background: ${darkMode ? '#2d2d2d' : '#fff'};
-                            color: ${darkMode ? '#e0e0e0' : '#333'};
-                            border-radius: 6px;
-                            min-width: 150px;
-                        ">
-                            <strong style="font-size: 1.1rem;">${name}</strong><br/>
-                            ${hasData ? `
-                                <span style="font-size: 1.3rem; font-weight: bold; color: #0b63a4;">
-                                    ${parseFloat(avg).toFixed(2)}
-                                </span>
-                                <div style="font-size: 0.85rem; color: #666; margin-top: 4px;">
-                                    Average Score
-                                </div>
-                            ` : `
-                                <span style="font-size: 0.9rem; color: #999; margin-top: 8px; display: block;">
-                                    No votes in this region
-                                </span>
-                            `}
-                            <div style="font-size: 0.75rem; color: #999; margin-top: 8px;">
-                                ${level === 'countries' ? '🌍 Country' : level === 'states' ? '📍 State/Province' : '🏘️ County/District'}
+                    <div style="
+                        text-align: center; 
+                        padding: 12px;
+                        background: ${darkMode ? '#2d2d2d' : '#fff'};
+                        color: ${darkMode ? '#e0e0e0' : '#333'};
+                        border-radius: 6px;
+                        min-width: 150px;
+                    ">
+                        <strong style="font-size: 1.1rem;">${name}</strong><br/>
+                        ${hasData ? `
+                            <span style="font-size: 1.3rem; font-weight: bold; color: #0b63a4;">
+                                ${parseFloat(avg).toFixed(2)}
+                            </span>
+                            <div style="font-size: 0.85rem; color: #666; margin-top: 4px;">
+                                Average Score
                             </div>
+                        ` : `
+                            <span style="font-size: 0.9rem; color: #999; margin-top: 8px; display: block;">
+                                No votes in this region
+                            </span>
+                        `}
+                        <div style="font-size: 0.75rem; color: #999; margin-top: 8px;">
+                            ${level === 'countries' ? '🌍 Country' : level === 'states' ? '📍 State/Province' : '🏘️ County/District'}
                         </div>
-                    `)
+                    </div>
+                `)
                         .addTo(map);
                 }
             });
