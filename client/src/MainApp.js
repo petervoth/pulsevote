@@ -1234,11 +1234,21 @@ export default function MainApp() {
                 getNorthEast: () => ({ lat: bounds.getNorth(), lng: bounds.getEast() })
             });
 
+            // Set mapStyleLoaded to false first to trigger cleanup
             setMapStyleLoaded(false);
+
+            // Wait a bit longer for map to fully settle, then set to true
             setTimeout(() => {
                 setMapStyleLoaded(true);
-                setTimeout(() => map.fire('moveend'), 50);
-            }, 0);
+                // Force a moveend event to trigger any bounds-based updates
+                setTimeout(() => {
+                    map.fire('moveend');
+                    // Trigger a manual re-render of visualizations by slightly adjusting zoom
+                    const currentZoom = map.getZoom();
+                    map.setZoom(currentZoom + 0.0001);
+                    setTimeout(() => map.setZoom(currentZoom), 50);
+                }, 100);
+            }, 100); // ← Increased delay from 0 to 100ms
         });
     }, [darkMode, baseMapStyle]);
 
@@ -1385,6 +1395,8 @@ export default function MainApp() {
         if (!map || !mapStyleLoaded || !selectedTopic || heatPoints.length === 0) return;
         if (selectedMapStyle !== 'heatmap') return;
 
+        let timeoutId = null;
+
         function updatePointMap(map, points) {
             if (!map.isStyleLoaded()) return;
 
@@ -1456,7 +1468,18 @@ export default function MainApp() {
 
         updatePointMap(map, heatPoints);
 
+        // Wait a bit longer in globe mode for projection to settle
+        if (useGlobe) {
+            timeoutId = setTimeout(() => {
+                updatePointMap(map, heatPoints);
+            }, 300);
+        } else {
+            updatePointMap(map, heatPoints);
+        }
+
         return () => {
+            if (timeoutId) clearTimeout(timeoutId);
+
             const layerId = 'pointmap-layer-combined';
             const sourceId = 'pointmap-combined';
 
@@ -1484,6 +1507,8 @@ export default function MainApp() {
         const map = mapRef.current;
         if (!map || !mapStyleLoaded || !selectedTopic || heatPoints.length === 0) return;
         if (selectedMapStyle !== 'choropleth') return;
+
+        let timeoutId = null;
 
         function getGridSizeForZoom(zoom) {
             if (zoom <= 2) return 6;
@@ -1642,7 +1667,21 @@ export default function MainApp() {
             map.on('moveend', handleMoveEnd);
         }
 
+        // Wait longer in globe mode for projection to settle
+        if (useGlobe) {
+            timeoutId = setTimeout(() => {
+                updateChoropleth(map);
+                map.on('zoomend', handleZoomEnd);
+            }, 300);
+        } else {
+            updateChoropleth(map);
+            map.on('zoomend', handleZoomEnd);
+            map.on('moveend', handleMoveEnd);
+        }
+
         return () => {
+            if (timeoutId) clearTimeout(timeoutId);
+
             map.off('zoomend', handleZoomEnd);
             map.off('moveend', handleMoveEnd);
             const layerId = 'choropleth-layer';
@@ -1669,6 +1708,7 @@ export default function MainApp() {
         if (selectedMapStyle !== 'custom-choropleth') return;
 
         let currentLevel = null;
+        let timeoutId = null;
 
         async function loadChoroplethForZoom(zoom) {
             const level = getZoomLevel(zoom);
@@ -1679,6 +1719,15 @@ export default function MainApp() {
             setChoroplethLevel(level);
 
             try {
+                // Get current viewport bounds
+                const bounds = map.getBounds();
+                const west = bounds.getWest();
+                const south = bounds.getSouth();
+                const east = bounds.getEast();
+                const north = bounds.getNorth();
+
+                console.log(`📍 Loading ${level} data for viewport:`, { west, south, east, north });
+
                 let geoJSONData = null;
 
                 // Try to load the appropriate file based on zoom level
@@ -1739,11 +1788,77 @@ export default function MainApp() {
 
                 if (!map.isStyleLoaded()) return;
 
-                renderCustomChoropleth(map, geoJSONData, level);
+                // ===== FILTER TO VIEWPORT =====
+                // Only render features that intersect with the current viewport
+                const filteredFeatures = geoJSONData.features.filter(feature => {
+                    if (!feature.geometry || !feature.geometry.coordinates) return false;
+
+                    // Get bounding box of feature
+                    let featureBounds = getFeatureBounds(feature);
+                    if (!featureBounds) return false;
+
+                    // Check if feature intersects viewport
+                    return boundsIntersect(
+                        { west, south, east, north },
+                        featureBounds
+                    );
+                });
+
+                console.log(`🎯 Filtered to ${filteredFeatures.length} features in viewport (from ${geoJSONData.features.length} total)`);
+
+                // Create filtered GeoJSON with only visible features
+                const filteredGeoJSON = {
+                    ...geoJSONData,
+                    features: filteredFeatures
+                };
+
+                renderCustomChoropleth(map, filteredGeoJSON, level);
 
             } catch (error) {
                 console.error('Error loading choropleth:', error);
             }
+        }
+
+        // Helper function: Get bounding box of a feature
+        function getFeatureBounds(feature) {
+            let minLng = Infinity, minLat = Infinity;
+            let maxLng = -Infinity, maxLat = -Infinity;
+
+            const processCoords = (coords) => {
+                coords.forEach(coord => {
+                    if (Array.isArray(coord[0])) {
+                        processCoords(coord);
+                    } else {
+                        const [lng, lat] = coord;
+                        minLng = Math.min(minLng, lng);
+                        maxLng = Math.max(maxLng, lng);
+                        minLat = Math.min(minLat, lat);
+                        maxLat = Math.max(maxLat, lat);
+                    }
+                });
+            };
+
+            if (feature.geometry.type === 'Polygon') {
+                processCoords(feature.geometry.coordinates);
+            } else if (feature.geometry.type === 'MultiPolygon') {
+                feature.geometry.coordinates.forEach(polygon => {
+                    processCoords(polygon);
+                });
+            }
+
+            if (minLng === Infinity) return null;
+
+            return { west: minLng, south: minLat, east: maxLng, north: maxLat };
+        }
+
+        // Helper function: Check if two bounding boxes intersect
+        function boundsIntersect(bounds1, bounds2) {
+            return !(
+                bounds1.east < bounds2.west ||
+                bounds1.west > bounds2.east ||
+                bounds1.north < bounds2.south ||
+                bounds1.south > bounds2.north
+            );
         }
 
         function renderCustomChoropleth(map, geoJSONData, level) {
@@ -1935,16 +2050,45 @@ export default function MainApp() {
         const initialZoom = map.getZoom();
         loadChoroplethForZoom(initialZoom);
 
-        // Listen for zoom changes
+        // Listen for zoom AND move changes to update viewport
         const handleZoomEnd = () => {
             const zoom = map.getZoom();
             loadChoroplethForZoom(zoom);
         };
 
+        const handleMoveEnd = () => {
+            // Reload regions when user pans to new area
+            if (!useGlobe) { // Don't reload during globe rotation
+                const zoom = map.getZoom();
+                // Force reload by resetting currentLevel
+                const prevLevel = currentLevel;
+                currentLevel = null;
+                loadChoroplethForZoom(zoom);
+                if (currentLevel === null) currentLevel = prevLevel; // Restore if load failed
+            }
+        };
+
         map.on('zoomend', handleZoomEnd);
+        map.on('moveend', handleMoveEnd);
+
+        // Wait longer in globe mode for projection to settle
+        if (useGlobe) {
+            timeoutId = setTimeout(() => {
+                const initialZoom = map.getZoom();
+                loadChoroplethForZoom(initialZoom);
+                map.on('zoomend', handleZoomEnd);
+            }, 300);
+        } else {
+            const initialZoom = map.getZoom();
+            loadChoroplethForZoom(initialZoom);
+            map.on('zoomend', handleZoomEnd);
+        }
 
         return () => {
+            if (timeoutId) clearTimeout(timeoutId);
+
             map.off('zoomend', handleZoomEnd);
+            map.off('moveend', handleMoveEnd);
             const layerId = 'custom-choropleth-layer';
             const outlineLayerId = 'custom-choropleth-outline';
             const sourceId = 'custom-choropleth';
