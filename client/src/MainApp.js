@@ -1454,7 +1454,7 @@ export default function MainApp() {
                         ['zoom'],
                         2, 3,      // Small when zoomed out
                         6, 5,
-                        12, 10     // Larger when zoomed in
+                        12, 30     // Larger when zoomed in
                     ],
                     'circle-color': ['get', 'color'],  // Get color from feature properties
                     'circle-opacity': 0.65,    // Semi-transparent for blending
@@ -3751,8 +3751,8 @@ A lone data scientist has built this site and runs everything independently. The
                                         transition: 'all 0.2s ease'
                                     }}
                                 >
-                                    <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>🔥</div>
-                                    <span style={{ fontWeight: 'bold', color: darkMode ? '#e0e0e0' : '#333' }}>Heatmap</span>
+                                    <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>📍</div>
+                                    <span style={{ fontWeight: 'bold', color: darkMode ? '#e0e0e0' : '#333' }}>Pointmap</span>
                                 </div>
 
                                 <div
