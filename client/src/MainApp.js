@@ -2315,6 +2315,18 @@ export default function MainApp() {
         checkReport();
     }, [selectedTopic]);
 
+    // Open ad modal if URL parameter is present
+    useEffect(() => {
+        const params = new URLSearchParams(location.search);
+        const showAd = params.get('advertise');
+        const path = location.pathname;
+
+        // Support both /?advertise=true and /advertise
+        if (showAd === 'true' || path === '/advertise') {
+            setAdSubmissionOpen(true);
+        }
+    }, [location.search, location.pathname]);
+
     const handleReportSubmit = async () => {
         if (!reportReason) {
             alert('Please select a reason for reporting');
