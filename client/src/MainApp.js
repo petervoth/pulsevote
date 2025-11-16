@@ -2650,7 +2650,7 @@ Not yet. In a perfect world, we would trust our police to always protect us from
 Absolutely! You can make recommendatins by creating a vote using the PulseVote - Site Suggestions category. Topics with a very high ratio of Yes responses will be considered for the Live site.
 
 8. I like what PulseVote is trying to do, can I make a donation?
-Yes, donations can be made on the same page we sell Advertising. 
+Yes, donations can be made by clicking the Donations link below. 
 
 9. Who runs PulseVote?
 A lone data scientist has built this site and runs everything independently. There are no secret financial backers or "big government" behind the project.`
