@@ -1585,6 +1585,15 @@ export default function MainApp() {
             const sourceId = 'choropleth-grid';
             const layerId = 'choropleth-layer';
 
+            // ===== CRITICAL: REMOVE OLD EVENT LISTENERS FIRST =====
+            try {
+                map.off('click', layerId);
+                map.off('mouseenter', layerId);
+                map.off('mouseleave', layerId);
+            } catch (e) {
+                // Ignore errors if listeners don't exist
+            }
+
             if (map.getLayer(layerId)) {
                 map.removeLayer(layerId);
             }
@@ -1609,28 +1618,35 @@ export default function MainApp() {
                     }
                 });
 
+                // ===== ADD EVENT LISTENERS ONLY ONCE =====
                 // Add click handler for popups
                 map.on('click', layerId, (e) => {
                     if (e.features.length > 0) {
                         const avg = e.features[0].properties.avg;
 
+                        // Remove any existing popups first
+                        const existingPopups = document.getElementsByClassName('maplibregl-popup');
+                        while (existingPopups.length > 0) {
+                            existingPopups[0].remove();
+                        }
+
                         new maplibregl.Popup()
                             .setLngLat(e.lngLat)
                             .setHTML(`
-                            <div style="
-                                text-align: center; 
-                                padding: 12px;
-                                background: ${darkMode ? '#2d2d2d' : '#fff'};
-                                color: ${darkMode ? '#e0e0e0' : '#333'};
-                                border-radius: 6px;
-                                min-width: 120px;
-                            ">
-                                <strong style="font-size: 1.1rem;">Average Score</strong><br/>
-                                <span style="font-size: 1.5rem; font-weight: bold; color: #0b63a4;">
-                                    ${parseFloat(avg).toFixed(2)}
-                                </span>
-                            </div>
-                        `)
+                    <div style="
+                        text-align: center; 
+                        padding: 12px;
+                        background: ${darkMode ? '#2d2d2d' : '#fff'};
+                        color: ${darkMode ? '#e0e0e0' : '#333'};
+                        border-radius: 6px;
+                        min-width: 120px;
+                    ">
+                        <strong style="font-size: 1.1rem;">Average Score</strong><br/>
+                        <span style="font-size: 1.5rem; font-weight: bold; color: #0b63a4;">
+                            ${parseFloat(avg).toFixed(2)}
+                        </span>
+                    </div>
+                `)
                             .addTo(map);
                     }
                 });
