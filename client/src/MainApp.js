@@ -1,4 +1,5 @@
 ﻿// src/MainApp.js - MAPLIBRE GL JS v5 VERSION
+console.log('🔑 Stripe Key:', process.env.REACT_APP_STRIPE_PUBLISHABLE_KEY);
 import React, { useState, useEffect, useRef, useMemo } from "react";
 import { useLocation } from "react-router-dom";
 import maplibregl from "maplibre-gl";
