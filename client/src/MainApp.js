@@ -4418,7 +4418,8 @@ A lone data scientist has built this site and runs everything independently. The
                                                         </select>
 
                                             <textarea
-                                                placeholder="Describe your topic..."
+                                                            placeholder={`Topic (required)
+                                                            Description`}
                                                 value={newDescription}
                                                 onChange={(e) => {
                                                     setNewDescription(e.target.value);
