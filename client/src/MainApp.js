@@ -405,6 +405,169 @@ function CheckoutForm({ adFormData, validateForm, onSuccess, onError, darkMode }
     );
 }
 
+function DonationCheckoutForm({ amount, donorName, donorEmail, message, onSuccess, onError, darkMode }) {
+    const stripe = useStripe();
+    const elements = useElements();
+    const [processing, setProcessing] = useState(false);
+
+    const handleSubmit = async (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+
+        if (!amount || !donorEmail) {
+            alert('Please enter donation amount and email.');
+            return;
+        }
+
+        if (parseFloat(amount) < 1) {
+            alert('Minimum donation is $1 USD');
+            return;
+        }
+
+        if (!stripe || !elements) {
+            alert('Payment system not ready. Please refresh and try again.');
+            return;
+        }
+
+        setProcessing(true);
+
+        try {
+            // Create payment intent for donation
+            const intentResponse = await fetch(`${API_BASE}/api/stripe/create-donation-intent`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    amount: parseFloat(amount),
+                    email: donorEmail,
+                    donorName: donorName || 'Anonymous',
+                    message: message || ''
+                })
+            });
+
+            if (!intentResponse.ok) {
+                const errorText = await intentResponse.text();
+                throw new Error(`Failed to create donation intent: ${errorText}`);
+            }
+
+            const { clientSecret, paymentIntentId } = await intentResponse.json();
+
+            // Confirm payment
+            const { error, paymentIntent } = await stripe.confirmCardPayment(clientSecret, {
+                payment_method: {
+                    card: elements.getElement(CardElement),
+                    billing_details: {
+                        email: donorEmail,
+                        name: donorName || 'Anonymous'
+                    }
+                }
+            });
+
+            if (error) {
+                onError(error.message);
+                setProcessing(false);
+                return;
+            }
+
+            if (paymentIntent.status === 'succeeded') {
+                // Record donation in database
+                const recordResponse = await fetch(`${API_BASE}/api/donations`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        amount: parseFloat(amount),
+                        donorName: donorName || 'Anonymous',
+                        donorEmail: donorEmail,
+                        message: message || '',
+                        paymentIntentId: paymentIntentId
+                    })
+                });
+
+                if (!recordResponse.ok) {
+                    throw new Error('Payment succeeded but failed to record donation');
+                }
+
+                await onSuccess();
+            } else {
+                throw new Error(`Unexpected payment status: ${paymentIntent.status}`);
+            }
+        } catch (err) {
+            onError(err.message || 'Payment processing failed');
+            setProcessing(false);
+        }
+    };
+
+    return (
+        <form onSubmit={handleSubmit} style={{ marginTop: '1rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+            <div>
+                <label style={{
+                    display: 'block',
+                    marginBottom: '0.5rem',
+                    fontWeight: '600',
+                    fontSize: '0.95rem',
+                    color: darkMode ? '#e0e0e0' : '#333'
+                }}>
+                    Card Details *
+                </label>
+                <div style={{
+                    padding: '0.75rem 1rem',
+                    border: `1px solid ${darkMode ? '#444' : '#ddd'}`,
+                    borderRadius: '6px',
+                    backgroundColor: darkMode ? '#1a1a1a' : '#fff'
+                }}>
+                    <CardElement
+                        options={{
+                            style: {
+                                base: {
+                                    fontSize: '16px',
+                                    color: darkMode ? '#e0e0e0' : '#333',
+                                    '::placeholder': {
+                                        color: darkMode ? '#999' : '#aaa'
+                                    },
+                                    fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
+                                },
+                                invalid: {
+                                    color: '#dc3545',
+                                    iconColor: '#dc3545'
+                                }
+                            }
+                        }}
+                    />
+                </div>
+            </div>
+
+            <button
+                type="submit"
+                disabled={!stripe || processing}
+                style={{
+                    width: '100%',
+                    padding: '0.75rem',
+                    fontSize: '1rem',
+                    fontWeight: '600',
+                    borderRadius: '6px',
+                    border: 'none',
+                    backgroundColor: processing ? '#999' : '#0b63a4',
+                    color: '#fff',
+                    cursor: processing ? 'not-allowed' : 'pointer',
+                    opacity: processing ? 0.6 : 1,
+                    transition: 'background-color 0.2s ease'
+                }}
+                onMouseEnter={(e) => {
+                    if (!processing && stripe) {
+                        e.target.style.backgroundColor = '#094d7f';
+                    }
+                }}
+                onMouseLeave={(e) => {
+                    if (!processing) {
+                        e.target.style.backgroundColor = '#0b63a4';
+                    }
+                }}
+            >
+                {processing ? 'Processing...' : `Donate $${amount || '0'} USD`}
+            </button>
+        </form>
+    );
+}
+
 function useQuery() {
     return new URLSearchParams(useLocation().search);
 }
@@ -455,6 +618,7 @@ export default function MainApp() {
     const [donorName, setDonorName] = useState('');
     const [donorEmail, setDonorEmail] = useState('');
     const [donationMessage, setDonationMessage] = useState('');
+    const [donationProcessing, setDonationProcessing] = useState(false);
 
     const [liveAds, setLiveAds] = useState([]);
     const [homebaseName, setHomebaseName] = useState("Loading...");
@@ -3520,24 +3684,26 @@ A lone data scientist has built this site and runs everything independently. The
                                             </div>
                                         </div>
 
-                                        <button
-                                            disabled={!donationAmount || !donorEmail}
-                                            style={{
-                                                width: '100%',
-                                                padding: '0.75rem',
-                                                fontSize: '1rem',
-                                                fontWeight: '600',
-                                                borderRadius: '6px',
-                                                border: 'none',
-                                                backgroundColor: (!donationAmount || !donorEmail) ? '#999' : '#0b63a4',
-                                                color: '#fff',
-                                                cursor: (!donationAmount || !donorEmail) ? 'not-allowed' : 'pointer',
-                                                opacity: (!donationAmount || !donorEmail) ? 0.6 : 1
-                                            }}
-                                            onClick={() => alert('Stripe integration for donations coming soon!')}
-                                        >
-                                            Donate ${donationAmount || '0'} USD
-                                        </button>
+                                <Elements stripe={stripePromise}>
+                                    <DonationCheckoutForm
+                                        amount={donationAmount}
+                                        donorName={donorName}
+                                        donorEmail={donorEmail}
+                                        message={donationMessage}
+                                        onSuccess={async () => {
+                                            alert(`🙏 Thank you for your ${donationAmount ? `$${donationAmount}` : ''} donation! Your support means everything to PulseVote.`);
+                                            setDonationAmount('');
+                                            setDonorName('');
+                                            setDonorEmail('');
+                                            setDonationMessage('');
+                                            setDonationModalOpen(false);
+                                        }}
+                                        onError={(error) => {
+                                            alert(`Payment failed: ${error}\n\nPlease try again or contact us at support@pulsevote.org`);
+                                        }}
+                                        darkMode={darkMode}
+                                    />
+                                </Elements>
 
                                         <p style={{
                                             fontSize: '0.75rem',
